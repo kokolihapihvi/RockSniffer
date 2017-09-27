@@ -1,0 +1,3 @@
+[submodule "RockSnifferLib"]
+	path = RockSnifferLib
+	url = https://github.com/kokolihapihvi/RockSnifferLib.git
