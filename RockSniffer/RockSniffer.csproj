@@ -101,13 +101,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\RockSnifferLib\RockSnifferLib\RockSnifferLib.csproj">
+    <Content Include="sniffy.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RockSnifferLib\RockSnifferLib.csproj">
       <Project>{5c132036-7413-432e-b03e-13a1015e3fb8}</Project>
       <Name>RockSnifferLib</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="sniffy.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
