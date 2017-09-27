@@ -1,0 +1,184 @@
+@keyframes popup-animation {
+	/*start of animation*/
+	0% {
+		opacity: 0;
+		font-size: 100vw;
+		transform: rotate(0deg);
+		color: white;
+	}
+
+	/*End of entering animation and start of first bounce*/
+	10% {
+		opacity: 1;
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+	}
+
+	/*End of first bounce*/
+	25% {
+		font-size: 7vw;
+		transform: rotate(5deg);
+	}
+
+	/*Start of second bounce*/
+	35% {
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+	}
+
+	/*End of second bounce*/
+	45% {
+		font-size: 6vw;
+		transform: rotate(-4deg);
+	}
+
+	/*Start of third bounce*/
+	50% {
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+	}
+
+	/*End of third bounce*/
+	60% {
+		font-size: 5vw;
+		transform: rotate(2deg);
+	}
+
+	/*Start of fourth bounce*/
+	65% {
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+	}
+
+	/*End of fourth bounce*/
+	75% {
+		font-size: 4vw;
+		transform: rotate(-1deg);
+	}
+
+	/*Start of exit animation*/
+	90% {
+		opacity: 1;
+		font-size: 3.5vw;
+		transform: rotate(0deg) translate(0,0);
+	}
+
+	/*Final state and end of exit animation*/
+	100% {
+		opacity: 0;
+		transform: translateY(-100px);
+		color: white;
+	}
+}
+
+@keyframes popup-animation-rainbow {
+	/*start of animation*/
+	0% {
+		opacity: 0;
+		font-size: 100vw;
+		transform: rotate(0deg);
+	}
+
+	/*End of entering animation and start of first bounce*/
+	10% {
+		opacity: 1;
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+		color: magenta;
+	}
+
+	/*End of first bounce*/
+	25% {
+		font-size: 7vw;
+		transform: rotate(5deg);
+		color: red;
+	}
+
+	/*Start of second bounce*/
+	35% {
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+		color: DeepPink;
+	}
+
+	/*End of second bounce*/
+	45% {
+		font-size: 6vw;
+		transform: rotate(-4deg);
+		color: yellow;
+	}
+
+	/*Start of third bounce*/
+	50% {
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+		color: green;
+	}
+
+	/*End of third bounce*/
+	60% {
+		font-size: 5vw;
+		transform: rotate(2deg);
+		color: blue;
+	}
+
+	/*Start of fourth bounce*/
+	65% {
+		font-size: 3.5vw;
+		transform: rotate(0deg);
+		color: aqua;
+	}
+
+	/*End of fourth bounce*/
+	75% {
+		font-size: 4vw;
+		transform: rotate(-1deg);
+		color: purple;
+	}
+
+	/*Start of exit animation*/
+	90% {
+		opacity: 1;
+		font-size: 3.5vw;
+		transform: rotate(0deg) translate(0,0);
+		color: lime;
+	}
+
+	/*Final state and end of exit animation*/
+	100% {
+		opacity: 0;
+		transform: translateY(-100px);
+	}
+}
+
+/* This applies to all the text */
+body {
+	font-family: arial;
+}
+
+/* This is the popup container, hide it by default */
+div.popup {
+	/*display: none;*/
+	text-align: center;
+}
+
+/* This applies to the information text */
+h1 {
+	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	font-size: 5vw;
+	color: white;
+	-webkit-text-stroke: 0.15vw black;
+}
+
+/* This applies to the header title text */
+h1.streak {
+	animation-name: popup-animation;
+    animation-duration: 3s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
+	font-weight: bold;
+	font-size: 7vw;
+	color: white;
+	padding-top: 22vw;
+    display: none;
+}

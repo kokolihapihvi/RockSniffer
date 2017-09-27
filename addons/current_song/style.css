@@ -1,0 +1,63 @@
+/* This applies to all the text */
+body {
+	font-family: arial;
+}
+
+/* This is the popup container, hide it by default */
+div.popup {
+	display: none;
+}
+
+/* This is the header of the popup, the section containing the text "CURRENT SONG" */
+div.header {
+	font-family: Arial;
+	width: 100%;
+	height: 5vw;
+	background-color: rgb(40, 56, 72);
+	border-radius: 8px 8px 0 0;
+	border-bottom: 0.5vw solid black;
+}
+
+/* This is the popup block that contains all the data */
+div.content {
+	overflow: hidden;
+	padding-left: 2vw;
+	background-color: rgba(85, 98, 111, 0.84);
+	border-radius: 0 0 7px 7px;
+}
+
+/* This applies to the information text */
+h1 {
+	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	font-size: 4.5vw;
+	color: white;
+	line-height: 4.3vw;
+	-webkit-text-stroke: 0.2vw black;
+}
+
+/* This applies to the header title text */
+h1.title {
+	font-size: 3.5vw;
+	line-height: 4vw;
+	color: white;
+	padding-top: 0.6vw;
+}
+
+/* This applies to the rocksmith guitarpick in the top left corner of the popup */
+img.pick {
+	height: 70%;
+	float: left;
+	padding-right: 1.5vw;
+	margin-left: 7px;
+	margin-top: 7px;
+}
+
+/* This applies to the album cover on the popup */
+img.album_cover {
+	width: 23%;
+	float: right;
+	margin: 2vw;
+	border-style: solid;
+	border-color: black;
+	border-width: 3px;
+}
