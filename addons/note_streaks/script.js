@@ -21,7 +21,7 @@ function refresh() {
 	}
 
 	//JSON query the addon service
-	$.getJSON("http://localhost:9938", function(data) {
+	$.getJSON("http://127.0.0.1:9938", function(data) {
 		//If data was successfully gotten
 		if(data.success) {
 			//Get memory readout

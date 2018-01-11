@@ -28,10 +28,10 @@ namespace RockSniffer.Addons
             listenThread.Start();
         }
 
-        internal void SetReadouts(SongDetails details, RSMemoryReadout memReadout)
+        public void SetSniffer(Sniffer sniffer)
         {
-            listener.songDetails = details;
-            listener.memReadout = memReadout;
+            sniffer.OnCurrentSongChanged += listener.OnCurrentSongChanged;
+            sniffer.OnMemoryReadout += listener.OnMemoryReadout;
         }
     }
 }

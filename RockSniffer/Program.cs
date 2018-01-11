@@ -16,7 +16,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.0.3";
+        internal const string version = "0.1.0";
 
         internal static Cache cache;
         internal static Config config;
@@ -30,6 +30,9 @@ namespace RockSniffer
 
         private static AddonService addonService;
         private Image defaultAlbumCover = new Bitmap(256, 256);
+
+        private RSMemoryReadout memReadout = new RSMemoryReadout();
+        private SongDetails details = new SongDetails();
 
         static void Main(string[] args)
         {
@@ -109,7 +112,16 @@ namespace RockSniffer
 
             //Initialize file handle reader and memory reader
             Sniffer sniffer = new Sniffer(rsProcess, cache);
-            RSMemoryReader memreader = new RSMemoryReader(rsProcess);
+
+            //Listen for events
+            sniffer.OnCurrentSongChanged += Sniffer_OnCurrentSongChanged;
+            sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
+
+            //Inform AddonService
+            if (config.addonSettings.enableAddons)
+            {
+                addonService.SetSniffer(sniffer);
+            }
 
             while (true)
             {
@@ -118,28 +130,10 @@ namespace RockSniffer
                     break;
                 }
 
-                try
-                {
-                    //Sniff handles and read memory and output results
-                    RSMemoryReadout ro = memreader.DoReadout();
-                    SongDetails sd = sniffer.Sniff(ro);
-
-                    //If the song details are not valid, but there appears to be a songID, revalidate HIRC pointer
-                    if (!sd.IsValid() && ro.songID != null)
-                    {
-                        memreader.RevalidateHIRC();
-                    }
-
-                    OutputDetails(sd, ro);
-                }
-                catch (Exception e)
-                {
-                    PrintError("Warning: Error during readout: {0}", e.Message);
-                    //Console.WriteLine(e.StackTrace);
-                }
+                OutputDetails();
 
                 //GOTTA GO FAST
-                Thread.Sleep(900);
+                Thread.Sleep(1000);
 
                 if (random.Next(0, 100) > 99)
                 {
@@ -147,11 +141,33 @@ namespace RockSniffer
                 }
             }
 
+            sniffer.Stop();
+
             //Clean up as best as we can
             rsProcess.Dispose();
             rsProcess = null;
 
             Console.WriteLine("This is rather unfortunate, the Rocksmith2014 process has vanished :/");
+        }
+
+        private void Sniffer_OnMemoryReadout(RSMemoryReadout memReadout)
+        {
+            this.memReadout = memReadout;
+        }
+
+        private void Sniffer_OnCurrentSongChanged(SongDetails songDetails)
+        {
+            details = songDetails;
+
+            //Write album art
+            if (details.albumArt != null)
+            {
+                WriteImageToFileLocking("output/album_cover.jpeg", details.albumArt);
+            }
+            else
+            {
+                WriteImageToFileLocking("output/album_cover.jpeg", defaultAlbumCover);
+            }
         }
 
         public static string FormatTime(float lengthTime)
@@ -165,14 +181,8 @@ namespace RockSniffer
             return string.Format(config.formatSettings.percentageFormat, frac * 100d);
         }
 
-        private void OutputDetails(SongDetails details, RSMemoryReadout memReadout)
+        private void OutputDetails()
         {
-            //Inform AddonService
-            if (config.addonSettings.enableAddons)
-            {
-                addonService.SetReadouts(details.Clone(), memReadout.Clone());
-            }
-
             //Print memreadout if debug is enabled
             memReadout.print();
 
@@ -212,16 +222,6 @@ namespace RockSniffer
                 //Write to output
                 WriteTextToFileLocking("output/" + of.filename, outputtext);
             }
-
-            //Write album art
-            if (details.albumArt != null)
-            {
-                WriteImageToFileLocking("output/album_cover.jpeg", details.albumArt);
-            }
-            else
-            {
-                WriteImageToFileLocking("output/album_cover.jpeg", defaultAlbumCover);
-            }
         }
 
         private void ClearOutput()
@@ -239,7 +239,7 @@ namespace RockSniffer
             //Clear AddonService
             if (config.addonSettings.enableAddons)
             {
-                addonService.SetReadouts(null, null);
+                //addonService.SetSniffer(null);
             }
         }
 

@@ -1,11 +1,17 @@
 //If you want to preview what the popup looks like, set this to true
 var preview = false;
 
+//Enable accuracy percentage
+var show_accuracy = true;
+
 //Enable animation (percentage scrolls to the next number instead of snapping)
 var animate_percentage = true;
 
 //Enable colour animation (percentage fades from one color to another across 0%->100%)
 var animate_percentage_color = true;
+
+//Enable a media player style progress bar on the bottom
+var show_progress = true;
 
 //Color for 0%
 var color_0 = "#FF0000";
@@ -22,9 +28,22 @@ var color_midpoint = 0.8;
 //Exponent for interpolation, higher number = steeper curve towards the end, 1 = linear interpolation
 var color_exponent = 2;
 
+//How often to poll the addon service
+var pollrate = 900;
+
 //JQuerys document.onReady function
 //Gets called after the webpage is loaded
 $(function() {
+	//Hide progress if disabled
+	if(!show_accuracy) {
+		$("h1.accuracy_percentage").hide();
+	}
+
+	//Hide progress bar if disabled
+	if(!show_progress) {
+		$("div.progress_bar").hide();
+	}
+
 	//If preview is enabled, show the popup with some example text
 	if(preview) {
 		$("h1.artist_name").text("Artist name");
@@ -36,7 +55,7 @@ $(function() {
 
 		if(animate_percentage) {
 			testAnim = function() {
-				$("h1.accuracy_percentage").prop("number", 0).finish().animateNumber({
+				$("h1.accuracy_percentage").finish().animateNumber({
 						number: 100,
 						numberStep: function(now, tween) {
 							$(tween.elem).text(now.toFixed(2)+"%");
@@ -52,10 +71,24 @@ $(function() {
 
 			setInterval(testAnim, 6000);
 		}
+
+		testProgressBar = function() {
+			$("div.progress_bar_inner").finish().animateNumber({
+				number: 600,
+				numberStep: function(now, tween) {
+					$(tween.elem).css("width",100*(now/600)+"%");
+					$(tween.elem).prev().text(durationString(now)+"/"+durationString(600));
+				}
+			}, 5000);
+		}
+
+		testProgressBar();
+
+		setInterval(testProgressBar, 6000);
 	}
 	else {
 		//Set a timer to refresh our data every 1000 milliseconds
-		setInterval(refresh, 1000);
+		setInterval(refresh, pollrate);
 	}
 });
 
@@ -67,7 +100,7 @@ var prev_accuracy = 0;
 
 function refresh() {
 	//JSON query the addon service
-	$.getJSON("http://localhost:9938", function(data) {
+	$.getJSON("http://127.0.0.1:9938", function(data) {
 		//If data was successfully gotten
 		if(data.success) {
 			//Get song details out of it
@@ -107,7 +140,7 @@ function refresh() {
 							$(tween.elem).css("color", lerpColors(now/100));
 						}
 					}
-				}, 1000);
+				}, pollrate);
 
 				//Remember previous accuracy
 				prev_accuracy = accuracy;
@@ -115,6 +148,9 @@ function refresh() {
 				$("h1.accuracy_percentage").text(accuracy.toFixed(2)+"%");
 			}
 
+			//Update progress bar
+			$("div.progress_bar_inner").css("width",100*(readout.songTimer/details.songLength)+"%");
+			$("p.progress_bar_text").text(durationString(readout.songTimer)+"/"+durationString(details.songLength));
 
 			//Set the album art, which is base64 encoded, HTML can handle that, just append
 			//"data:image/jpeg; base64, " in front to tell HTML how to use the data
@@ -150,6 +186,23 @@ function showPopup() {
 	//Do a fadein over 1000 milliseconds and set the visible variable to true
 	$("div.popup").fadeIn(1000);
 	visible = true;
+}
+
+//Convert a number to a duration "hh:mm:ss"
+function durationString(tSeconds) {
+	var hh = Math.floor(tSeconds / 3600);
+	var mm = Math.floor((tSeconds - (hh * 3600)) / 60);
+	var ss = Math.floor(tSeconds % 60);
+
+	if(hh < 10) {hh = "0"+hh;}
+	if(mm < 10) {mm = "0"+mm;}
+	if(ss < 10) {ss = "0"+ss;}
+
+	if(hh > 0) {
+		return hh+":"+mm+":"+ss;
+	} else {
+		return mm+":"+ss;
+	}
 }
 
 //Lerp between the 0%, 50% and 100% colors

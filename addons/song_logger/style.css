@@ -1,0 +1,14 @@
+/* This applies to all the text */
+body {
+	font-family: arial;
+}
+
+/* This is the div that contains all log lines */
+div.log {
+
+}
+
+/* This is a log line */
+div.log_line {
+	display: inline-block;
+}

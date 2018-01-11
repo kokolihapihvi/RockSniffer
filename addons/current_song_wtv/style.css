@@ -24,6 +24,7 @@ div.header {
 div.content {
 	overflow: hidden;
 	padding-left: 2vw;
+	padding-right: 2vw;
 	background-color: rgba(85, 98, 111, 0.84);
 	border-radius: 0 0 7px 7px;
 }
@@ -62,8 +63,32 @@ img.pick {
 img.album_cover {
 	width: 23%;
 	float: right;
-	margin: 2vw;
+	margin: 2vw 0 1vw 2vw;
 	border-style: solid;
 	border-color: black;
 	border-width: 3px;
+}
+
+/* Classes for the progress bar */
+div.progress_bar {
+	background-color: rgb(40, 56, 72);
+	height: 4vw;
+	font-size: 4vw;
+	margin: 0 0 1vw 0;
+	clear: both;
+	text-align: center;
+}
+
+div.progress_bar_inner {
+	background-color: rgba(95, 108, 121, 0.3);
+	height: 100%;
+	width: 0;
+}
+
+p.progress_bar_text {
+	padding: 0;
+	margin: 0;
+	height: 0;
+	overflow: visible;
+	color: white;
 }
