@@ -30,7 +30,7 @@ namespace RockSniffer.Addons
 
         public void SetSniffer(Sniffer sniffer)
         {
-            sniffer.OnCurrentSongChanged += listener.OnCurrentSongChanged;
+            sniffer.OnSongChanged += listener.OnCurrentSongChanged;
             sniffer.OnMemoryReadout += listener.OnMemoryReadout;
         }
     }

@@ -1,5 +1,7 @@
 ﻿using RockSniffer.Addons;
 using RockSniffer.Configuration;
+using RockSnifferLib.Cache;
+using RockSnifferLib.Events;
 using RockSnifferLib.Logging;
 using RockSnifferLib.RSHelpers;
 using RockSnifferLib.Sniffing;
@@ -9,6 +11,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
@@ -18,7 +21,7 @@ namespace RockSniffer
     {
         internal const string version = "0.1.0";
 
-        internal static Cache cache;
+        internal static ICache cache;
         internal static Config config;
 
         internal static Process rsProcess;
@@ -57,6 +60,7 @@ namespace RockSniffer
             config.Load();
 
             //Transfer logging options
+            Logger.logStateMachine = config.debugSettings.debugStateMachine;
             Logger.logCache = config.debugSettings.debugCache;
             Logger.logFileDetailQuery = config.debugSettings.debugFileDetailQuery;
             Logger.logHIRCScan = config.debugSettings.debugHIRCScan;
@@ -65,7 +69,7 @@ namespace RockSniffer
             Logger.logSystemHandleQuery = config.debugSettings.debugSystemHandleQuery;
 
             //Initialize cache
-            cache = new Cache(cachedir);
+            cache = new FileCache(cachedir);
 
             //Create directories
             Directory.CreateDirectory("output");
@@ -73,7 +77,18 @@ namespace RockSniffer
             //Enable addon service if configured
             if (config.addonSettings.enableAddons)
             {
-                addonService = new AddonService();
+                try
+                {
+                    addonService = new AddonService();
+                }
+                catch (SocketException e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Could not start addon service, is the port already in use?");
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                    Console.ResetColor();
+                }
             }
         }
 
@@ -87,7 +102,7 @@ namespace RockSniffer
             //Loop infinitely trying to find rocksmith process
             while (true)
             {
-                var processes = Process.GetProcessesByName("Rocksmith2014"); //Rocksmith2014
+                var processes = Process.GetProcessesByName("Rocksmith2014");
 
                 //Sleep for 1 second if no processes found
                 if (processes.Length == 0)
@@ -114,11 +129,11 @@ namespace RockSniffer
             Sniffer sniffer = new Sniffer(rsProcess, cache);
 
             //Listen for events
-            sniffer.OnCurrentSongChanged += Sniffer_OnCurrentSongChanged;
+            sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
 
             //Inform AddonService
-            if (config.addonSettings.enableAddons)
+            if (config.addonSettings.enableAddons && addonService != null)
             {
                 addonService.SetSniffer(sniffer);
             }
@@ -150,14 +165,14 @@ namespace RockSniffer
             Console.WriteLine("This is rather unfortunate, the Rocksmith2014 process has vanished :/");
         }
 
-        private void Sniffer_OnMemoryReadout(RSMemoryReadout memReadout)
+        private void Sniffer_OnMemoryReadout(object sender, OnMemoryReadoutArgs args)
         {
-            this.memReadout = memReadout;
+            memReadout = args.memoryReadout;
         }
 
-        private void Sniffer_OnCurrentSongChanged(SongDetails songDetails)
+        private void Sniffer_OnCurrentSongChanged(object sender, OnSongChangedArgs args)
         {
-            details = songDetails;
+            details = args.songDetails;
 
             //Write album art
             if (details.albumArt != null)

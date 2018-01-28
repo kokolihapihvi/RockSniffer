@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RockSnifferLib.Events;
 using RockSnifferLib.RSHelpers;
 using RockSnifferLib.Sniffing;
 using System;
@@ -34,9 +35,9 @@ namespace RockSniffer.Addons
             tcpListener = socket;
         }
 
-        internal void OnCurrentSongChanged(SongDetails songDetails)
+        internal void OnCurrentSongChanged(object sender, OnSongChangedArgs args)
         {
-            this.songDetails = songDetails;
+            songDetails = args.songDetails;
 
             jsResp.songDetails = songDetails;
 
@@ -57,9 +58,9 @@ namespace RockSniffer.Addons
             }
         }
 
-        internal void OnMemoryReadout(RSMemoryReadout memReadout)
+        internal void OnMemoryReadout(object sender, OnMemoryReadoutArgs args)
         {
-            this.memReadout = memReadout;
+            memReadout = args.memoryReadout;
 
             jsResp.memoryReadout = memReadout;
         }
@@ -78,7 +79,7 @@ namespace RockSniffer.Addons
                 {
                     jsResp.success = false;
                 }
-                
+
                 ServeClient(s);
             }
         }
