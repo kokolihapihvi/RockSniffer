@@ -1,11 +1,18 @@
 //Set this to true for previewing
 var preview = false;
 
+//Addon service ip and port
+var ip = "127.0.0.1";
+var port = 9938;
+
+//How often to poll the addon service (in milliseconds)
+var pollrate = 900;
+
 //JQuerys document.onReady function
 //Gets called after the webpage is loaded
 $(function() {
-	//Set a timer to refresh our data every 1000 milliseconds
-	setInterval(refresh, 1000);
+	//Set a timer to refresh our data
+	setInterval(refresh, pollrate);
 });
 
 //Remember popup visibility
@@ -21,7 +28,7 @@ function refresh() {
 	}
 
 	//JSON query the addon service
-	$.getJSON("http://127.0.0.1:9938", function(data) {
+	$.getJSON("http://"+ip+":"+port, function(data) {
 		//If data was successfully gotten
 		if(data.success) {
 			//Get memory readout

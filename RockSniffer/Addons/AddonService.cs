@@ -1,12 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using RockSnifferLib.Sniffing;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using RockSnifferLib.RSHelpers;
-using RockSnifferLib.Sniffing;
 
 namespace RockSniffer.Addons
 {
@@ -15,11 +11,16 @@ namespace RockSniffer.Addons
         private AddonServiceListener listener;
         private Thread listenThread;
 
-        public AddonService()
+        public AddonService(string ipStr, int port)
         {
-            Console.WriteLine("Starting AddonService listener on localhost:9938");
+            if (!IPAddress.TryParse(ipStr, out IPAddress ip))
+            {
+                throw new Exception($"IP Address '{ipStr}' is not valid");
+            }
 
-            TcpListener l = new TcpListener(IPAddress.Loopback, 9938);
+            Console.WriteLine("Starting AddonService listener on {0}:{1}", ip.ToString(), port);
+
+            TcpListener l = new TcpListener(ip, port);
             l.Start();
 
             listener = new AddonServiceListener(l);
@@ -32,6 +33,7 @@ namespace RockSniffer.Addons
         {
             sniffer.OnSongChanged += listener.OnCurrentSongChanged;
             sniffer.OnMemoryReadout += listener.OnMemoryReadout;
+            sniffer.OnStateChanged += listener.OnStateChanged;
         }
     }
 }

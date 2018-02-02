@@ -29,13 +29,29 @@ div.content {
 	border-radius: 0 0 7px 7px;
 }
 
+div.song_details {
+	width: 74%;
+}
+
 /* This applies to the information text */
 h1 {
 	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
 	font-size: 4.5vw;
 	color: white;
 	line-height: 4.3vw;
-	-webkit-text-stroke: 0.2vw black;
+}
+
+/* Classes for outlined stroke text */
+.stroke {
+	position: relative;
+	z-index: 0;
+}
+
+.stroke:before {
+	position: absolute;
+	content: attr(data-stroke);
+	-webkit-text-stroke: 0.1em #000000;
+	z-index: -1;
 }
 
 /* This applies to the accuracy percentage in the title */
@@ -63,10 +79,10 @@ img.pick {
 img.album_cover {
 	width: 23%;
 	float: right;
-	margin: 2vw 0 1vw 2vw;
+	margin: 2vw 0 1vw 0;
 	border-style: solid;
 	border-color: black;
-	border-width: 3px;
+	border-width: 0.5vw;
 }
 
 /* Classes for the progress bar */

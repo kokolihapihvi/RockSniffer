@@ -19,7 +19,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.1.0";
+        internal const string version = "0.1.1";
 
         internal static ICache cache;
         internal static Config config;
@@ -28,7 +28,7 @@ namespace RockSniffer
 
         public static Random random = new Random();
 
-        internal static string tempdir = AppDomain.CurrentDomain.BaseDirectory + "temp";
+        //internal static string tempdir = AppDomain.CurrentDomain.BaseDirectory + "temp";
         internal static string cachedir = AppDomain.CurrentDomain.BaseDirectory + "cache";
 
         private static AddonService addonService;
@@ -79,13 +79,20 @@ namespace RockSniffer
             {
                 try
                 {
-                    addonService = new AddonService();
+                    addonService = new AddonService(config.addonSettings.ipAddress, config.addonSettings.port);
                 }
                 catch (SocketException e)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Could not start addon service, is the port already in use?");
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine("Please verify that the IP address is valid and the port is not already in use");
+                    Console.WriteLine("Could not start addon service: {0}", e.Message);
+                    Console.WriteLine(e.StackTrace);
+                    Console.ResetColor();
+                }
+                catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Could not start addon service: {0}", e.Message);
                     Console.WriteLine(e.StackTrace);
                     Console.ResetColor();
                 }

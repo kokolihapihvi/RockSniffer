@@ -1,6 +1,16 @@
 //If you want to preview what the popup looks like, set this to true
 var preview = false;
 
+//Addon service ip and port
+var ip = "127.0.0.1";
+var port = 9938;
+
+//How often to poll the addon service (in milliseconds)
+var pollrate = 900;
+
+//Should the popup be always visible or fade out in between songs
+var always_visible = false;
+
 //Enable accuracy percentage
 var show_accuracy = true;
 
@@ -28,12 +38,19 @@ var color_midpoint = 0.8;
 //Exponent for interpolation, higher number = steeper curve towards the end, 1 = linear interpolation
 var color_exponent = 2;
 
-//How often to poll the addon service
-var pollrate = 900;
+//Extend jQuery
+jQuery.fn.extend({
+	textStroke(text) {
+		return setTextStroke(this, text);
+	}
+});
 
 //JQuerys document.onReady function
 //Gets called after the webpage is loaded
 $(function() {
+	//If always visible, show the popup
+	if(always_visible) {showPopup()};
+
 	//Hide progress if disabled
 	if(!show_accuracy) {
 		$("h1.accuracy_percentage").hide();
@@ -44,12 +61,16 @@ $(function() {
 		$("div.progress_bar").hide();
 	}
 
+	$(".stroke").each(function() {
+		setTextStroke($(this), $(this).text());
+	});
+
 	//If preview is enabled, show the popup with some example text
 	if(preview) {
-		$("h1.artist_name").text("Artist name");
-		$("h1.song_name").text("Song name");
-		$("h1.album_name").text("Album name (1234)");
-		$("h1.accuracy_percentage").text("100%");
+		$("h1.artist_name").textStroke("Artist name");
+		$("h1.song_name").textStroke("Song name");
+		$("h1.album_name").textStroke("Album name (1234)");
+		$("h1.accuracy_percentage").textStroke("100%");
 		$("img.album_cover").attr("src", "rs_pick.png");
 		showPopup();
 
@@ -58,7 +79,7 @@ $(function() {
 				$("h1.accuracy_percentage").finish().animateNumber({
 						number: 100,
 						numberStep: function(now, tween) {
-							$(tween.elem).text(now.toFixed(2)+"%");
+							$(tween.elem).textStroke(now.toFixed(2)+"%");
 
 							if(animate_percentage_color) {
 								$(tween.elem).css("color", lerpColors(now/100));
@@ -77,7 +98,7 @@ $(function() {
 				number: 600,
 				numberStep: function(now, tween) {
 					$(tween.elem).css("width",100*(now/600)+"%");
-					$(tween.elem).prev().text(durationString(now)+"/"+durationString(600));
+					$(tween.elem).prev().textStroke(durationString(now)+"/"+durationString(600));
 				}
 			}, 5000);
 		}
@@ -87,8 +108,9 @@ $(function() {
 		setInterval(testProgressBar, 6000);
 	}
 	else {
-		//Set a timer to refresh our data every 1000 milliseconds
+		//Set a timer to refresh our data
 		setInterval(refresh, pollrate);
+		refresh();
 	}
 });
 
@@ -100,7 +122,7 @@ var prev_accuracy = 0;
 
 function refresh() {
 	//JSON query the addon service
-	$.getJSON("http://127.0.0.1:9938", function(data) {
+	$.getJSON("http://"+ip+":"+port, function(data) {
 		//If data was successfully gotten
 		if(data.success) {
 			//Get song details out of it
@@ -116,9 +138,9 @@ function refresh() {
 			}
 
 			//Transfer data onto DOM elements using JQuery selectors
-			$("h1.artist_name").text(details.artistName);
-			$("h1.song_name").text(details.songName);
-			$("h1.album_name").text(details.albumName + " (" + details.albumYear + ")");
+			$("h1.artist_name").textStroke(details.artistName);
+			$("h1.song_name").textStroke(details.songName);
+			$("h1.album_name").textStroke(details.albumName + " (" + details.albumYear + ")");
 
 			//Calculate percentage (notes hit / notes hit + notes missed)
 			var accuracy = readout.totalNotesHit / (readout.totalNotesHit + readout.totalNotesMissed);
@@ -134,7 +156,7 @@ function refresh() {
 				$("h1.accuracy_percentage").prop("number", prev_accuracy).finish().animateNumber({
 					number: accuracy,
 					numberStep: function(now, tween) {
-						$(tween.elem).text(now.toFixed(2)+"%");
+						$(tween.elem).textStroke(now.toFixed(2)+"%");
 
 						if(animate_percentage_color) {
 							$(tween.elem).css("color", lerpColors(now/100));
@@ -145,7 +167,7 @@ function refresh() {
 				//Remember previous accuracy
 				prev_accuracy = accuracy;
 			} else {
-				$("h1.accuracy_percentage").text(accuracy.toFixed(2)+"%");
+				$("h1.accuracy_percentage").textStroke(accuracy.toFixed(2)+"%");
 			}
 
 			//Update progress bar
@@ -170,8 +192,14 @@ function refresh() {
 	}, "json");
 }
 
+//Function to set text of an element and update the stoke attribute
+function setTextStroke(elem, text) {
+	return elem.text(text).addClass("stroke").attr("data-stroke", text);
+}
+
 //Hides the popup if it is visible
 function hidePopup() {
+	if(always_visible) return;
 	if(!visible) return;
 
 	//Do a fadeout over 1000 milliseconds and set the visible variable to false

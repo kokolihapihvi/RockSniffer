@@ -17,6 +17,7 @@ namespace RockSniffer.Addons
         private class JsonResponse
         {
             public bool success = false;
+            public SnifferState currentState = SnifferState.NONE;
             public RSMemoryReadout memoryReadout;
             public SongDetails songDetails;
             public string albumCoverBase64;
@@ -63,6 +64,11 @@ namespace RockSniffer.Addons
             memReadout = args.memoryReadout;
 
             jsResp.memoryReadout = memReadout;
+        }
+
+        internal void OnStateChanged(object sender, OnStateChangedArgs args)
+        {
+            jsResp.currentState = args.newState;
         }
 
         public void Listen()
