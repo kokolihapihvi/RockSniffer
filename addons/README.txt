@@ -6,10 +6,10 @@ Here is how to query the addon service from your addon
 Note that this query is written with JQuery, a library found in _deps
 The _deps directory contains some common javascript libraries
 
-Also note that the addon service is disabled by default, see config/addons.json
+Also note that the addon service may be disabled by default, see config/addons.json
 
 //This will query data from the addon service
-$.getJSON("http://localhost:9938", function(data) {
+$.getJSON("http://127.0.0.1:9938", function(data) {
 	//When the query has completed, this function will run
 	//Included in the data object you will find these fields:
 
