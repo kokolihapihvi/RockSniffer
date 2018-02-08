@@ -1,4 +1,5 @@
 This addon shows a popup with the song details and album cover
+This version is tailored for twitch.tv/wr4thtv
 
 Just add current_song.html into OBS as a browser source
 The display will fade in once a song starts, and will fade out when the song ends
