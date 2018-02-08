@@ -28,7 +28,6 @@ namespace RockSniffer
 
         public static Random random = new Random();
 
-        //internal static string tempdir = AppDomain.CurrentDomain.BaseDirectory + "temp";
         internal static string cachedir = AppDomain.CurrentDomain.BaseDirectory + "cache";
 
         private static AddonService addonService;
