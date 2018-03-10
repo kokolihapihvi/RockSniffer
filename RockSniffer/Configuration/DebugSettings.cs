@@ -12,5 +12,6 @@ namespace RockSniffer.Configuration
         public bool debugSystemHandleQuery = false;
         public bool debugFileDetailQuery = false;
         public bool debugHIRCScan = false;
+        public bool debugHIRCValidation = false;
     }
 }

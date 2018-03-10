@@ -19,7 +19,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.1.1";
+        internal const string version = "0.1.2_PR1";
 
         internal static ICache cache;
         internal static Config config;
@@ -44,7 +44,16 @@ namespace RockSniffer
             //Keep running even when rocksmith disappears
             while (true)
             {
-                p.Run();
+                try
+                {
+                    p.Run();
+                }
+                catch (Exception e)
+                {
+                    //Catch all exceptions that are not handled and log
+                    Logger.LogError("Encountered unhandled exception: {0}\r\n{1}", e.Message, e.StackTrace);
+                    throw e;
+                }
             }
         }
 
@@ -52,17 +61,26 @@ namespace RockSniffer
         {
             //Set title and print version
             Console.Title = string.Format("RockSniffer {0}", version);
-            Console.WriteLine("RockSniffer {0} ({1}bits)", version, CustomAPI.Is64Bits() ? "64" : "32");
+            Logger.Log("RockSniffer {0} ({1}bits)", version, CustomAPI.Is64Bits() ? "64" : "32");
 
             //Initialize and load configuration
             config = new Config();
-            config.Load();
+            try
+            {
+                config.Load();
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Could not load configuration: {0}\r\n{1}", e.Message, e.StackTrace);
+                throw e;
+            }
 
             //Transfer logging options
             Logger.logStateMachine = config.debugSettings.debugStateMachine;
             Logger.logCache = config.debugSettings.debugCache;
             Logger.logFileDetailQuery = config.debugSettings.debugFileDetailQuery;
             Logger.logHIRCScan = config.debugSettings.debugHIRCScan;
+            Logger.logHIRCValidation = config.debugSettings.debugHIRCValidation;
             Logger.logMemoryReadout = config.debugSettings.debugMemoryReadout;
             Logger.logSongDetails = config.debugSettings.debugSongDetails;
             Logger.logSystemHandleQuery = config.debugSettings.debugSystemHandleQuery;
@@ -82,18 +100,12 @@ namespace RockSniffer
                 }
                 catch (SocketException e)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Please verify that the IP address is valid and the port is not already in use");
-                    Console.WriteLine("Could not start addon service: {0}", e.Message);
-                    Console.WriteLine(e.StackTrace);
-                    Console.ResetColor();
+                    Logger.LogError("Please verify that the IP address is valid and the port is not already in use");
+                    Logger.LogError("Could not start addon service: {0}\r\n{1}", e.Message, e.StackTrace);
                 }
                 catch (Exception e)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Could not start addon service: {0}", e.Message);
-                    Console.WriteLine(e.StackTrace);
-                    Console.ResetColor();
+                    Logger.LogError("Could not start addon service: {0}\r\n{1}", e.Message, e.StackTrace);
                 }
             }
         }
@@ -103,7 +115,7 @@ namespace RockSniffer
             //Clear output / create output files
             ClearOutput();
 
-            Console.WriteLine("Waiting for rocksmith");
+            Logger.Log("Waiting for rocksmith");
 
             //Loop infinitely trying to find rocksmith process
             while (true)
@@ -129,7 +141,7 @@ namespace RockSniffer
                 break;
             }
 
-            Console.WriteLine("Rocksmith found! Sniffing...");
+            Logger.Log("Rocksmith found! Sniffing...");
 
             //Initialize file handle reader and memory reader
             Sniffer sniffer = new Sniffer(rsProcess, cache);
@@ -168,7 +180,7 @@ namespace RockSniffer
             rsProcess.Dispose();
             rsProcess = null;
 
-            Console.WriteLine("This is rather unfortunate, the Rocksmith2014 process has vanished :/");
+            Logger.Log("This is rather unfortunate, the Rocksmith2014 process has vanished :/");
         }
 
         private void Sniffer_OnMemoryReadout(object sender, OnMemoryReadoutArgs args)
@@ -204,9 +216,6 @@ namespace RockSniffer
 
         private void OutputDetails()
         {
-            //Print memreadout if debug is enabled
-            memReadout.print();
-
             //TODO: remember state of each file and only update the ones that have changed!
             foreach (OutputFile of in config.outputSettings.output)
             {
@@ -302,13 +311,6 @@ namespace RockSniffer
                 //Write to file
                 fstream.Write(contents, 0, contents.Length);
             }
-        }
-
-        public static void PrintError(string text, params object[] p)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(text, p);
-            Console.ResetColor();
         }
     }
 }
