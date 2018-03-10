@@ -265,12 +265,6 @@ namespace RockSniffer
 
             //Clear album art
             WriteImageToFileLocking("output/album_cover.jpeg", defaultAlbumCover);
-
-            //Clear AddonService
-            if (config.addonSettings.enableAddons)
-            {
-                //addonService.SetSniffer(null);
-            }
         }
 
         private void WriteImageToFileLocking(string file, Image image)
@@ -281,10 +275,17 @@ namespace RockSniffer
                 File.WriteAllText(file, "");
             }
 
-            //Open a file stream, write access, read only sharing
-            using (FileStream fstream = new FileStream(file, FileMode.Truncate, FileAccess.Write, FileShare.None))
+            try
             {
-                image.Save(fstream, ImageFormat.Jpeg);
+                //Open a file stream, write access, no sharing
+                using (FileStream fstream = new FileStream(file, FileMode.Truncate, FileAccess.Write, FileShare.None))
+                {
+                    image.Save(fstream, ImageFormat.Jpeg);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Unable to write to file {0}: {1}\r\n{2}", file, e.Message, e.StackTrace);
             }
         }
 
@@ -305,11 +306,19 @@ namespace RockSniffer
 
         private void WriteToFileLocking(string file, byte[] contents)
         {
-            //Open a file stream, write access, read only sharing
-            using (FileStream fstream = new FileStream(file, FileMode.Truncate, FileAccess.Write, FileShare.Read))
+            try
             {
-                //Write to file
-                fstream.Write(contents, 0, contents.Length);
+                //Open a file stream, write access, read only sharing
+                using (FileStream fstream = new FileStream(file, FileMode.Truncate, FileAccess.Write, FileShare.Read))
+                {
+                    //Write to file
+
+                    fstream.Write(contents, 0, contents.Length);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Unable to write to file {0}: {1}\r\n{2}", file, e.Message, e.StackTrace);
             }
         }
     }
