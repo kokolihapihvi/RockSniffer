@@ -4,5 +4,5 @@ It allows you to display the currently played song and some gameplay stats autom
 
 Requires [RockSnifferLib](https://github.com/kokolihapihvi/RockSnifferLib)
 
-# RockSniffer Dowload Link
+# RockSniffer Download Link
 [Latest version download link](https://github.com/kokolihapihvi/RockSniffer/releases/) 
