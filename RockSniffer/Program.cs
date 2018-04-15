@@ -19,7 +19,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.1.2_PR1";
+        internal const string version = "0.1.2_PR2";
 
         internal static ICache cache;
         internal static Config config;
@@ -79,8 +79,6 @@ namespace RockSniffer
             Logger.logStateMachine = config.debugSettings.debugStateMachine;
             Logger.logCache = config.debugSettings.debugCache;
             Logger.logFileDetailQuery = config.debugSettings.debugFileDetailQuery;
-            Logger.logHIRCScan = config.debugSettings.debugHIRCScan;
-            Logger.logHIRCValidation = config.debugSettings.debugHIRCValidation;
             Logger.logMemoryReadout = config.debugSettings.debugMemoryReadout;
             Logger.logSongDetails = config.debugSettings.debugSongDetails;
             Logger.logSystemHandleQuery = config.debugSettings.debugSystemHandleQuery;
