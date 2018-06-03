@@ -221,11 +221,21 @@ namespace RockSniffer
                 string outputtext = (string)of.format.Clone();
 
                 //Replace strings from song details
+                outputtext = outputtext.Replace("%SONG_ID%", details.songID);
                 outputtext = outputtext.Replace("%SONG_ARTIST%", details.artistName);
                 outputtext = outputtext.Replace("%SONG_NAME%", details.songName);
                 outputtext = outputtext.Replace("%SONG_ALBUM%", details.albumName);
                 outputtext = outputtext.Replace("%ALBUM_YEAR%", details.albumYear.ToString());
                 outputtext = outputtext.Replace("%SONG_LENGTH%", FormatTime(details.songLength));
+
+                //Toolkit details
+                if (details.toolkit != null)
+                {
+                    outputtext = outputtext.Replace("%TOOLKIT_VERSION%", details.toolkit.version);
+                    outputtext = outputtext.Replace("%TOOLKIT_AUTHOR%", details.toolkit.author);
+                    outputtext = outputtext.Replace("%TOOLKIT_PACKAGE_VERSION%", details.toolkit.package_version);
+                    outputtext = outputtext.Replace("%TOOLKIT_COMMENT%", details.toolkit.comment);
+                }
 
                 //If this output contained song detail information
                 if (outputtext != of.format)
