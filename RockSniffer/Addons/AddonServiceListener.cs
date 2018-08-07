@@ -21,6 +21,12 @@ namespace RockSniffer.Addons
             public RSMemoryReadout memoryReadout;
             public SongDetails songDetails;
             public string albumCoverBase64;
+
+            public string Version {
+                get {
+                    return Program.version;
+                }
+            }
         }
 
         private TcpListener tcpListener;
