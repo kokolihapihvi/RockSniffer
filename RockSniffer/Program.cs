@@ -1,4 +1,5 @@
-﻿using RockSniffer.Addons;
+﻿using Newtonsoft.Json.Linq;
+using RockSniffer.Addons;
 using RockSniffer.Configuration;
 using RockSnifferLib.Cache;
 using RockSnifferLib.Events;
@@ -11,6 +12,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -75,6 +77,12 @@ namespace RockSniffer
                 throw e;
             }
 
+            //Run version check
+            if (!config.debugSettings.disableVersionCheck)
+            {
+                VersionCheck();
+            }
+
             //Transfer logging options
             Logger.logStateMachine = config.debugSettings.debugStateMachine;
             Logger.logCache = config.debugSettings.debugCache;
@@ -105,6 +113,62 @@ namespace RockSniffer
                 {
                     Logger.LogError("Could not start addon service: {0}\r\n{1}", e.Message, e.StackTrace);
                 }
+            }
+        }
+
+        private async void VersionCheck()
+        {
+            try
+            {
+                //GET git api for newest release
+                var request = WebRequest.CreateHttp("https://api.github.com/repos/kokolihapihvi/RockSniffer/releases/latest");
+                request.Accept = "application/vnd.github.v3+json";
+                request.Method = "GET";
+                request.UserAgent = ".NET WebRequest";
+
+                //Get the response
+                using (var response = await request.GetResponseAsync())
+                {
+                    var httpresp = (HttpWebResponse)response;
+
+                    //If status code was 200 OK
+                    if (httpresp.StatusCode == HttpStatusCode.OK)
+                    {
+                        //Read the response
+                        using (var reader = new StreamReader(httpresp.GetResponseStream()))
+                        {
+                            var respstr = await reader.ReadToEndAsync();
+
+                            //Parse response as JSON
+                            var respjson = JObject.Parse(respstr);
+
+                            //Get the newest release tag name, remove v prefix
+                            var newest_release = respjson.Value<string>("tag_name").Substring(1);
+
+                            //Compare to program version
+                            var cversion = new Version(version);
+                            var nversion = new Version(newest_release);
+
+                            switch (cversion.CompareTo(nversion))
+                            {
+                                case -1:
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Logger.Log($"A new version ({newest_release}) of RockSniffer is available");
+                                    Console.ResetColor();
+                                    break;
+                                case 0:
+                                    Logger.Log("RockSniffer is up to date");
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                Logger.LogError("Version check failed");
             }
         }
 
