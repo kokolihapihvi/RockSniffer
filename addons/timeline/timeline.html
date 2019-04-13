@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+		<title>RockSniffer OBS Sequencer</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css"> 
+		<link rel="stylesheet" type="text/css" href="../_deps/jquery-ui.css"> 
+
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script type="text/javascript" src="timeline.js"></script>
+		<link rel="stylesheet" type="text/css" href="timeline.css">
+		<script src="../_deps/sniffer-storage.js"></script>
+		<script src="../_deps/jQuery-3.2.1.js"></script>
+		<script src="../_deps/jQuery-ui.js"></script>
+		<script src="../_deps/jQuery.animateNumber.js"></script>
+		<script src="../_deps/obs-websocket.js"></script>
+		<script src="script.js"></script>
+	</head>
+	<body>
+		<div id="eventDialog">
+			<form id="eventDialog">
+				<fieldset>
+					<label>Event type
+						<select v-model="currentET">
+							<option v-for="et in eventTypes">{{et}}</option>
+						</select>
+					</label>
+					<p></p>
+					<div v-if="currentET != null">
+						<h3>{{curEvent.desc}}</h3>
+						<div v-for="opt,optkey in curEvent.options">
+							<label>{{opt.name}}<br>
+								<select v-model="curOptions[optkey]" v-bind:id="optkey" v-if="opt.type == 'select'">
+									<option v-for="subopt in opt.options(curOptions)">{{subopt}}</option>
+								</select>
+							</label>
+							<p></p>
+						</div>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+		<div id="songDisplay">
+			{{status}}<br>
+			<div v-if="addonData !== null && addonData.songDetails !== null">
+				Current Song:<br>
+				{{addonData.songDetails.songID}}: {{addonData.songDetails.artistName}} - {{addonData.songDetails.songName}}
+			</div>
+			<div v-else>
+				<h3 style="color: red;">No current song</h3>
+			</div>
+		</div>
+		<p></p>
+		<div id="timeline"></div>
+		<p></p>
+		<button onClick="clearTimeline()">Delete sequence</button>
+		<button onClick="saveTimeline()">Save sequence</button>
+		<button onClick="loadTimeline()">Load sequence</button>
+	</body>
+</html>
