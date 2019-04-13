@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using RockSniffer.Addons;
+using RockSniffer.Addons.Storage;
 using RockSniffer.Configuration;
 using RockSnifferLib.Cache;
 using RockSnifferLib.Events;
@@ -21,7 +22,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.1.4";
+        internal const string version = "0.2.0";
 
         internal static ICache cache;
         internal static Config config;
@@ -33,7 +34,7 @@ namespace RockSniffer
         internal static string cachedir = AppDomain.CurrentDomain.BaseDirectory + "cache";
 
         private static AddonService addonService;
-        private Image defaultAlbumCover = new Bitmap(256, 256);
+        private readonly Image defaultAlbumCover = new Bitmap(256, 256);
 
         private RSMemoryReadout memReadout = new RSMemoryReadout();
         private SongDetails details = new SongDetails();
@@ -92,7 +93,7 @@ namespace RockSniffer
             Logger.logSystemHandleQuery = config.debugSettings.debugSystemHandleQuery;
 
             //Initialize cache
-            cache = new FileCache(cachedir);
+            cache = new SQLiteCache();
 
             //Create directories
             Directory.CreateDirectory("output");
@@ -102,7 +103,7 @@ namespace RockSniffer
             {
                 try
                 {
-                    addonService = new AddonService(config.addonSettings.ipAddress, config.addonSettings.port);
+                    addonService = new AddonService(config.addonSettings.ipAddress, config.addonSettings.port, new SQLiteStorage());
                 }
                 catch (SocketException e)
                 {

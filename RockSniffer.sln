@@ -8,9 +8,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RockSnifferLib", "RockSnifferLib\RockSnifferLib.csproj", "{5C132036-7413-432E-B03E-13A1015E3FB8}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -34,8 +31,8 @@ Global
 		{8B784AB7-8D24-4AFC-AA34-4A7299C6A650}.Release|x86.Build.0 = Release|x86
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|x64.Build.0 = Debug|Any CPU
+		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|x64.ActiveCfg = Debug|x64
+		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|x64.Build.0 = Debug|x64
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|x86.Build.0 = Debug|Any CPU
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -50,6 +47,12 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {807E9788-C924-42A6-BAC9-C94DD6EC1FC0}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

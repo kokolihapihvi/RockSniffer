@@ -1,17 +1,16 @@
-﻿using RockSnifferLib.Sniffing;
+﻿using RockSniffer.Addons.Storage;
+using RockSnifferLib.Sniffing;
 using System;
 using System.Net;
-using System.Net.Sockets;
-using System.Threading;
 
 namespace RockSniffer.Addons
 {
     internal class AddonService
     {
         private AddonServiceListener listener;
-        private Thread listenThread;
 
-        public AddonService(string ipStr, int port)
+
+        public AddonService(string ipStr, int port, IAddonStorage storage)
         {
             if (!IPAddress.TryParse(ipStr, out IPAddress ip))
             {
@@ -20,13 +19,7 @@ namespace RockSniffer.Addons
 
             Console.WriteLine("Starting AddonService listener on {0}:{1}", ip.ToString(), port);
 
-            TcpListener l = new TcpListener(ip, port);
-            l.Start();
-
-            listener = new AddonServiceListener(l);
-
-            listenThread = new Thread(new ThreadStart(listener.Listen));
-            listenThread.Start();
+            listener = new AddonServiceListener(ip, port, storage);
         }
 
         public void SetSniffer(Sniffer sniffer)
