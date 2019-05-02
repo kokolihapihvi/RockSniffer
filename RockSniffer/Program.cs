@@ -117,11 +117,6 @@ namespace RockSniffer
                     Logger.LogError("Could not start addon service: {0}\r\n{1}", e.Message, e.StackTrace);
                 }
             }
-
-            if (config.rpcSettings.enabled)
-            {
-                rpcHandler = new DiscordRPCHandler();
-            }
         }
 
         private async void VersionCheck()
@@ -220,9 +215,10 @@ namespace RockSniffer
             sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
 
+            //Add RPC event listeners
             if (config.rpcSettings.enabled)
             {
-                rpcHandler.Listen(sniffer);
+                rpcHandler = new DiscordRPCHandler(sniffer);
             }
 
             //Inform AddonService
@@ -254,6 +250,9 @@ namespace RockSniffer
             //Clean up as best as we can
             rsProcess.Dispose();
             rsProcess = null;
+
+            rpcHandler?.Dispose();
+            rpcHandler = null;
 
             Logger.Log("This is rather unfortunate, the Rocksmith2014 process has vanished :/");
         }
