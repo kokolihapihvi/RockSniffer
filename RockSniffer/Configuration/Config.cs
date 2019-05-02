@@ -26,10 +26,7 @@ namespace RockSniffer.Configuration
         {
             //Create the config directory if it doesn't exist
             Directory.CreateDirectory(cfiledir);
-
-            //Set convert settings to output pretty indented json
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings { Formatting = Formatting.Indented };
-
+            
             //Load settings files
             addonSettings = LoadFile<AddonSettings>(addonFile);
             rpcSettings = LoadFile<RPCSettings>(rpcFile);
@@ -65,11 +62,11 @@ namespace RockSniffer.Configuration
         /// </summary>
         private void Save()
         {
-            File.WriteAllText(cfiledir + addonFile, JsonConvert.SerializeObject(addonSettings));
-            File.WriteAllText(cfiledir + rpcFile, JsonConvert.SerializeObject(rpcSettings));
-            File.WriteAllText(cfiledir + formatFile, JsonConvert.SerializeObject(formatSettings));
-            File.WriteAllText(cfiledir + debugFile, JsonConvert.SerializeObject(debugSettings));
-            File.WriteAllText(cfiledir + outputFile, JsonConvert.SerializeObject(outputSettings));
+            File.WriteAllText(cfiledir + addonFile, JsonConvert.SerializeObject(addonSettings, Formatting.Indented));
+            File.WriteAllText(cfiledir + rpcFile, JsonConvert.SerializeObject(rpcSettings, Formatting.Indented));
+            File.WriteAllText(cfiledir + formatFile, JsonConvert.SerializeObject(formatSettings, Formatting.Indented));
+            File.WriteAllText(cfiledir + debugFile, JsonConvert.SerializeObject(debugSettings, Formatting.Indented));
+            File.WriteAllText(cfiledir + outputFile, JsonConvert.SerializeObject(outputSettings, Formatting.Indented));
         }
     }
 }
