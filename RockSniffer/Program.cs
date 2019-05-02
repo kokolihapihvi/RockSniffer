@@ -2,6 +2,7 @@
 using RockSniffer.Addons;
 using RockSniffer.Addons.Storage;
 using RockSniffer.Configuration;
+using RockSniffer.RPC;
 using RockSnifferLib.Cache;
 using RockSnifferLib.Events;
 using RockSnifferLib.Logging;
@@ -22,7 +23,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.2.0";
+        internal const string version = "0.2.1_PR2";
 
         internal static ICache cache;
         internal static Config config;
@@ -38,6 +39,7 @@ namespace RockSniffer
 
         private RSMemoryReadout memReadout = new RSMemoryReadout();
         private SongDetails details = new SongDetails();
+        private DiscordRPCHandler rpcHandler;
 
         static void Main(string[] args)
         {
@@ -114,6 +116,11 @@ namespace RockSniffer
                 {
                     Logger.LogError("Could not start addon service: {0}\r\n{1}", e.Message, e.StackTrace);
                 }
+            }
+
+            if (config.rpcSettings.enabled)
+            {
+                rpcHandler = new DiscordRPCHandler();
             }
         }
 
@@ -212,6 +219,11 @@ namespace RockSniffer
             //Listen for events
             sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
+
+            if (config.rpcSettings.enabled)
+            {
+                rpcHandler.Listen(sniffer);
+            }
 
             //Inform AddonService
             if (config.addonSettings.enableAddons && addonService != null)
