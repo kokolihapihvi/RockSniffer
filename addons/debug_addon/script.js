@@ -16,42 +16,6 @@ $(function() {
 function refresh() {
 	//JSON query the addon service
 	$.get("http://"+ip+":"+port, function(data) {
-		$("div.data").html(DumpObjectIndented(data));
+		$("div.data").html("<pre>"+JSON.stringify(data, null, 4)+"</pre");
 	});
-}
-
-//based on https://stackoverflow.com/a/130504
-function DumpObjectIndented(obj)
-{
-	var nl = "<br>";
-
-	var oi = "<div class='ind'>";
-	var ci = "</div>";
-
-	var result = oi;
-
-	for (var property in obj) {
-		var value = obj[property];
-
-		if (typeof value == 'string') {
-			value = "'" + value + "'";
-		} else if (typeof value == 'object') {
-			if (value instanceof Array) {
-				// Just let JS convert the Array to a string!
-				value = "[ " + value + " ]";
-			} else if (value === null) {
-				value = "null";
-			} else {
-				// Recursive dump
-				var od = DumpObjectIndented(value);
-
-				value = nl + "{" + nl + od + "}";
-			}
-		}
-		result += "'" + property + "': " + value + "," + nl;
-	}
-
-	result += ci;
-
-	return result;
 }
