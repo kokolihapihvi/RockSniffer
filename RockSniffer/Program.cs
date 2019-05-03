@@ -7,6 +7,7 @@ using RockSnifferLib.Cache;
 using RockSnifferLib.Events;
 using RockSnifferLib.Logging;
 using RockSnifferLib.RSHelpers;
+using RockSnifferLib.RSHelpers.NoteData;
 using RockSnifferLib.Sniffing;
 using RockSnifferLib.SysHelpers;
 using System;
@@ -23,7 +24,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.2.1_PR2";
+        internal const string version = "0.2.1_PR3";
 
         internal static ICache cache;
         internal static Config config;
@@ -324,14 +325,19 @@ namespace RockSniffer
                     }
                 }
 
-                //Replace strings from memory readout
-                outputtext = outputtext.Replace("%SONG_TIMER%", FormatTime(memReadout.songTimer));
-                outputtext = outputtext.Replace("%NOTES_HIT%", memReadout.totalNotesHit.ToString());
-                outputtext = outputtext.Replace("%CURRENT_STREAK%", (memReadout.currentHitStreak - memReadout.currentMissStreak).ToString());
-                outputtext = outputtext.Replace("%HIGHEST_STREAK%", memReadout.highestHitStreak.ToString());
-                outputtext = outputtext.Replace("%NOTES_MISSED%", memReadout.totalNotesMissed.ToString());
-                outputtext = outputtext.Replace("%TOTAL_NOTES%", memReadout.TotalNotes.ToString());
-                outputtext = outputtext.Replace("%CURRENT_ACCURACY%", FormatPercentage((memReadout.totalNotesHit > 0 && memReadout.TotalNotes > 0) ? ((double)memReadout.totalNotesHit / (double)memReadout.TotalNotes) : 0));
+                var nd = memReadout.noteData;
+
+                if(nd != null)
+                {
+                    //Replace strings from memory readout
+                    outputtext = outputtext.Replace("%SONG_TIMER%", FormatTime(memReadout.songTimer));
+                    outputtext = outputtext.Replace("%NOTES_HIT%", nd.TotalNotesHit.ToString());
+                    outputtext = outputtext.Replace("%CURRENT_STREAK%", (nd.CurrentHitStreak - nd.CurrentMissStreak).ToString());
+                    outputtext = outputtext.Replace("%HIGHEST_STREAK%", nd.HighestHitStreak.ToString());
+                    outputtext = outputtext.Replace("%NOTES_MISSED%", nd.TotalNotesMissed.ToString());
+                    outputtext = outputtext.Replace("%TOTAL_NOTES%", nd.TotalNotes.ToString());
+                    outputtext = outputtext.Replace("%CURRENT_ACCURACY%", FormatPercentage(nd.Accuracy));
+                }
 
                 //Write to output
                 WriteTextToFileLocking("output/" + of.filename, outputtext);

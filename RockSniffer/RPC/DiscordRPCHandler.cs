@@ -2,8 +2,10 @@
 using DiscordRPC.Logging;
 using RockSnifferLib.Logging;
 using RockSnifferLib.RSHelpers;
+using RockSnifferLib.RSHelpers.NoteData;
 using RockSnifferLib.Sniffing;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RockSniffer.RPC
@@ -14,6 +16,21 @@ namespace RockSniffer.RPC
         private RSMemoryReadout readout;
         private SnifferState state = SnifferState.NONE;
         private SongDetails songdetails;
+
+        private readonly Dictionary<string, string> gcadeGames = new Dictionary<string, string>()
+        {
+            ["GC_WhaleRider"] = "Gone Wailin'!",
+            ["GC_StringSkipSaloon"] = "String Skip Saloon",
+            ["GC_DucksPlus"] = "Ducks ReDux",
+            ["GC_NinjaSlides"] = "Ninja Slide N",
+            ["GC_ScaleWarriorsMenu"] = "Scale Warriors",
+            ["GC_RailShooterMenu"] = "Return to Chastle Chordead",
+            ["GC_TrackAndField"] = "Hurtlin' Hurdles",
+            ["GC_TempleOfBends"] = "Temple of Bends",
+            ["GC_ScaleRacer"] = "Scale Racer",
+            ["GC_StarChords"] = "Star Chords",
+            ["GC_HarmonicHeist"] = "Harmonic Heist"
+        };
 
         private readonly DateTime appStartTime;
 
@@ -66,15 +83,24 @@ namespace RockSniffer.RPC
                 rp.Timestamps = new Timestamps(DateTime.UtcNow, DateTime.UtcNow.AddSeconds(songdetails.songLength - readout.songTimer));
 
                 //Calculate accuracy
-                float accuracy = 100;
+                float accuracy = readout.noteData.Accuracy;
 
-                if (readout.TotalNotes > 0 && readout.totalNotesHit > 0)
-                {
-                    accuracy = ((float)readout.totalNotesHit / (float)readout.TotalNotes) * 100f;
-                }
+                string accuracyText = FormattableString.Invariant($"{accuracy:F2}%");
 
                 //Set accuracy as text for arrangement icon
-                rp.Assets.SmallImageText = $"{accuracy:F2}%";
+                rp.Assets.SmallImageText = accuracyText;
+
+                if (readout.mode == RSMode.SCOREATTACK)
+                {
+                    var sand = (ScoreAttackNoteData)readout.noteData;
+
+                    rp.Assets.SmallImageText = $"{FormattableString.Invariant($"{sand.CurrentScore:n0}")} x{sand.CurrentMultiplier} | {rp.Assets.SmallImageText}";
+
+                    if (sand.FailedPhrases > 0)
+                    {
+                        rp.Assets.SmallImageText = $"{new string('X', sand.FailedPhrases)} | {rp.Assets.SmallImageText}";
+                    }
+                }
 
                 //When we got the arrangement
                 if (arrangement != null)
@@ -89,14 +115,71 @@ namespace RockSniffer.RPC
                     if (section != null)
                     {
                         //Add section to small image text
-                        rp.Assets.SmallImageText = $"{section.name} | {accuracy:F2}%";
+                        rp.Assets.SmallImageText = $"{section.name} | {rp.Assets.SmallImageText}";
                     }
                 }
             }
             else
             {
-                rp.Details = "Browsing menus";
-                rp.State = readout.gameStage;
+                rp.Details = "Browsing Menus";
+
+                if (readout != null)
+                {
+                    string gameStage = readout.gameStage.ToLowerInvariant().Trim();
+
+                    string state = "";
+
+                    if (gameStage.StartsWith("main"))
+                    {
+                        state = "Main Menu";
+                    }
+                    else if (gameStage.StartsWith("las"))
+                    {
+                        state = "Learn A Song";
+                    }
+                    else if (gameStage.StartsWith("sm"))
+                    {
+                        state = "Session Mode";
+                    }
+                    else if (gameStage.StartsWith("nsp"))
+                    {
+                        state = "Nonstop Play";
+                    }
+                    else if (gameStage.StartsWith("sa"))
+                    {
+                        state = "Score Attack";
+                    }
+                    else if (gameStage.StartsWith("guitarcade") || gameStage.StartsWith("gc_games"))
+                    {
+                        state = "Guitarcade";
+                    }
+                    else if (gameStage.StartsWith("gcade"))
+                    {
+                        rp.Details = "Playing Guitarcade";
+                        state = "";
+
+                        if (gcadeGames.ContainsKey(readout.songID))
+                        {
+                            state = gcadeGames[readout.songID];
+                        }
+                    }
+                    else if (gameStage.StartsWith("ge_"))
+                    {
+                        state = "Lessons";
+                    }
+                    else if (gameStage.StartsWith("mp_"))
+                    {
+                        state = "Multiplayer";
+                    }
+                    else if (gameStage.StartsWith("shop"))
+                    {
+                        state = "Shop";
+                    }
+
+
+                    rp.State = state;
+                }
+
                 rp.Timestamps = new Timestamps(appStartTime);
             }
 
