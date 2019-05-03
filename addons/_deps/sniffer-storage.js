@@ -1,15 +1,26 @@
 class SnifferStorage {
-	constructor(addonID, ip, port) {
+	constructor(addonID, options = {}) {
 		this.addonID = addonID;
-		this.ip = ip;
-		this.port = port;
+
+		if(!this.addonID) {
+			throw "Must define addon id";
+		}
+
+		var defaultOptions = {
+			ip: "127.0.0.1",
+			port: "9938"
+		}
+
+		//Set up options
+		this.options = {}
+		$.extend(this.options, defaultOptions, options);
 	}
 
 	getValue(key) {
 		return $.ajax({
 			method: "GET",
 			dataType: "text",
-			url: "http://"+ip+":"+port+"/storage/"+this.addonID+"/"+key,
+			url: "http://"+this.options.ip+":"+this.options.port+"/storage/"+this.addonID+"/"+key,
 			crossDomain: true
 		});
 	}
@@ -22,7 +33,7 @@ class SnifferStorage {
 		return $.ajax({
 			method: "PUT",
 			crossDomain: true,
-			url: "http://"+ip+":"+port+"/storage/"+this.addonID+"/"+key,
+			url: "http://"+this.options.ip+":"+this.options.port+"/storage/"+this.addonID+"/"+key,
 			data: value
 		});
 	}
