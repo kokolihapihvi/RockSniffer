@@ -1,14 +1,33 @@
-//Addon service ip and port
-var ip = "127.0.0.1";
-var port = 9938;
-
 //OBS websocket details
 var obs_ip = "localhost";
 var obs_port = 4444;
 var obs_password = "who needs a password anyway";
 
-//How often to poll the addon service (in milliseconds)
-var pollrate = 500;
+var songID = "";
+var poller = new SnifferPoller({
+	interval: 500,
+
+	onData: function(data) {
+		songDisplay.addonData = data;
+
+		if(data.memoryReadout !== null) {
+			timeline.setCustomTime(timeToDate(data.memoryReadout.songTimer));
+		}
+
+		if(data.songDetails !== null) {
+			if(data.songDetails.songID != songID) {
+				songID = data.songDetails.songID;
+
+				loadTimeline();
+
+				timeline.getOptions().max = timeToDate(data.songDetails.songLength);
+				timeline.redraw();
+			}
+		}
+
+		evalSequencer();
+	}
+});
 
 var events = {
 	"Scene": {
@@ -130,7 +149,7 @@ $(function() {
 	obs = new OBSWebSocket();
 	obs.connect({address: obs_ip+":"+obs_port, password:obs_password}).then(refreshOBS);
 
-	storage = new SnifferStorage("timeline", ip, port);
+	storage = new SnifferStorage("timeline");
 
 	songDisplay = new Vue({
 		el: "#songDisplay",
@@ -229,50 +248,7 @@ $(function() {
 	timeline.move(0);
 
 	timeline.setCustomTime(timeToDate(0))
-
-	//Set a timer to refresh our data
-	setInterval(refresh, pollrate);
-	refresh();
 });
-
-var songID = "";
-var canPoll = true;
-function refresh() {
-	if(!canPoll) {
-		return;
-	}
-
-	canPoll = false;
-
-	//JSON query the addon service
-	$.getJSON("http://"+ip+":"+port, function(data) {
-		songDisplay.addonData = data;
-
-		if(data.memoryReadout !== null) {
-			timeline.setCustomTime(timeToDate(data.memoryReadout.songTimer));
-		}
-
-		if(data.songDetails !== null) {
-			if(data.songDetails.songID != songID) {
-				songID = data.songDetails.songID;
-
-				loadTimeline();
-
-				timeline.getOptions().max = timeToDate(data.songDetails.songLength);
-				timeline.redraw();
-			}
-		}
-
-		evalSequencer();
-	})
-	.fail(function() {
-		songDisplay.addonData = null;
-		timeline.setCustomTime(timeToDate(0));
-	})
-	.always(function() {
-		canPoll = true;
-	});
-}
 
 var pastEvents = [];
 var currentEvents = [];

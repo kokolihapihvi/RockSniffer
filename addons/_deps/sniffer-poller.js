@@ -47,6 +47,9 @@ class SnifferPoller {
 
 			if(this._prevdata.currentState == STATE_SONG_ENDING && data.currentState == STATE_IN_MENUS) {
 				this.options.onSongEnded(data.songDetails);
+			}
+
+			if(data.currentState == STATE_IN_MENUS) {
 				this.songStarted = false;
 			}
 		}
@@ -79,14 +82,8 @@ class SnifferPoller {
 	}
 
 	getCurrentAccuracy(decimals = 2) {
-		//Calculate percentage (notes hit / notes hit + notes missed)
-		var accuracy = this._prevdata.memoryReadout.totalNotesHit / (this._prevdata.memoryReadout.totalNotesHit + this._prevdata.memoryReadout.totalNotesMissed);
-		accuracy *= 100;
-
-		//If the accuracy is not a number, set it to 100
-		if(isNaN(accuracy)) {
-			accuracy = 100;
-		}
+		//Get accuracy
+		var accuracy = this._prevdata.memoryReadout.noteData.Accuracy;
 
 		//Round to decimals
 		return parseFloat(accuracy.toFixed(decimals));

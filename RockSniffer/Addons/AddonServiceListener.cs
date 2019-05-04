@@ -4,8 +4,6 @@ using RockSnifferLib.Events;
 using RockSnifferLib.RSHelpers;
 using RockSnifferLib.Sniffing;
 using System;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -24,7 +22,6 @@ namespace RockSniffer.Addons
             public SnifferState currentState = SnifferState.NONE;
             public RSMemoryReadout memoryReadout;
             public SongDetails songDetails;
-            public string albumCoverBase64;
 
             public string Version {
                 get {
@@ -60,22 +57,6 @@ namespace RockSniffer.Addons
             songDetails = args.songDetails;
 
             jsResp.songDetails = songDetails;
-
-            try
-            {
-                if (songDetails.albumArt != null)
-                {
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        jsResp.songDetails.albumArt.Save(ms, ImageFormat.Jpeg);
-                        jsResp.albumCoverBase64 = Convert.ToBase64String(ms.ToArray());
-                    }
-                }
-            }
-            catch
-            {
-                //Catch all errors related to album art
-            }
         }
 
         internal void OnMemoryReadout(object sender, OnMemoryReadoutArgs args)

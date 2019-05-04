@@ -7,7 +7,6 @@ using RockSnifferLib.Cache;
 using RockSnifferLib.Events;
 using RockSnifferLib.Logging;
 using RockSnifferLib.RSHelpers;
-using RockSnifferLib.RSHelpers.NoteData;
 using RockSnifferLib.Sniffing;
 using RockSnifferLib.SysHelpers;
 using System;
@@ -24,7 +23,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.2.1_PR3";
+        internal const string version = "0.2.1_PR4";
 
         internal static ICache cache;
         internal static Config config;

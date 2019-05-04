@@ -32,10 +32,10 @@ function refresh() {
 		//If data was successfully gotten
 		if(data.success) {
 			//Get memory readout
-			var ro = data.memoryReadout;
+			var ro = data.memoryReadout.noteData;
 
 			//Get current note streak from readout
-			var streak = ro.currentHitStreak;
+			var streak = ro.CurrentHitStreak;
 
 			//If the previous streak is larger than current streak, the streak must have broken
 			if(prevStreak > streak) {

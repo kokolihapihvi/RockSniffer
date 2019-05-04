@@ -142,14 +142,8 @@ function refresh() {
 			$("h1.song_name").textStroke(details.songName);
 			$("h1.album_name").textStroke(details.albumName + " (" + details.albumYear + ")");
 
-			//Calculate percentage (notes hit / notes hit + notes missed)
-			var accuracy = readout.totalNotesHit / (readout.totalNotesHit + readout.totalNotesMissed);
-			accuracy *= 100;
-
-			//If the accuracy is not a number, set it to 0
-			if(isNaN(accuracy)) {
-				accuracy = 0;
-			}
+			//Get accuracy
+			var accuracy = readout.noteData.Accuracy
 
 			if(animate_percentage) {
 				//Format it and apply it to the element
@@ -176,8 +170,8 @@ function refresh() {
 
 			//Set the album art, which is base64 encoded, HTML can handle that, just append
 			//"data:image/jpeg; base64, " in front to tell HTML how to use the data
-			if(data.albumCoverBase64 != null) {
-				$("img.album_cover").attr("src", "data:image/jpeg;base64, " + data.albumCoverBase64);
+			if(details.albumArt != null) {
+				$("img.album_cover").attr("src", "data:image/jpeg;base64, " + details.albumArt);
 			}
 
 			//If the song timer is over 1 second, we are playing a song, so show the popup
