@@ -1,0 +1,107 @@
+body {
+	font-family: 'Open Sans', sans-serif;
+	font-size: 20px;
+}
+
+div.popup {
+	width: 300px;
+	display: flex;
+	overflow: hidden;
+	background-color: rgba(0,0,0,0.7);
+	color: white;
+	padding: 2px 6px 2px 6px;
+}
+
+div.mainContainer {
+	flex-grow: 1;
+}
+
+div.songTitle {
+	
+}
+
+a {
+	-webkit-text-stroke: 0.2px black;
+}
+
+a.songName {
+	font-size: 26px;
+}
+
+a.artistName {
+	
+}
+
+/* MODE 0 */
+img.albumArt {
+	width: 100%;
+}
+
+div.timer {
+	display: flex;
+	flex-direction: column;
+}
+
+div.timerBar {
+	background-color: black;
+	height: 8px;
+	width: 100%;
+	border: 1px solid lightgrey;
+	position: relative;
+}
+
+div.timerBarSection {
+	height: 8px;
+	position: absolute;
+	background-color: red;
+	top: 0px;
+	opacity: 0.6;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 1px 0 1px;
+}
+
+div.timestamps {
+	display: flex;
+	justify-content: space-between;
+	font-size: 16px;
+}
+
+div.timerBarInner {
+	background-color: white;
+	height: 100%;
+}
+
+/* MODE 1 */
+div.sectionContainer {
+	position: relative;
+	height: 10px;
+}
+
+div.section {
+	height: 10px;
+	position: absolute;
+	top: 0px;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 1px 0 1px;
+}
+
+/* TRANSITIONS */
+.fade-expand-enter-active, .fade-expand-leave-active {
+	transition: all 1s ease;
+}
+.fade-expand-enter, .fade-expand-leave-to {
+	opacity: 0;
+	max-height: 0;
+}
+.fade-expand-leave, .fade-expand-enter-to {
+	max-height: 500px;
+}
+
+.fade-enter-active, .fade-leave-active {
+	transition: opacity 1s ease;
+}
+.fade-enter, .fade-leave-to {
+	opacity: 0;
+}

@@ -28,25 +28,89 @@ class SnifferPoller {
 
 		//Some internal state variables
 		this.songStarted = false;
+
+		this.callbacks = {
+			onData: [],
+			onSongChanged: [],
+			onSongStarted: [],
+			onSongEnded: [],
+			onStateChanged: []
+		}
 	}
+
+	onData(f) {
+		this.callbacks.onData.push(f);
+	}
+	_doOnData(data) {
+		this.options.onData(data);
+
+		for (var i = this.callbacks.onData.length - 1; i >= 0; i--) {
+			this.callbacks.onData[i](data);
+		}
+	}
+
+	onSongChanged(f) {
+		this.callbacks.onSongChanged.push(f);
+	}
+	_doOnSongChanged(song) {
+		this.options.onSongChanged(song);
+
+		for (var i = this.callbacks.onSongChanged.length - 1; i >= 0; i--) {
+			this.callbacks.onSongChanged[i](song);
+		}
+	}
+
+	onSongStarted(f) {
+		this.callbacks.onSongStarted.push(f);
+	}
+	_doOnSongStarted(song) {
+		this.options.onSongStarted(song);
+
+		for (var i = this.callbacks.onSongStarted.length - 1; i >= 0; i--) {
+			this.callbacks.onSongStarted[i](song);
+		}
+	}
+
+	onSongEnded(f) {
+		this.callbacks.onSongEnded.push(f);
+	}
+	_doOnSongEnded(song) {
+		this.options.onSongEnded(song);
+
+		for (var i = this.callbacks.onSongEnded.length - 1; i >= 0; i--) {
+			this.callbacks.onSongEnded[i](song);
+		}
+	}
+
+	onStateChanged(f) {
+		this.callbacks.onStateChanged.push(f);
+	}
+	_doOnStateChanged(oldState, newState) {
+		this.options.onStateChanged(oldState, newState);
+
+		for (var i = this.callbacks.onStateChanged.length - 1; i >= 0; i--) {
+			this.callbacks.onStateChanged[i](oldState, newState);
+		}
+	}
+
 
 	gotData(data) {
 		//If we have no previous data, fire all events
 		if(!this._prevdata) {
-			this.options.onStateChanged(STATE_NONE, data.currentState);
-			this.options.onSongChanged(data.songDetails);
+			this._doOnStateChanged(STATE_NONE, data.currentState);
+			this._doOnSongChanged(data.songDetails);
 
 			this._prevdata = data;
-			this.options.onData(data);
+			this._doOnData(data);
 
 			return;
 		}
 
 		if(this._prevdata.currentState != data.currentState) {
-			this.options.onStateChanged(this._prevdata.currentState, data.currentState);
+			this._doOnStateChanged(this._prevdata.currentState, data.currentState);
 
 			if(this._prevdata.currentState == STATE_SONG_ENDING && data.currentState == STATE_IN_MENUS) {
-				this.options.onSongEnded(data.songDetails);
+				this._doOnSongEnded(data.songDetails);
 			}
 
 			if(data.currentState == STATE_IN_MENUS) {
@@ -55,22 +119,30 @@ class SnifferPoller {
 		}
 
 		if(this._prevdata.songDetails && data.songDetails && this._prevdata.songDetails.songID != data.songDetails.songID) {
-			this.options.onSongChanged(data.songDetails);
+			this._doOnSongChanged(data.songDetails);
 		}
 
 		//Don't fire song started before we have a valid arrangement
 		if(!this.songStarted) {
 			if(data.currentState == STATE_SONG_STARTING || data.currentState == STATE_SONG_PLAYING) {
 				if(this.getCurrentArrangement() != null) {
-					this.options.onSongStarted(data.songDetails);
 					this.songStarted = true;
+					this._doOnSongStarted(data.songDetails);
 				}
 			}
 		}
 
 
 		this._prevdata = data;
-		this.options.onData(data);
+		this._doOnData(data);
+	}
+
+	getCurrentReadout() {
+		return this._prevdata.memoryReadout;
+	}
+
+	getCurrentSong() {
+		return this._prevdata.songDetails;
 	}
 
 	getCurrentState() {
@@ -105,32 +177,33 @@ class SnifferPoller {
 		for (var i = this._prevdata.songDetails.arrangements.length - 1; i >= 0; i--) {
 			var arrangement = this._prevdata.songDetails.arrangements[i];
 
-		 	if(arrangement.arrangementID == this._prevdata.memoryReadout.arrangementID) {
-		 		return arrangement;
-		 	}
-		 }
+			if(arrangement.arrangementID == this._prevdata.memoryReadout.arrangementID) {
+				return arrangement;
+			}
+		}
 	}
 
 	getCurrentSection() {
+		return this.getSectionAt(this.getSongTimer());
+	}
+
+	getSectionAt(time) {
 		var arrangement = this.getCurrentArrangement();
 
 		if(!arrangement) {
 			return null;
 		}
 
-		for (var i = 0; i < arrangement.sections.length; i++) {
+		for (var i = arrangement.sections.length-1; i >= 0; i--) {
 			var section = arrangement.sections[i];
+			section.index = i;
 
-			if(this.getSongTimer() > section.startTime) {
+			if(time > section.startTime) {
 				return section;
 			}
 		}
 
-		return {
-			startTime: 0,
-			endTime: 0,
-			name: "unknown"
-		};
+		return arrangement.sections[0];
 	}
 
 	poll() {

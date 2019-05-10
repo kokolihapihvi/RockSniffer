@@ -7,6 +7,7 @@ using RockSnifferLib.Cache;
 using RockSnifferLib.Events;
 using RockSnifferLib.Logging;
 using RockSnifferLib.RSHelpers;
+using RockSnifferLib.RSHelpers.NoteData;
 using RockSnifferLib.Sniffing;
 using RockSnifferLib.SysHelpers;
 using System;
@@ -23,16 +24,14 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.2.1_PR4";
+        internal const string version = "0.2.1_PR5";
 
         internal static ICache cache;
         internal static Config config;
 
         internal static Process rsProcess;
 
-        public static Random random = new Random();
-
-        internal static string cachedir = AppDomain.CurrentDomain.BaseDirectory + "cache";
+        private static Random random = new Random();
 
         private static AddonService addonService;
         private readonly Image defaultAlbumCover = new Bitmap(256, 256);
@@ -239,7 +238,7 @@ namespace RockSniffer
                 //GOTTA GO FAST
                 Thread.Sleep(1000);
 
-                if (random.Next(0, 100) > 99)
+                if (random.Next(100) == 0)
                 {
                     Console.WriteLine("*sniff sniff*");
                 }
@@ -285,7 +284,7 @@ namespace RockSniffer
 
         public static string FormatPercentage(double frac)
         {
-            return string.Format(config.formatSettings.percentageFormat, frac * 100d);
+            return string.Format(config.formatSettings.percentageFormat, frac);
         }
 
         private void OutputDetails()
@@ -324,19 +323,16 @@ namespace RockSniffer
                     }
                 }
 
-                var nd = memReadout.noteData;
+                var nd = memReadout.noteData ?? new LearnASongNoteData();
 
-                if(nd != null)
-                {
-                    //Replace strings from memory readout
-                    outputtext = outputtext.Replace("%SONG_TIMER%", FormatTime(memReadout.songTimer));
-                    outputtext = outputtext.Replace("%NOTES_HIT%", nd.TotalNotesHit.ToString());
-                    outputtext = outputtext.Replace("%CURRENT_STREAK%", (nd.CurrentHitStreak - nd.CurrentMissStreak).ToString());
-                    outputtext = outputtext.Replace("%HIGHEST_STREAK%", nd.HighestHitStreak.ToString());
-                    outputtext = outputtext.Replace("%NOTES_MISSED%", nd.TotalNotesMissed.ToString());
-                    outputtext = outputtext.Replace("%TOTAL_NOTES%", nd.TotalNotes.ToString());
-                    outputtext = outputtext.Replace("%CURRENT_ACCURACY%", FormatPercentage(nd.Accuracy));
-                }
+                //Replace strings from memory readout
+                outputtext = outputtext.Replace("%SONG_TIMER%", FormatTime(memReadout.songTimer));
+                outputtext = outputtext.Replace("%NOTES_HIT%", nd.TotalNotesHit.ToString());
+                outputtext = outputtext.Replace("%CURRENT_STREAK%", (nd.CurrentHitStreak - nd.CurrentMissStreak).ToString());
+                outputtext = outputtext.Replace("%HIGHEST_STREAK%", nd.HighestHitStreak.ToString());
+                outputtext = outputtext.Replace("%NOTES_MISSED%", nd.TotalNotesMissed.ToString());
+                outputtext = outputtext.Replace("%TOTAL_NOTES%", nd.TotalNotes.ToString());
+                outputtext = outputtext.Replace("%CURRENT_ACCURACY%", FormatPercentage(nd.Accuracy));
 
                 //Write to output
                 WriteTextToFileLocking("output/" + of.filename, outputtext);

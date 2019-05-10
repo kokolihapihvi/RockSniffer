@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+		<title>RockSniffer Current Song Display</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css"> 
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+		<script src="../_deps/jquery-3.2.1.js"></script>
+		<script src="../_deps/vue.js"></script>
+		<script src="../_deps/sniffer-storage.js"></script>
+		<script src="../_deps/sniffer-poller.js"></script>
+		<script src="../_deps/playthrough-tracker.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			<transition name="fade" mode="out-in">
+				<div id="popup" class="popup" v-show="visible">
+					<div class="mainContainer" v-if="song != null">
+						<transition mode="out-in" name="fade-expand">
+							<div v-if="mode == 0" :key="'mode0'">
+								<div class="songTitle">
+									<a class="songName">{{song.songName}}</a><br>
+									<a class="artistName">{{song.artistName}}</a>
+								</div>
+								<img class="albumArt" v-bind:src="'data:image/jpeg;base64,'+song.albumArt">
+								<div class="timer">
+									<div class="timerBar">
+										<div class="timerBarSection" v-bind:style="section.style" v-bind:key="index" v-for="(section,index) in sections">
+											
+										</div>
+										<div class="timerBarInner" v-bind:style="{width: songProgress+'%'}"></div>
+									</div>
+									<div class="timestamps">
+										<a class="timestamp">{{songTimer}}</a>
+										<a class="accuracy">{{notes.Accuracy.toFixed(2)}}%</a>
+										<a class="timestamp">{{songLength}}</a>
+									</div>
+								</div>
+							</div>
+							<div v-if="mode == 1" :key="'mode1'">
+								<div class="songTitle">
+									<a class="songName">{{prevSong.songName}}</a><br>
+									<a class="artistName">{{prevSong.artistName}}</a>
+								</div>
+								<a>{{prevNotes.Accuracy.toFixed(2)}}% ({{prevArrangement.type}})</a>
+								<div class="sectionContainer">
+									<div class="section" v-bind:style="section.style" v-bind:key="index" v-for="(section,index) in prevSections"></div>
+								</div>
+								<div v-if="hasPreviousBest()">
+									<a>{{Math.abs(trackerScore().RelativeAccuracy.toFixed(2))}}% {{(trackerScore().RelativeAccuracy >= 0 ? "better" : "worse")}} than previous best</a>
+									<div class="feedback">
+										<div>{{(trackerScore().RelativeAccuracy >= 0 ? "also" : "...but")}}</div>
+										<transition mode="out-in" name="fade">
+											<div :key="feedbackIdx">
+												{{feedback[feedbackIdx]}}
+											</div>
+										</transition>
+									</div>
+								</div>
+							</div>
+						</transition>
+					</div>
+				</div>
+			</transition>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
+</html>
