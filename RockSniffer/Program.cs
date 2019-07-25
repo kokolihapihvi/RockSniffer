@@ -122,6 +122,9 @@ namespace RockSniffer
         {
             try
             {
+                //Use TLS
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+
                 //GET git api for newest release
                 var request = WebRequest.CreateHttp("https://api.github.com/repos/kokolihapihvi/RockSniffer/releases/latest");
                 request.Accept = "application/vnd.github.v3+json";
