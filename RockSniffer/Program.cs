@@ -9,7 +9,6 @@ using RockSnifferLib.Logging;
 using RockSnifferLib.RSHelpers;
 using RockSnifferLib.RSHelpers.NoteData;
 using RockSnifferLib.Sniffing;
-using RockSnifferLib.SysHelpers;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -24,14 +23,16 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.3.0";
+        internal const string version = "0.3.1_PR2";
 
         internal static ICache cache;
         internal static Config config;
 
         internal static Process rsProcess;
 
-        private static Random random = new Random();
+        private static readonly Random random = new Random();
+
+        private static readonly bool Is64Bits = (IntPtr.Size == 8);
 
         private static AddonService addonService;
         private readonly Image defaultAlbumCover = new Bitmap(256, 256);
@@ -65,7 +66,7 @@ namespace RockSniffer
         {
             //Set title and print version
             Console.Title = string.Format("RockSniffer {0}", version);
-            Logger.Log("RockSniffer {0} ({1}bits)", version, CustomAPI.Is64Bits() ? "64" : "32");
+            Logger.Log("RockSniffer {0} ({1}bits)", version, Is64Bits ? "64" : "32");
 
             //Initialize and load configuration
             config = new Config();
@@ -171,9 +172,13 @@ namespace RockSniffer
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
                 Logger.LogError("Version check failed");
+
+#if DEBUG
+                Logger.LogException(e);
+#endif
             }
         }
 
@@ -211,7 +216,7 @@ namespace RockSniffer
             Logger.Log("Rocksmith found! Sniffing...");
 
             //Initialize file handle reader and memory reader
-            Sniffer sniffer = new Sniffer(rsProcess, cache);
+            Sniffer sniffer = new Sniffer(rsProcess, cache, config.snifferSettings);
 
             //Listen for events
             sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;

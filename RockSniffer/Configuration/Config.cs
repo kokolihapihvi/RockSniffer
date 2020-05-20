@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RockSnifferLib.Configuration;
 using System;
 using System.IO;
 
@@ -8,12 +9,14 @@ namespace RockSniffer.Configuration
     {
         private static readonly string cfiledir = "." + Path.DirectorySeparatorChar + "config" + Path.DirectorySeparatorChar;
         private const string addonFile = "addons.json";
+        private const string snifferFile = "sniffer.json";
         private const string rpcFile = "rpc.json";
         private const string formatFile = "format.json";
         private const string debugFile = "debug.json";
         private const string outputFile = "output.json";
 
         public AddonSettings addonSettings;
+        public SnifferSettings snifferSettings;
         public RPCSettings rpcSettings;
         public FormatSettings formatSettings;
         public DebugSettings debugSettings;
@@ -26,9 +29,10 @@ namespace RockSniffer.Configuration
         {
             //Create the config directory if it doesn't exist
             Directory.CreateDirectory(cfiledir);
-            
+
             //Load settings files
             addonSettings = LoadFile<AddonSettings>(addonFile);
+            snifferSettings = LoadFile<SnifferSettings>(snifferFile);
             rpcSettings = LoadFile<RPCSettings>(rpcFile);
             formatSettings = LoadFile<FormatSettings>(formatFile);
             debugSettings = LoadFile<DebugSettings>(debugFile);
@@ -48,7 +52,7 @@ namespace RockSniffer.Configuration
         /// <returns></returns>
         private T LoadFile<T>(string file) where T : new()
         {
-            if(File.Exists(cfiledir + file))
+            if (File.Exists(cfiledir + file))
             {
                 string str = File.ReadAllText(cfiledir + file);
                 return JsonConvert.DeserializeObject<T>(str);
@@ -63,6 +67,7 @@ namespace RockSniffer.Configuration
         private void Save()
         {
             File.WriteAllText(cfiledir + addonFile, JsonConvert.SerializeObject(addonSettings, Formatting.Indented));
+            File.WriteAllText(cfiledir + snifferFile, JsonConvert.SerializeObject(snifferSettings, Formatting.Indented));
             File.WriteAllText(cfiledir + rpcFile, JsonConvert.SerializeObject(rpcSettings, Formatting.Indented));
             File.WriteAllText(cfiledir + formatFile, JsonConvert.SerializeObject(formatSettings, Formatting.Indented));
             File.WriteAllText(cfiledir + debugFile, JsonConvert.SerializeObject(debugSettings, Formatting.Indented));
