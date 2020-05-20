@@ -1,0 +1,14 @@
+/* This applies to all the text */
+body {
+	font-family: arial;
+}
+
+/* This applies to the information text */
+h1 {
+	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	font-size: 5vw;
+	color: black;
+	padding: 0;
+	margin: 0;
+	text-align: center;
+}
