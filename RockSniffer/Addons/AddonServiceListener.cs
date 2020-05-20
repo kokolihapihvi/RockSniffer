@@ -227,7 +227,11 @@ namespace RockSniffer.Addons
             s.Send(fileBytes);
         }
 
+#if DEBUG
         private static readonly string addonsPath = "../../../../addons";
+#else
+        private static readonly string addonsPath = "./addons";
+#endif
 
         /// <summary>
         /// This should be ok since we are only serving over localhost or a local area network
@@ -239,61 +243,71 @@ namespace RockSniffer.Addons
         {
             string path = Path.Combine(addonsPath, url.Replace("GET /addons/", ""));
 
-            //Serve file
-            if (Path.HasExtension(path))
+            try
             {
-                Logger.Log("[AddonService] Serving {0}", path);
 
-                if (!File.Exists(path))
+                //Serve file
+                if (Path.HasExtension(path))
                 {
-                    Logger.LogError("[AddonService] File does not exist");
-                    RespondError(s, 404, "File Not Found");
-                    return;
+                    Logger.Log("[AddonService] Serving {0}", path);
+
+                    if (!File.Exists(path))
+                    {
+                        Logger.LogError("[AddonService] File does not exist");
+                        RespondError(s, 404, "File Not Found");
+                        return;
+                    }
+
+                    string contentType = "text/plain";
+
+                    switch (Path.GetExtension(path))
+                    {
+                        case ".htm":
+                        case ".html":
+                            contentType = "text/html";
+                            break;
+                        case ".css":
+                            contentType = "text/css";
+                            break;
+                        case ".js":
+                            contentType = "text/javascript";
+                            break;
+                    }
+
+                    RespondFile(s, path, contentType);
                 }
-
-                string contentType = "text/plain";
-
-                switch (Path.GetExtension(path))
+                else //Serve addon index
                 {
-                    case ".htm":
-                    case ".html":
-                        contentType = "text/html";
-                        break;
-                    case ".css":
-                        contentType = "text/css";
-                        break;
-                    case ".js":
-                        contentType = "text/javascript";
-                        break;
-                }
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append("<html><head><title>Rocksniffer Addon Index</title></head><body>");
 
-                RespondFile(s, path, contentType);
+                    sb.Append("<h1>Available Addons:</h1>");
+
+                    sb.Append("<ul>");
+
+                    foreach (string dir in Directory.GetDirectories(addonsPath))
+                    {
+                        string addon = Path.GetFileName(dir);
+
+                        //Skip the deps folder
+                        if (addon.Equals("_deps")) continue;
+
+                        sb.Append($"<li><a href='/addons/{addon}/{addon}.html'>{Path.GetFileName(dir)}</a></li>");
+                    }
+
+                    sb.Append("</ul>");
+
+
+                    sb.Append("</body></html>");
+
+                    RespondText(s, sb.ToString(), "text/html");
+                }
             }
-            else //Serve addon index
+            catch (Exception e)
             {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("<html><head><title>Rocksniffer Addon Index</title></head><body>");
-
-                sb.Append("<h1>Available Addons:</h1>");
-
-                sb.Append("<ul>");
-
-                foreach (string dir in Directory.GetDirectories(addonsPath))
-                {
-                    string addon = Path.GetFileName(dir);
-
-                    //Skip the deps folder
-                    if (addon.Equals("_deps")) continue;
-
-                    sb.Append($"<li><a href='/addons/{addon}/{addon}.html'>{Path.GetFileName(dir)}</a></li>");
-                }
-
-                sb.Append("</ul>");
-
-
-                sb.Append("</body></html>");
-
-                RespondText(s, sb.ToString(), "text/html");
+                RespondError(s, 500, "Unable to serve addons, see console for details");
+                Logger.LogError("Unable to serve {0}", url);
+                Logger.LogException(e);
             }
         }
     }
