@@ -104,7 +104,7 @@ namespace RockSniffer
             {
                 try
                 {
-                    addonService = new AddonService(config.addonSettings.ipAddress, config.addonSettings.port, new SQLiteStorage());
+                    addonService = new AddonService(config.addonSettings, new SQLiteStorage());
                 }
                 catch (SocketException e)
                 {

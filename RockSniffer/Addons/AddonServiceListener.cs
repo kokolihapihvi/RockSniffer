@@ -1,9 +1,12 @@
 ﻿using Newtonsoft.Json;
 using RockSniffer.Addons.Storage;
+using RockSniffer.Configuration;
 using RockSnifferLib.Events;
+using RockSnifferLib.Logging;
 using RockSnifferLib.RSHelpers;
 using RockSnifferLib.Sniffing;
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -23,8 +26,10 @@ namespace RockSniffer.Addons
             public RSMemoryReadout memoryReadout;
             public SongDetails songDetails;
 
-            public string Version {
-                get {
+            public string Version
+            {
+                get
+                {
                     return Program.version;
                 }
             }
@@ -39,13 +44,15 @@ namespace RockSniffer.Addons
 
         //Cache the response
         private JsonResponse jsResp = new JsonResponse();
+        private readonly AddonSettings settings;
         private readonly IAddonStorage storage;
 
-        public AddonServiceListener(IPAddress ip, int port, IAddonStorage storage)
+        public AddonServiceListener(IPAddress ip, AddonSettings settings, IAddonStorage storage)
         {
+            this.settings = settings;
             this.storage = storage;
 
-            tcpListener = new TcpListener(ip, port);
+            tcpListener = new TcpListener(ip, settings.port);
             tcpListener.Start();
 
             listenThread = new Thread(new ThreadStart(Listen));
@@ -101,11 +108,16 @@ namespace RockSniffer.Addons
                 //Sleep for 10ms
                 Thread.Sleep(10);
 
-                s.Receive(buffer);
+                int received = s.Receive(buffer);
 
                 request += Encoding.UTF8.GetString(buffer.TakeWhile(x => x > 0).ToArray());
 
                 Array.Clear(buffer, 0, buffer.Length);
+
+                if (received == 0)
+                {
+                    break;
+                }
             }
 
             return request;
@@ -125,22 +137,11 @@ namespace RockSniffer.Addons
 
         private void ServeClient(Socket s)
         {
-            byte[] resp;
-
-            string content = "";
-
             string request = GetRequest(s);
 
-            if(request.Length <= 0)
+            if (request.Length <= 0)
             {
-                resp = Encoding.UTF8.GetBytes($"HTTP/1.1 500 Internal Server Error\r\nContent-Length: {Encoding.UTF8.GetByteCount(content)}\r\nContent-Type: text/json\r\nAccess-Control-Allow-Methods: *\r\nAccess-Control-Allow-Origin: *\r\n\r\n{ content }\r\n");
-
-                using (var context = new SocketAsyncEventArgs())
-                {
-                    context.SetBuffer(resp, 0, resp.Length);
-
-                    s.SendAsync(context);
-                }
+                RespondError(s);
 
                 return;
             }
@@ -149,7 +150,7 @@ namespace RockSniffer.Addons
 
             if (url.StartsWith("OPTIONS"))
             {
-                content = "";
+                //Empty response
             }
             else if (url.StartsWith("GET /storage/"))
             {
@@ -158,7 +159,7 @@ namespace RockSniffer.Addons
                 string addonid = parts[1];
                 string key = parts[2];
 
-                content = storage.GetValue(addonid, key) ?? "null";
+                RespondText(s, storage.GetValue(addonid, key) ?? "null", "text/json");
             }
             else if (url.StartsWith("PUT /storage/"))
             {
@@ -171,20 +172,128 @@ namespace RockSniffer.Addons
 
                 storage.SetValue(addonid, key, value);
 
-                content = "";
+                //Empty response
+            }
+            else if (url.StartsWith("GET /addons"))
+            {
+                if (settings.serveAddons)
+                {
+                    TryServeAddons(s, url);
+                }
+                else
+                {
+                    RespondError(s, 500, "Addon serving is disabled in config/addons.json");
+                }
             }
             else
             {
-                content = JsonConvert.SerializeObject(jsResp);
+                RespondText(s, JsonConvert.SerializeObject(jsResp), "text/json");
             }
 
-            resp = Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nContent-Length: {Encoding.UTF8.GetByteCount(content)}\r\nContent-Type: text/json\r\nAccess-Control-Allow-Methods: *\r\nAccess-Control-Allow-Origin: *\r\n\r\n{ content }\r\n");
+            s.Close();
+        }
+
+        private void RespondError(Socket s, int errorCode = 500, string message = "Internal Server Error")
+        {
+            byte[] resp = Encoding.UTF8.GetBytes($"HTTP/1.1 {errorCode} {message}\r\nContent-Length: {Encoding.UTF8.GetByteCount(message)}\r\nContent-Type: text/html\r\nAccess-Control-Allow-Methods: *\r\nAccess-Control-Allow-Origin: *\r\n\r\n{message}\r\n");
 
             using (var context = new SocketAsyncEventArgs())
             {
                 context.SetBuffer(resp, 0, resp.Length);
 
                 s.SendAsync(context);
+            }
+        }
+
+        private void RespondText(Socket s, string text, string contentType)
+        {
+            byte[] resp = Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nContent-Length: {Encoding.UTF8.GetByteCount(text)}\r\nContent-Type: {contentType}\r\nAccess-Control-Allow-Methods: *\r\nAccess-Control-Allow-Origin: *\r\n\r\n{ text }\r\n");
+
+            using (var context = new SocketAsyncEventArgs())
+            {
+                context.SetBuffer(resp, 0, resp.Length);
+
+                s.SendAsync(context);
+            }
+        }
+
+        private void RespondFile(Socket s, string filename, string contentType)
+        {
+            byte[] fileBytes = File.ReadAllBytes(filename);
+
+            byte[] header = Encoding.UTF8.GetBytes($"HTTP/1.1 200 OK\r\nContent-Length: {fileBytes.Length}\r\nContent-Type: {contentType}\r\nAccess-Control-Allow-Methods: *\r\nAccess-Control-Allow-Origin: *\r\n\r\n");
+
+            s.Send(header);
+            s.Send(fileBytes);
+        }
+
+        private static readonly string addonsPath = "../../../../addons";
+
+        /// <summary>
+        /// This should be ok since we are only serving over localhost or a local area network
+        /// Don't look at me like that :/
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="content"></param>
+        private void TryServeAddons(Socket s, string url)
+        {
+            string path = Path.Combine(addonsPath, url.Replace("GET /addons/", ""));
+
+            //Serve file
+            if (Path.HasExtension(path))
+            {
+                Logger.Log("[AddonService] Serving {0}", path);
+
+                if (!File.Exists(path))
+                {
+                    Logger.LogError("[AddonService] File does not exist");
+                    RespondError(s, 404, "File Not Found");
+                    return;
+                }
+
+                string contentType = "text/plain";
+
+                switch (Path.GetExtension(path))
+                {
+                    case ".htm":
+                    case ".html":
+                        contentType = "text/html";
+                        break;
+                    case ".css":
+                        contentType = "text/css";
+                        break;
+                    case ".js":
+                        contentType = "text/javascript";
+                        break;
+                }
+
+                RespondFile(s, path, contentType);
+            }
+            else //Serve addon index
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("<html><head><title>Rocksniffer Addon Index</title></head><body>");
+
+                sb.Append("<h1>Available Addons:</h1>");
+
+                sb.Append("<ul>");
+
+                foreach (string dir in Directory.GetDirectories(addonsPath))
+                {
+                    string addon = Path.GetFileName(dir);
+
+                    //Skip the deps folder
+                    if (addon.Equals("_deps")) continue;
+
+                    sb.Append($"<li><a href='/addons/{addon}/{addon}.html'>{Path.GetFileName(dir)}</a></li>");
+                }
+
+                sb.Append("</ul>");
+
+
+                sb.Append("</body></html>");
+
+                RespondText(s, sb.ToString(), "text/html");
             }
         }
     }

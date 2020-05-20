@@ -9,5 +9,7 @@ namespace RockSniffer.Configuration
         public bool enableAddons = true;
         public string ipAddress = "127.0.0.1";
         public int port = 9938;
+        public string _NOTE2 = "Serving addons through the local web server might be unsafe!";
+        public bool serveAddons = false;
     }
 }
