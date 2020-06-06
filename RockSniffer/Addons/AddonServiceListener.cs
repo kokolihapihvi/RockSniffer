@@ -151,6 +151,7 @@ namespace RockSniffer.Addons
             if (url.StartsWith("OPTIONS"))
             {
                 //Empty response
+                RespondText(s, "", "text/html");
             }
             else if (url.StartsWith("GET /storage/"))
             {
@@ -173,6 +174,7 @@ namespace RockSniffer.Addons
                 storage.SetValue(addonid, key, value);
 
                 //Empty response
+                RespondText(s, "", "text/html");
             }
             else if (url.StartsWith("GET /addons"))
             {
