@@ -1,5 +1,4 @@
 var widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth; //Get width of UI
-var defaultPath = "Bass"; //Set default path for arrangement/section search
 
 //create dictionary for translating phrase grades into color 
 var gradeCode = {
