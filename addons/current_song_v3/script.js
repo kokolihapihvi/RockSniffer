@@ -1,5 +1,7 @@
-var widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth;
-var defaultPath = "Bass";
+var widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth; //Get width of UI
+var defaultPath = "Bass"; //Set default path for arrangement/section search
+
+//create dictionary for translating phrase grades into color 
 var gradeCode = {
 	NaN : 'white',
 	'error' : 'white',
@@ -10,6 +12,8 @@ var gradeCode = {
 	'Good' : 'gold',
 	'Perfect' : 'lime'
 }
+
+//Create function for translating phrase accuracy into color
 function accuracyGradient(accuracy){
 	if (accuracy == "Rest"){return "grey"}
 	if (accuracy < 50){return "rgb(255, 0, 0)"}
@@ -18,6 +22,7 @@ function accuracyGradient(accuracy){
 	return "rgb("+red+","+green+", 0)";
 };
 
+//Edit poller functions
 var poller = new SnifferPoller({
 	interval: 100,
 
@@ -42,10 +47,14 @@ var poller = new SnifferPoller({
 	}
 });
 
+//Get tracker functions
 var tracker = new PlaythroughTracker(poller);
 
+
+//Create app
 var app = new Vue({
 	el: "#app",
+	//create variable for data storage
 	data: {
 		visible: true,
 		mode: 0,
@@ -55,10 +64,16 @@ var app = new Vue({
 		feedbackIdx: 0,
         songInfoTransform: "translateX(0px)"
 	},
+	
+	//set interval for song scroll
     mounted: function() {
         setInterval(this.doScrollSong, 4000);
     },
+	
+	//Create functions for UI
 	methods: {
+		
+		//Scroll song if larger than UI
         doScrollSong: function() {
 			if(this.song == null){
 				var width = 0;
@@ -71,20 +86,30 @@ var app = new Vue({
                 this.songInfoTransform = "translateX(0px)";
             }
         },
+		
+		//If multiple feedback, cycle
 		cycleFeedback: function() {
 			if(this.mode == 1) {
 				setTimeout(() => this.cycleFeedback(), 5000);
 				this.feedbackIdx = (this.feedbackIdx+1) % this.feedback.length;
 			}
 		},
+		
+		//return previous best if available
 		hasPreviousBest: function() {
 			return tracker.hasPreviousBest();
 		},
+		
+		//Return trackerScore
 		trackerScore: function() {
 			return tracker.getFinal();
 		}
 	},
+	
+	//Grab variables for UI
 	computed: {
+		
+		//Get song details
 		song: function() {
 			if(!this.snifferData) {
 				return null;
@@ -92,6 +117,8 @@ var app = new Vue({
 
 			return this.snifferData.songDetails;
 		},	
+		
+		//Get current readout
 		readout: function() {
 			if(!this.snifferData) {
 				return null;
@@ -99,6 +126,8 @@ var app = new Vue({
 
 			return this.snifferData.memoryReadout;
 		},
+		
+		//Get note data
 		notes: function() {
 			if(!this.snifferData) {
 				return null;
@@ -106,22 +135,32 @@ var app = new Vue({
 
 			return this.readout.noteData;
 		},
+		
+		//Get song length
 		songLength: function() {
 			return formatTimer(this.song.songLength);
 		},
+		
+		//Get song timer
 		songTimer: function() {
 			return formatTimer(this.readout.songTimer);
 		},
+		
+		//Get song Progress in %
 		songProgress: function() {
 			if (this.readout.songTimer == 0){return 0;}
 			return (this.readout.songTimer / this.song.songLength) * 100;
 		},
+		
+		//get Phrase Start Time
 		phraseStartTime: function() {
 			if (this.readout.songTimer == 0){return 0;}
 			var currentPhrase = poller.getCurrentPhrase();
 			if(currentPhrase.index == 0){return 0;}
 			return (currentPhrase.startTime / this.song.songLength) * 100;
 		},
+		
+		//Calculate phrase height from difficulty
 		phraseHeight: function() {
 			if (this.readout.songTimer == 0){return 0;}
 			var phraseHeight = 1;
@@ -132,10 +171,13 @@ var app = new Vue({
 			}
 			return phraseHeight*100;
 		},		
+		
+		//Get current arrangement
 		arrangement: function() {
 			if(this.song == null) {return null;}
 			if(this.song.arrangements == null) {return null;}
 			
+			//Cycle through list of arrangemwnts for matching ID
 			for (var i = this.song.arrangements.length - 1; i >= 0; i--) {
 				var arrangement = this.song.arrangements[i];
 
@@ -144,10 +186,9 @@ var app = new Vue({
 				}
 			}
 			
+			//If no ID found, vall back on previous Path first then defaultPath
 			for (var i = this.song.arrangements.length - 1; i >= 0; i--) {
 				var arrangement = this.song.arrangements[i];
-				
-				//rearrange for readability- default should be the else statement
 				if(this.prevPath == null && arrangement.name == defaultPath && arrangement.type == defaultPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
 					return arrangement;
 				} else if (arrangement.name == this.prevPath && arrangement.type == this.prevPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
@@ -157,10 +198,14 @@ var app = new Vue({
 			}	
 			return null;
 		},
+		
+		//Get tuning name
         tuningName: function() {
             if(this.arrangement == null) {return null;}
 			return this.arrangement.tuning.TuningName;		
         },
+		
+		//Create and draw sections
 		sections: function() {
 			var arrangement = this.arrangement;
 
@@ -170,6 +215,7 @@ var app = new Vue({
 
 			var songLength = this.song.songLength;
 			
+			//Cycle through all sections and draw
 			for (var i = 0; i < sections.length; i++) {
 				var section = sections[i];
 
@@ -192,10 +238,12 @@ var app = new Vue({
 					width: (section.lengthPercent-(100/(widthUI)))+'%',
 				}
 				
+				//If currently playing, color royal-blue as in game
 				if(this.readout.songTimer > section.startTime & this.readout.songTimer <= section.endTime){
 					section.style.backgroundColor = "royalblue";
 				}
 				
+				//If has previous best, color based on that. If not, then color using accuracy gradient
 				if (this.readout.songTimer > section.endTime | this.readout.gameStage == "panel_bib" | this.readout.gameStage == "sa_songreview" | this.readout.gameStage == "las_songreview"){
 					if(tracker.hasPreviousBest() & tracker.getSectionAccuracy((section.startTime + section.endTime)/2) != 'Rest') {
 						section.style.backgroundColor = (tracker.isBetterRelative((section.startTime + section.endTime)/2) ? "lime" : "red");
@@ -209,6 +257,8 @@ var app = new Vue({
 
 			return sections;
 		},
+		
+		//Create and draw phrase iterations
 		phraseIterations: function() {
 			var arrangement = this.arrangement;
 
@@ -220,6 +270,7 @@ var app = new Vue({
 					
 			var maxDif = poller.getMaxDif();		
 			
+			//Cycle through phrases and draw
 			for (var i = 0; i < phraseIterations.length; i++) {
 				var phrase = phraseIterations[i];
 
@@ -239,6 +290,7 @@ var app = new Vue({
 				
 				var phraseHeight = 1;
 				
+				//If has maxDifficulty, set phrase height to fraction of maxDif. Else set to max height
 				if(maxDif != 0){
 					phraseHeight = phrase.maxDifficulty/maxDif;
 				}
@@ -249,6 +301,7 @@ var app = new Vue({
 					height: Math.round((phraseHeight)*100)+'%'
 				}
 
+				//If phrase grade exists, color based on that; else, use accuracy gradient
 				if (this.readout.songTimer > phrase.endTime | this.readout.gameStage == "panel_bib" | this.readout.gameStage == "sa_songreview"  | this.readout.gameStage == "las_songreview"){
 					if(tracker.getPhraseGrade((phrase.startTime + phrase.endTime)/2) != "No Data"){
 						phrase.style.backgroundColor = gradeCode[tracker.getPhraseGrade((phrase.startTime + phrase.endTime)/2)];
@@ -261,9 +314,13 @@ var app = new Vue({
 			return phraseIterations;
 		},
 		/* PREV */
+		
+		//Get previous song
 		prevSong: function() {
 			return this.prevData.songDetails;
 		},
+		
+		//Get previous readout
 		prevReadout: function() {
 			if(!this.prevData) {
 				return null;
@@ -271,6 +328,8 @@ var app = new Vue({
 
 			return this.prevData.memoryReadout;
 		},
+		
+		//Get previous note data 
 		prevNotes: function() {
 			if(!this.snifferData) {
 				return null;
@@ -279,6 +338,7 @@ var app = new Vue({
 			return this.prevReadout.noteData;
 		},
 		
+		//Get previous arrangement
 		prevArrangement: function() {
 			if(this.prevSong == null) {return null;}
 			if(this.prevSong.arrangements == null) {return null;}
@@ -290,14 +350,27 @@ var app = new Vue({
 					return arrangement;
 				}
 			}
+			
+			//If no ID found, vall back on previous Path first then defaultPath
+			for (var i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
+				var arrangement = this.prevSong.arrangements[i];
+				if(this.prevPath == null && arrangement.name == defaultPath && arrangement.type == defaultPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
+					return arrangement;
+				} else if (arrangement.name == this.prevPath && arrangement.type == this.prevPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
+					return arrangement;
+					
+				}				
+			}	
 			return null;
 		},
 		
+		//Get previous path info
 		prevPath: function() {
 			if(this.prevSong == null){return null;}
 			return this.prevArrangement.type;
 		},
 		
+		//Get previous sections and draw results screen
 		prevSections: function() {
 			var arrangement = this.prevArrangement;
 
@@ -329,20 +402,19 @@ var app = new Vue({
 					width: (section.lengthPercent-(100/(widthUI)))+'%'
 				}
 				
-
 				if(tracker.hasPreviousBest()) {
 					section.style.backgroundColor = (tracker.isBetterRelative((section.startTime + section.endTime)/2) ? "lime" : "red");
 				} else {						
 					section.style.backgroundColor = accuracyGradient(tracker.getSectionAccuracy((section.startTime + section.endTime)/2));
 				}
 				
-
 				sections[i] = section;
 			}
 
 			return sections;
 		},
-		
+				
+		//Get previous phrases and draw results screen
 		prevPhrases: function() {
 			var arrangement = this.prevArrangement;
 
@@ -397,6 +469,7 @@ var app = new Vue({
 	}
 });
 
+//Format timer
 function formatTimer(time) {
 	var minutes = Math.floor(time/60);
 	var seconds = time % 60;
@@ -408,6 +481,7 @@ function formatTimer(time) {
 	return [minutes,seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
 }
 
+//Generate feedback
 function generateFeedback() {
 	app.feedback = [];
 
