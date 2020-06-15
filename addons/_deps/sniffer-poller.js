@@ -1,4 +1,3 @@
-var defaultPath = "Bass"; //Assign default path for poller to inspect
 const STATE_NONE = 0;
 const STATE_IN_MENUS = 1;
 const STATE_SONG_SELECTED = 2;
