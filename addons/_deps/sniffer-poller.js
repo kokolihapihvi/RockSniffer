@@ -1,10 +1,10 @@
+var defaultPath = "Bass"; //Assign default path for poller to inspect
 const STATE_NONE = 0;
 const STATE_IN_MENUS = 1;
 const STATE_SONG_SELECTED = 2;
 const STATE_SONG_STARTING = 3;
 const STATE_SONG_PLAYING = 4;
 const STATE_SONG_ENDING = 5;
-var defaultPath = "Bass";
 
 class SnifferPoller {
 	//Create variables and containers for poller data.
