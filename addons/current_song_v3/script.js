@@ -350,17 +350,6 @@ var app = new Vue({
 					return arrangement;
 				}
 			}
-			
-			//If no ID found, vall back on previous Path first then defaultPath
-			for (var i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
-				var arrangement = this.prevSong.arrangements[i];
-				if(this.prevPath == null && arrangement.name == defaultPath && arrangement.type == defaultPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
-					return arrangement;
-				} else if (arrangement.name == this.prevPath && arrangement.type == this.prevPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
-					return arrangement;
-					
-				}				
-			}	
 			return null;
 		},
 		
