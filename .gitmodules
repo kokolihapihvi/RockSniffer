@@ -1,4 +1,4 @@
 [submodule "RockSnifferLib"]
 	path = RockSnifferLib
 	url = https://github.com/PoizenJam/RockSnifferLib	
-   	branch = master
+   	branch = UpdatedLib
