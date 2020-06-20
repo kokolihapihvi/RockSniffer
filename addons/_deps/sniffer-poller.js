@@ -11,7 +11,7 @@ class SnifferPoller {
 		var defaultOptions = {
 			ip: "127.0.0.1",
 			port: "9938",
-			interval: 100,
+			interval: 900,
 
 			onData: (data) => {},
 			onSongChanged: (songData) => {console.log("onSongChanged",songData)},
