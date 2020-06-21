@@ -110,7 +110,7 @@ var app = new Vue({
 				
 				//Always make the first section start from 0%
 				if(i == 0) {
-					section.length += section.startPercent;
+					section.length = section.endTime;
 					section.startPercent = 0;
 				}
 
@@ -183,7 +183,7 @@ var app = new Vue({
 
 				//Always make the first section start from 0%
 				if(i == 0) {
-					section.length += section.startPercent;
+					section.length = section.endTime;
 					section.startPercent = 0;
 				}
 
