@@ -23,7 +23,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.3.2_PR1";
+        internal const string version = "0.3.2_PR2";
 
         internal static ICache cache;
         internal static Config config;
@@ -214,6 +214,19 @@ namespace RockSniffer
             }
 
             Logger.Log("Rocksmith found! Sniffing...");
+
+            //Check rocksmith executable hash to make sure its the correct version
+            string hash = PSARCUtil.GetFileHash(new FileInfo(rsProcess.MainModule.FileName));
+
+            Logger.Log($"Rocksmith executable hash: {hash}");
+
+            if(!hash.Equals("GxT+/TXLpUFys+Cysek8zg=="))
+            {
+                Logger.LogError("Executable hash does not match expected hash, make sure you have the correct version");
+                Logger.Log("Press any key to exit");
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
 
             //Initialize file handle reader and memory reader
             Sniffer sniffer = new Sniffer(rsProcess, cache, config.snifferSettings);
