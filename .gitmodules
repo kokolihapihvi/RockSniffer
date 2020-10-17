@@ -1,3 +1,6 @@
 [submodule "RockSnifferLib"]
 	path = RockSnifferLib
 	url = https://github.com/kokolihapihvi/RockSnifferLib.git
+[submodule "Rocksmith2014PsarcLib"]
+	path = Rocksmith2014PsarcLib
+	url = ./Rocksmith2014PsarcLib

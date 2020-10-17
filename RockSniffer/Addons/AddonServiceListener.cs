@@ -56,6 +56,7 @@ namespace RockSniffer.Addons
             tcpListener.Start();
 
             listenThread = new Thread(new ThreadStart(Listen));
+            listenThread.Name = "Addon Service Listener";
             listenThread.Start();
         }
 

@@ -23,7 +23,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.3.2_PR2";
+        internal const string version = "0.3.3_PR1_FSW_DBG";
 
         internal static ICache cache;
         internal static Config config;
@@ -83,7 +83,14 @@ namespace RockSniffer
             //Run version check
             if (!config.debugSettings.disableVersionCheck)
             {
-                VersionCheck();
+                if (version.Contains("PR"))
+                {
+                    Logger.Log("Pre-release version, skipping version check");
+                }
+                else
+                {
+                    VersionCheck();
+                }
             }
 
             //Transfer logging options
@@ -220,7 +227,7 @@ namespace RockSniffer
 
             Logger.Log($"Rocksmith executable hash: {hash}");
 
-            if(!hash.Equals("GxT+/TXLpUFys+Cysek8zg=="))
+            if (!hash.Equals("GxT+/TXLpUFys+Cysek8zg=="))
             {
                 Logger.LogError("Executable hash does not match expected hash, make sure you have the correct version");
                 Logger.Log("Press any key to exit");
