@@ -94,7 +94,19 @@ namespace RockSniffer.Addons
                     jsResp.success = false;
                 }
 
-                ServeClient(s);
+                try
+                {
+                    ServeClient(s);
+                }
+                catch (SocketException e)
+                {
+                    Logger.LogError("Unable to serve AddonService client");
+                    Logger.LogException(e);
+                }
+                finally
+                {
+                    s.Dispose();
+                }
             }
         }
 
@@ -102,11 +114,14 @@ namespace RockSniffer.Addons
         {
             string request = "";
 
-            //Try to receive while socket is connected or there is data to be received
+            // Set socket timeout to 2 seconds, so that stalled clients will be disconnected properly
+            s.ReceiveTimeout = 2000;
+
+            // Try to receive while socket is connected or there is data to be received
             var buffer = new byte[s.ReceiveBufferSize];
             while (s.Available > 0 || request.Length == 0)
             {
-                //Sleep for 10ms
+                // Sleep for 10ms
                 Thread.Sleep(10);
 
                 int received = s.Receive(buffer);
