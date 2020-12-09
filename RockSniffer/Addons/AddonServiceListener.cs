@@ -245,12 +245,6 @@ namespace RockSniffer.Addons
             s.Send(fileBytes);
         }
 
-#if DEBUG
-        private static readonly string addonsPath = "../../../../addons";
-#else
-        private static readonly string addonsPath = "./addons";
-#endif
-
         /// <summary>
         /// This should be ok since we are only serving over localhost or a local area network
         /// Don't look at me like that :/
@@ -259,7 +253,7 @@ namespace RockSniffer.Addons
         /// <param name="content"></param>
         private void TryServeAddons(Socket s, string url)
         {
-            string path = Path.Combine(addonsPath, url.Replace("GET /addons/", ""));
+            string path = Path.Combine(AddonService.addonsPath, url.Replace("GET /addons/", ""));
 
             try
             {
@@ -303,7 +297,7 @@ namespace RockSniffer.Addons
 
                     sb.Append("<ul>");
 
-                    foreach (string dir in Directory.GetDirectories(addonsPath))
+                    foreach (string dir in Directory.GetDirectories(AddonService.addonsPath))
                     {
                         string addon = Path.GetFileName(dir);
 

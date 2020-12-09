@@ -9,8 +9,8 @@ class SnifferPoller {
 	//Create variables and containers for poller data.
 	constructor(options = {}) {
 		var defaultOptions = {
-			ip: "127.0.0.1",
-			port: "9938",
+			ip: ip,
+			port: port,
 			interval: 900,
 
 			onData: (data) => {},

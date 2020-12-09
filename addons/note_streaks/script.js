@@ -1,10 +1,6 @@
 //Set this to true for previewing
 var preview = false;
 
-//Addon service ip and port
-var ip = "127.0.0.1";
-var port = 9938;
-
 //How often to poll the addon service (in milliseconds)
 var pollrate = 900;
 

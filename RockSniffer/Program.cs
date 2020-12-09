@@ -23,7 +23,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.3.3_PR1_FSW_DBG";
+        internal const string version = "0.3.3_PR3";
 
         internal static ICache cache;
         internal static Config config;
@@ -100,6 +100,7 @@ namespace RockSniffer
             Logger.logMemoryReadout = config.debugSettings.debugMemoryReadout;
             Logger.logSongDetails = config.debugSettings.debugSongDetails;
             Logger.logSystemHandleQuery = config.debugSettings.debugSystemHandleQuery;
+            Logger.logProcessingQueue = config.debugSettings.debugProcessingQueue;
 
             //Initialize cache
             cache = new SQLiteCache();
