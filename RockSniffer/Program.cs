@@ -23,7 +23,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.3.3_PR3";
+        internal const string version = "0.3.4";
 
         internal static ICache cache;
         internal static Config config;
