@@ -1,0 +1,191 @@
+body {
+  font-family: "Lucida Console", Courier, monospace;
+  font-size: 14px;
+}
+
+div.popup {
+	width: 420px;
+	display: flex;
+	overflow: hidden;
+	background-color: rgba(0,0,0,1);
+	color: white;
+	padding: 0px 0px 0px 0px;
+}
+
+div.mainContainer {
+	width: 420px;
+}
+
+div.songInfo {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0px 5px 0px 5px;
+  line-height: 20px;
+	
+}
+
+
+div.songMarquee {
+    transition: transform 2s ease-in-out;
+    transform: translateX(0px);
+    width: 100%;
+	margin: 0px 0px 0px 0px;
+}
+
+a.songName {
+	color: white;
+	font-size: 18px;  
+	white-space: nowrap;
+}
+
+a.songDash {
+	color: white;
+	font-size: 18px;  
+	white-space: nowrap;
+}
+
+a.artistName {
+	color: white;
+	font-size: 18px;  
+	white-space: nowrap;
+}
+
+a.tuningName {
+	
+}
+
+/* MODE 0 */
+img.albumArt {
+	width: 100%;
+}
+
+div.stats{
+	display: flex;
+	width=100%;
+}
+
+div.statsLeft{
+	display: flex;
+	width: 50%;
+	justify-content: space-between;
+	margin: 0 5px 0 0;
+}
+
+div.statsRight{
+	display: flex;
+	width: 50%;
+	justify-content: space-between;
+	margin: 0 0 0 5px;
+}
+
+div.statsNAME{
+	width: 25%;
+}
+
+div.statsNUM{
+	font-size: 14px;
+	width: 75%;
+	text-align: right;
+}
+div.timer {
+	margin: 2px 0 0 0;
+	font-smooth: never;
+	-webkit-font-smoothing : none;
+}
+
+div.timerBar {
+	background-color: black;
+	height: 13px;
+	width: 100%;
+	position: relative;
+	border-width: 0 0 0 0;
+}
+
+div.timerBarPhrase{
+	position: absolute;
+	background-color: magenta;
+	bottom: 1px;
+	opacity: 1;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 1px 0 1px;
+}
+
+div.timerBarSection {
+	height: 2px;
+	position: absolute;
+	background-color: gold;
+	bottom: -2px;
+	opacity: 1;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 1px 0 1px;
+}
+
+div.timestamps {
+	display: flex;
+	justify-content: space-between;
+	margin: 2px 0 0 0;
+}
+
+div.timestamp {
+	font-size: 14px;
+}
+
+div.playMarker {
+	position: absolute;
+	background-color: transparent;
+	height: 15px;
+	bottom: 0px;
+	border-style: solid;
+	border-color: white;
+	border-width: 0 2px 0 0px;
+}
+
+div.timerBarCurrentPhrase{
+	width: 100%;
+	position: absolute;
+	background-color: navy;
+	bottom: 1px;
+	opacity: .6;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 0px 0 0px;
+}
+
+/* MODE 1 */
+div.section {
+	height: 2px;
+	position: absolute;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 1px 0 1px;
+}
+
+div.phrase {
+	height: 12px;
+	position: absolute;
+	border-style: solid;
+	border-color: black;
+	border-width: 0 1px 0 1px;
+}
+
+/* TRANSITIONS */
+.fade-expand-enter-active, .fade-expand-leave-active {
+	transition: all 1s ease;
+}
+.fade-expand-enter, .fade-expand-leave-to {
+	opacity: 0;
+	max-height: 0;
+}
+.fade-expand-leave, .fade-expand-enter-to {
+	max-height: 500px;
+}
+
+.fade-enter-active, .fade-leave-active {
+	transition: opacity 1s ease;
+}
+.fade-enter, .fade-leave-to {
+	opacity: 0;
+}

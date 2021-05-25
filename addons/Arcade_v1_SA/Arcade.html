@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+		<title>PoizenJam's Rocksniffer UI</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css"> 
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+		<script src="../config.js"></script>
+		<script src="../config-ui.js"></script>
+		<script src="../_deps/jquery-3.2.1.js"></script>
+		<script src="../_deps/vue.js"></script>
+		<script src="../_deps/sniffer-storage.js"></script>
+		<script src="../_deps/sniffer-poller.js"></script>
+		<script src="../_deps/playthrough-tracker.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			<transition name="fade" mode="out-in">
+				<div id="popup" class="popup" v-if="song != null">
+					<div class="mainContainer">
+						<img class="albumArt" v-bind:src="'data:image/jpeg;base64,'+song.albumArt">
+						<div class="songInfo">
+							<div class="songMarquee" v-bind:style="{transform: songInfoTransform}">
+								<a class="artistName">{{song.artistName}}</a><a class = "tuningName"><a class="songDash"> - </a><a class="songName">{{song.songName}}</a>
+							</div>		
+							<div v-if="mode == 0" :key="'mode0'">
+								<div class = "stats">
+									<div class = "statsLeft">
+										<div class ="statsNAME">SCR:</div>
+										<div class = "statsNUM">
+											<div class="scrDisplay">{{scrDisplay}}</div>
+										</div>
+									</div>
+									<div class = "statsRight">
+										<div class = "statsNAME">HIT:</div>
+										<div class = "statsNUM">
+											<div class="hitDisplay">{{hitDisplay}}</div>
+										</div>
+									</div>
+								</div>
+								<div class = "stats">
+									<div class = "statsLeft">
+										<div class ="statsNAME">MLT:</div>
+										<div class = "statsNUM">
+											<div class="mltDisplay">{{mltDisplay}}</div>
+										</div>
+									</div>
+									<div class = "statsRight">
+										<div class = "statsNAME">STR:</div>
+										<div class = "statsNUM">
+											<div class="strDisplay">{{strDisplay}}</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div v-if="mode == 1" :key="'mode1'">
+								<div class = "stats">
+									<div class = "statsLeft">
+										<div class ="statsNAME">SCR:</div>
+										<div class = "statsNUM">
+											<div class="scrDisplay">{{scrDisplayF}}</div>
+										</div>
+									</div>
+									<div class = "statsRight">
+										<div class = "statsNAME">HIT:</div>
+										<div class = "statsNUM">
+											<div class="hitDisplay">{{hitDisplayF}}</div>
+										</div>
+									</div>
+								</div>
+								<div class = "stats">
+									<div class = "statsLeft">
+										<div class ="statsNAME">MLT:</div>
+										<div class = "statsNUM">
+											<div class="mltDisplay">{{mltDisplayF}}</div>
+										</div>
+									</div>
+									<div class = "statsRight">
+										<div class = "statsNAME">STR:</div>
+										<div class = "statsNUM">
+											<div class="strDisplay">{{strDisplayF}}</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="timer">
+								<div class="timerBar">
+									<div class="timerBarPhrase" v-bind:style="phrase.style" v-bind:key="'phrase'+index" v-for="(phrase,index) in phraseIterations"></div>
+									<div class="timerBarCurrentPhrase" v-if="songProgress > 0" v-bind:style="{left: phraseStartTime+'%', width: (songProgress-phraseStartTime)+'%', height: phraseHeight+'%'}"></div>
+									<div class="timerBarSection" v-bind:style="section.style" v-bind:key="'section'+index" v-for="(section,index) in sections"></div>
+									<div class="playMarker" v-if="songProgress > 0" v-bind:style="{width: songProgress+'%'}"></div>
+								</div>
+								<div class="timestamps">
+									<a class="timeStamp">{{songTimer}}</a>
+									<a class="tuningName">{{tuningName}}</a>	
+									<a class="timeStamp">{{songLength}}</a>
+								</div>
+							</div>
+							<transition mode="out-in" name="fade-expand">
+								<div v-if="mode == 1" :key="'mode1'">								
+									<div v-if="hasPreviousBest()">
+										<a>{{Math.abs(trackerScore().RelativeAccuracy.toFixed(1))}}% {{(trackerScore().RelativeAccuracy >= 0 ? "better" : "worse")}} than previous best</a>
+										<div class="feedback">
+											<div>{{(trackerScore().RelativeAccuracy >= 0 ? "ALSO..." : "... BUT")}}</div>
+											<transition mode="out-in" name="fade">
+												<div :key="feedbackIdx">
+													{{feedback[feedbackIdx]}}
+												</div>
+											</transition>
+											</div>
+										</div>
+									</div>
+								</div>
+							</transition>
+						</div>
+					</div>
+				</transition>
+			</div>
+		</div>
+		<script src="script.js"></script>
+	</body>
+</html>
