@@ -9,11 +9,7 @@ namespace RockSniffer.Addons
 {
     internal class AddonService
     {
-#if DEBUG
-        internal static readonly string addonsPath = "../../../../addons";
-#else
-        internal static readonly string addonsPath = "./addons";
-#endif
+        internal static string AddonsPath { get; private set; }
 
         private AddonServiceListener listener;
 
@@ -26,9 +22,41 @@ namespace RockSniffer.Addons
 
             Console.WriteLine("Starting AddonService listener on {0}:{1}", ip.ToString(), settings.port);
 
-            GenerateConfig(settings);
+            // If addons folder was found, auto generate config file
+            if (FindAddons())
+            {
+                GenerateConfig(settings);
+            }
+            else
+            {
+                Console.WriteLine("Addons folder not found, skipped config.js generation");
+            }
 
             listener = new AddonServiceListener(ip, settings, storage);
+        }
+
+        /// <summary>
+        /// Try to find the addons folder
+        /// </summary>
+        private bool FindAddons()
+        {
+            var path = "./addons";
+
+            if (Directory.Exists(path))
+            {
+                AddonsPath = path;
+                return true;
+            }
+#if DEBUG // Find addons from the git root, if running in debug mode for development
+            path = "../../../../addons";
+            if (Directory.Exists(path))
+            {
+                AddonsPath = path;
+                return true;
+            }
+#endif
+
+            return false;
         }
 
         private void GenerateConfig(AddonSettings settings)
@@ -41,7 +69,7 @@ var ip = ""{settings.ipAddress}"";
 var port = {settings.port};
             ";
 
-            var configPath = Path.Combine(addonsPath, "config.js");
+            var configPath = Path.Combine(AddonsPath, "config.js");
 
             File.WriteAllText(configPath, pattern);
         }

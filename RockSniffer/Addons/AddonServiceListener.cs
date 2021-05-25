@@ -200,7 +200,7 @@ namespace RockSniffer.Addons
                 }
                 else
                 {
-                    RespondError(s, 500, "Addon serving is disabled in config/addons.json");
+                    RespondError(s, HttpStatusCode.InternalServerError, "Addon serving is disabled in config/addons.json");
                 }
             }
             else
@@ -211,9 +211,9 @@ namespace RockSniffer.Addons
             s.Close();
         }
 
-        private void RespondError(Socket s, int errorCode = 500, string message = "Internal Server Error")
+        private void RespondError(Socket s, HttpStatusCode errorCode = HttpStatusCode.InternalServerError, string message = "Internal Server Error")
         {
-            byte[] resp = Encoding.UTF8.GetBytes($"HTTP/1.1 {errorCode} {message}\r\nContent-Length: {Encoding.UTF8.GetByteCount(message)}\r\nContent-Type: text/html\r\nAccess-Control-Allow-Methods: *\r\nAccess-Control-Allow-Origin: *\r\n\r\n{message}\r\n");
+            byte[] resp = Encoding.UTF8.GetBytes($"HTTP/1.1 {(int)errorCode} {message}\r\nContent-Length: {Encoding.UTF8.GetByteCount(message)}\r\nContent-Type: text/html\r\nAccess-Control-Allow-Methods: *\r\nAccess-Control-Allow-Origin: *\r\n\r\n{message}\r\n");
 
             using (var context = new SocketAsyncEventArgs())
             {
@@ -253,7 +253,14 @@ namespace RockSniffer.Addons
         /// <param name="content"></param>
         private void TryServeAddons(Socket s, string url)
         {
-            string path = Path.Combine(AddonService.addonsPath, url.Replace("GET /addons/", ""));
+            // Handle missing addons folder when serving
+            if(string.IsNullOrEmpty(AddonService.AddonsPath))
+            {
+                RespondError(s, HttpStatusCode.InternalServerError, "Addons folder not found");
+                return;
+            }
+
+            string path = Path.Combine(AddonService.AddonsPath, url.Replace("GET /addons/", ""));
 
             try
             {
@@ -266,7 +273,7 @@ namespace RockSniffer.Addons
                     if (!File.Exists(path))
                     {
                         Logger.LogError("[AddonService] File does not exist");
-                        RespondError(s, 404, "File Not Found");
+                        RespondError(s, HttpStatusCode.NotFound, "File Not Found");
                         return;
                     }
 
@@ -297,7 +304,7 @@ namespace RockSniffer.Addons
 
                     sb.Append("<ul>");
 
-                    foreach (string dir in Directory.GetDirectories(AddonService.addonsPath))
+                    foreach (string dir in Directory.GetDirectories(AddonService.AddonsPath))
                     {
                         string addon = Path.GetFileName(dir);
 
@@ -317,7 +324,7 @@ namespace RockSniffer.Addons
             }
             catch (Exception e)
             {
-                RespondError(s, 500, "Unable to serve addons, see console for details");
+                RespondError(s, HttpStatusCode.InternalServerError, "Unable to serve addons, see console for details");
                 Logger.LogError("Unable to serve {0}", url);
                 Logger.LogException(e);
             }
