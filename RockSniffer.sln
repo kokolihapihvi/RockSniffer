@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RockSniffer", "RockSniffer\RockSniffer.csproj", "{8B784AB7-8D24-4AFC-AA34-4A7299C6A650}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RockSniffer", "RockSniffer\RockSniffer.csproj", "{8B784AB7-8D24-4AFC-AA34-4A7299C6A650}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RockSnifferLib", "RockSnifferLib\RockSnifferLib.csproj", "{5C132036-7413-432E-B03E-13A1015E3FB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RockSnifferLib", "RockSnifferLib\RockSnifferLib.csproj", "{5C132036-7413-432E-B03E-13A1015E3FB8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rocksmith2014PsarcLib", "Rocksmith2014PsarcLib\Rocksmith2014PsarcLib.csproj", "{8EA027ED-0A76-4913-9486-B2BAB27D9754}"
 EndProject
@@ -31,39 +31,21 @@ Global
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Debug|x64.Build.0 = Debug|x64
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C132036-7413-432E-B03E-13A1015E3FB8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5C132036-7413-432E-B03E-13A1015E3FB8}.Release|x64.ActiveCfg = Release|Any CPU
-		{5C132036-7413-432E-B03E-13A1015E3FB8}.Release|x64.Build.0 = Release|Any CPU
+		{5C132036-7413-432E-B03E-13A1015E3FB8}.Release|x64.ActiveCfg = Release|x64
+		{5C132036-7413-432E-B03E-13A1015E3FB8}.Release|x64.Build.0 = Release|x64
 		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Debug|x64.Build.0 = Debug|Any CPU
+		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Debug|x64.ActiveCfg = Debug|x64
+		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Debug|x64.Build.0 = Debug|x64
 		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Release|x64.ActiveCfg = Release|Any CPU
-		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Release|x64.Build.0 = Release|Any CPU
+		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Release|x64.ActiveCfg = Release|x64
+		{8EA027ED-0A76-4913-9486-B2BAB27D9754}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {807E9788-C924-42A6-BAC9-C94DD6EC1FC0}
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

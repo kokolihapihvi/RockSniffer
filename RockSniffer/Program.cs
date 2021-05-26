@@ -57,7 +57,7 @@ namespace RockSniffer
                 {
                     //Catch all exceptions that are not handled and log
                     Logger.LogError("Encountered unhandled exception: {0}\r\n{1}", e.Message, e.StackTrace);
-                    throw e;
+                    throw;
                 }
             }
         }
@@ -77,7 +77,7 @@ namespace RockSniffer
             catch (Exception e)
             {
                 Logger.LogError("Could not load configuration: {0}\r\n{1}", e.Message, e.StackTrace);
-                throw e;
+                throw;
             }
 
             //Run version check
@@ -180,7 +180,10 @@ namespace RockSniffer
                     }
                 }
             }
-            catch (Exception e)
+            catch
+#if DEBUG
+            (Exception e)
+#endif
             {
                 Logger.LogError("Version check failed");
 
