@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+		<title>RockSniffer Current Song Display</title>
+
+		<link rel="stylesheet" type="text/css" href="style.css"> 
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+		<script src="../config.js"></script>
+		<script src="../config-ui.js"></script>
+		<script src="../_deps/jquery-3.2.1.js"></script>
+		<script src="../_deps/vue.js"></script>
+		<script src="../_deps/sniffer-storage.js"></script>
+		<script src="../_deps/sniffer-poller.js"></script>
+		<script src="../_deps/playthrough-tracker.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			<transition name="fade" mode="out-in">
+				<div id="popup" class="popup" v-show="visible">
+					<div class="mainContainer" v-if="song != null">
+						<transition mode="out-in" name="fade-expand">
+							<div v-if="mode == 0" :key="'mode0'">
+								<div class="songTitle">
+									<a class="songName">{{song.songName}}</a><br>
+									<a class="artistName">{{song.artistName}}</a><br>
+								</div>
+								<img class="albumArt" v-bind:src="'data:image/jpeg;base64,'+song.albumArt">
+								<div class="songTitle">
+									<table style="width: 100%;"><tr>
+										<td>{{arrangement.type}}</td>
+										<td style="text-align: right;">{{arrangement.tuning.TuningName}}</td>
+									</tr></table>
+								</div>
+								<div class="timer">
+									<div class="timerBar">
+										<div class="timerBarSection" v-bind:style="section.style" v-bind:key="index" v-for="(section,index) in sections">
+											
+										</div>
+										<div class="timerBarInner" v-bind:style="{width: songProgress+'%'}"></div>
+									</div>
+									<div class="timestamps">
+										<a class="timestamp">{{songTimer}}</a>
+										<a class="timestamp">{{songLength}}</a>
+									</div>
+								</div>
+							</div>
+							<div v-if="mode == 1" :key="'mode1'">
+								<div class="songTitle">
+									<a class="songName">{{prevSong.songName}}</a><br>
+									<a class="artistName">{{prevSong.artistName}}</a><br>
+									<table style="width: 100%;"><tr>
+										<td>{{prevArrangement.type}}</td>
+										<td style="text-align: right;">{{prevArrangement.tuning.TuningName}}</td>
+									</tr></table>
+								</div>
+							</div>
+						</transition>
+					</div>
+				</div>
+			</transition>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
+</html>
