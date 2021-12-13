@@ -212,6 +212,16 @@ namespace RockSniffer
                     continue;
                 }
 
+                // Check for multiple Rocksmith processes
+                if (processes.Length > 1)
+                {
+                    Logger.LogError("Warning! More than one Rocksmith process found!");
+                    foreach (var process in processes)
+                    {
+                        Logger.LogError($"{process.ProcessName} [pid {process.Id}]");
+                    }
+                }
+
                 //Select the first rocksmith process and open a handle
                 rsProcess = processes[0];
 
