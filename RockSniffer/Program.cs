@@ -83,14 +83,7 @@ namespace RockSniffer
             //Run version check
             if (!config.debugSettings.disableVersionCheck)
             {
-                if (version.Contains("PR"))
-                {
-                    Logger.Log("Pre-release version, skipping version check");
-                }
-                else
-                {
-                    VersionCheck();
-                }
+                VersionCheck();
             }
 
             //Transfer logging options
@@ -129,6 +122,12 @@ namespace RockSniffer
 
         private async void VersionCheck()
         {
+            if (version.Contains("PR"))
+            {
+                Logger.Log("Pre-release version, skipping version check");
+                return;
+            }
+            
             try
             {
                 //Use TLS
@@ -138,7 +137,7 @@ namespace RockSniffer
                 var request = WebRequest.CreateHttp("https://api.github.com/repos/kokolihapihvi/RockSniffer/releases/latest");
                 request.Accept = "application/vnd.github.v3+json";
                 request.Method = "GET";
-                request.UserAgent = ".NET WebRequest";
+                request.UserAgent = "RockSniffer";
 
                 //Get the response
                 using (var response = await request.GetResponseAsync())
@@ -156,6 +155,9 @@ namespace RockSniffer
                             //Parse response as JSON
                             var respjson = JObject.Parse(respstr);
 
+                            //Treat release body as a changelog
+                            var changes = respjson.Value<string>("body");
+
                             //Get the newest release tag name, remove v prefix
                             var newest_release = respjson.Value<string>("tag_name").Substring(1);
 
@@ -167,7 +169,7 @@ namespace RockSniffer
                             {
                                 case -1:
                                     Console.ForegroundColor = ConsoleColor.Green;
-                                    Logger.Log($"A new version ({newest_release}) of RockSniffer is available");
+                                    Logger.Log($"A new version ({newest_release}) of RockSniffer is available:\r\n{changes}");
                                     Console.ResetColor();
                                     break;
                                 case 0:
