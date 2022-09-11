@@ -23,7 +23,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.3.4";
+        internal const string version = "0.4.0-PR1";
 
         internal static ICache cache;
         internal static Config config;
@@ -243,7 +243,7 @@ namespace RockSniffer
 
             Logger.Log($"Rocksmith executable hash: {hash}");
 
-            if (!hash.Equals("GxT+/TXLpUFys+Cysek8zg=="))
+            if (!hash.Equals("HtUXPbqP7r9hrd5sRV8Seg=="))
             {
                 Logger.LogError("Executable hash does not match expected hash, make sure you have the correct version");
                 Logger.Log("Press any key to exit");
