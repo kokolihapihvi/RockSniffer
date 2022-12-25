@@ -22,9 +22,9 @@ namespace RockSniffer.Addons
         private class JsonResponse
         {
             public bool success = false;
-            public SnifferState currentState = SnifferState.NONE;
-            public RSMemoryReadout memoryReadout;
-            public SongDetails songDetails;
+            public SnifferState? currentState = SnifferState.NONE;
+            public RSMemoryReadout? memoryReadout;
+            public SongDetails? songDetails;
 
             public string Version
             {
@@ -37,10 +37,10 @@ namespace RockSniffer.Addons
 
         private TcpListener tcpListener;
 
-        private Thread listenThread;
+        private Thread? listenThread;
 
-        private RSMemoryReadout memReadout = new RSMemoryReadout();
-        private SongDetails songDetails = new SongDetails();
+        private RSMemoryReadout? memReadout = new RSMemoryReadout();
+        private SongDetails? songDetails = new SongDetails();
 
         //Cache the response
         private JsonResponse jsResp = new JsonResponse();
@@ -83,7 +83,7 @@ namespace RockSniffer.Addons
         {
             while (true)
             {
-                Socket s = tcpListener.AcceptSocket();
+                Socket? s = tcpListener.AcceptSocket();
 
                 if (memReadout != null && songDetails != null && songDetails.IsValid())
                 {
@@ -297,7 +297,7 @@ namespace RockSniffer.Addons
                 }
                 else //Serve addon index
                 {
-                    StringBuilder sb = new StringBuilder();
+                    StringBuilder? sb = new StringBuilder();
                     sb.Append("<html><head><title>Rocksniffer Addon Index</title></head><body>");
 
                     sb.Append("<h1>Available Addons:</h1>");

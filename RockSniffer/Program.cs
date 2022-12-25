@@ -25,21 +25,21 @@ namespace RockSniffer
     {
         internal const string version = "0.4.1";
 
-        internal static ICache cache;
-        internal static Config config;
+        internal static ICache? cache;
+        internal static Config? config;
 
-        internal static Process rsProcess;
+        internal static Process? rsProcess;
 
         private static readonly Random random = new Random();
 
         private static readonly bool Is64Bits = (IntPtr.Size == 8);
 
-        private static AddonService addonService;
+        private static AddonService? addonService;
         private readonly Image defaultAlbumCover = new Bitmap(256, 256);
 
         private RSMemoryReadout memReadout = new RSMemoryReadout();
         private SongDetails details = new SongDetails();
-        private DiscordRPCHandler rpcHandler;
+        private DiscordRPCHandler? rpcHandler;
 
         static void Main(string[] args)
         {
