@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json;
-using RockSnifferLib.Configuration;
+using RockSnifferLib.Config;
 using System;
 using System.IO;
 
 namespace RockSniffer.Configuration
 {
-    public class Config
+	public class Config
     {
         private static readonly string cfiledir = "." + Path.DirectorySeparatorChar + "config" + Path.DirectorySeparatorChar;
         private const string addonFile = "addons.json";
