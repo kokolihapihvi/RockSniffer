@@ -8,7 +8,7 @@ class SnifferStorage {
 
 		var defaultOptions = {
 			ip: "127.0.0.1",
-			port: "9938"
+			port: "9002"
 		}
 
 		//Set up options
