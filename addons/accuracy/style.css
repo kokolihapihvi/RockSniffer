@@ -1,0 +1,69 @@
+/* This applies to all the text */
+body {
+	font-family: arial;
+}
+
+/* This is the popup container, hide it by default */
+div.popup {
+	display: none;
+}
+
+/* This is the header of the popup, the section containing the text "CURRENT SONG" */
+div.header {
+	font-family: Arial;
+	width: 100%;
+	height: 5vw;
+	display: flex;
+	align-items: center;
+}
+
+/* This is the popup block that contains all the data */
+div.content {
+	overflow: hidden;
+	padding-left: 2vw;
+	padding-right: 2vw;
+	background-color: rgba(85, 98, 111, 0.84);
+	border-radius: 0 0 7px 7px;
+}
+
+div.song_details {
+	width: 74%;
+}
+
+/* This applies to the information text */
+h1 {
+	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	font-size: 4.5vw;
+	color: white;
+	line-height: 4.3vw;
+}
+
+/* Classes for outlined stroke text */
+.stroke {
+	position: relative;
+	z-index: 0;
+}
+
+.stroke:before {
+	position: absolute;
+	content: attr(data-stroke);
+	-webkit-text-stroke: 0.1em #000000;
+	z-index: -1;
+}
+
+/* This applies to the accuracy percentage in the title */
+h1.accuracy_percentage {
+	font-size: 4.5vw !important;
+	padding-left: 1vw;
+}
+
+/* This applies to the header title text */
+h1.title {
+	display: inline-block;
+	font-size: 3.5vw;
+	color: white;
+}
+
+body {
+	background-color: rgba(24, 25, 26, 255);
+}
