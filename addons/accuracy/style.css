@@ -17,19 +17,6 @@ div.header {
 	align-items: center;
 }
 
-/* This is the popup block that contains all the data */
-div.content {
-	overflow: hidden;
-	padding-left: 2vw;
-	padding-right: 2vw;
-	background-color: rgba(85, 98, 111, 0.84);
-	border-radius: 0 0 7px 7px;
-}
-
-div.song_details {
-	width: 74%;
-}
-
 /* This applies to the information text */
 h1 {
 	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
