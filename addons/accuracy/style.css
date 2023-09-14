@@ -8,21 +8,18 @@ div.popup {
 	display: none;
 }
 
-/* This is the header of the popup, the section containing the text "CURRENT SONG" */
+/* This is the header of the popup, the section containing the text "ACCURACY:" */
 div.header {
 	font-family: Arial;
-	width: 100%;
-	height: 5vw;
 	display: flex;
 	align-items: center;
 }
 
 /* This applies to the information text */
 h1 {
+	margin: 0px;
 	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-	font-size: 4.5vw;
 	color: white;
-	line-height: 4.3vw;
 }
 
 /* Classes for outlined stroke text */
@@ -40,14 +37,12 @@ h1 {
 
 /* This applies to the accuracy percentage in the title */
 h1.accuracy_percentage {
-	font-size: 4.5vw !important;
-	padding-left: 1vw;
+	padding-left: 5px;
 }
 
 /* This applies to the header title text */
 h1.title {
 	display: inline-block;
-	font-size: 3.5vw;
 	color: white;
 }
 
