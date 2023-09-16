@@ -8,10 +8,11 @@ div.popup {
 	display: none;
 }
 
-/* This is the header of the popup, the section containing the text "ACCURACY:" */
-div.header {
+/* This is the content of the popup, the section containing the text "ACCURACY:" */
+div.content {
 	font-family: Arial;
 	display: flex;
+	gap: 50px;
 	align-items: center;
 }
 
@@ -35,15 +36,9 @@ h1 {
 	z-index: -1;
 }
 
-/* This applies to the accuracy percentage in the title */
-h1.accuracy_percentage {
-	padding-left: 5px;
-}
-
-/* This applies to the header title text */
-h1.title {
-	display: inline-block;
-	color: white;
+.section {
+	display: flex;
+	gap: 5px;
 }
 
 body {

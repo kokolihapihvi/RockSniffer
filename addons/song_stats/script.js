@@ -60,6 +60,7 @@ var visible = false;
 
 //Remember previous percentage for the animation
 var prev_accuracy = 0;
+var prev_potential = 0;
 
 function refresh() {
 	//JSON query the addon service
@@ -78,8 +79,20 @@ function refresh() {
 				return;
 			}
 
-			//Get accuracy
-			var accuracy = readout.noteData.Accuracy
+			//Accuracy
+			var accuracy = readout.noteData.Accuracy;
+
+			//Streak
+			var streak = readout.noteData.CurrentHitStreak;
+			var streak_max = readout.noteData.HighestHitStreak;
+
+			//Misses
+			var misses = readout.noteData.TotalNotesMissed;
+			
+			//Potential
+			var arrangement = details.arrangements.find(arrangement => arrangement.arrangementID === readout.arrangementID);
+			var totalNotes = arrangement.totalNotes;
+			var potential = (totalNotes - misses) / totalNotes * 100;
 
 			if(animate_percentage) {
 				//Format it and apply it to the element
@@ -94,11 +107,29 @@ function refresh() {
 					}
 				}, pollrate);
 
+				$("h1.accuracy_potential").prop("number", prev_potential).finish().animateNumber({
+					number: potential,
+					numberStep: function(now, tween) {
+						$(tween.elem).textStroke(now.toFixed(2)+"%");
+
+						if(animate_percentage_color) {
+							$(tween.elem).css("color", lerpColors(now/100));
+						}
+					}
+				}, pollrate);
+
 				//Remember previous accuracy
 				prev_accuracy = accuracy;
+				prev_potential = potential;
 			} else {
 				$("h1.accuracy_percentage").textStroke(accuracy.toFixed(2)+"%");
+				$("h1.accuracy_potential").textStroke(potential.toFixed(2)+"%");
 			}
+
+			$("h1.streak").textStroke(streak);
+			$("h1.streak_max").textStroke(streak_max);
+			
+			$("h1.misses").textStroke(misses);
 
 			//If the song timer is over 1 second, we are playing a song, so show the popup
 			if(readout.songTimer > 1) {
