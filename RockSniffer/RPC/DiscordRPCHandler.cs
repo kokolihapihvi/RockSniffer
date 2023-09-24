@@ -16,6 +16,7 @@ namespace RockSniffer.RPC
         private RSMemoryReadout readout;
         private SnifferState state = SnifferState.NONE;
         private SongDetails songdetails;
+        private AlbumArtResolver albumArtResolver = new AlbumArtResolver();
 
         private readonly Dictionary<string, string> gcadeGames = new Dictionary<string, string>()
         {
@@ -70,6 +71,13 @@ namespace RockSniffer.RPC
             //If we have a valid song and are playing a song
             if ((songdetails != null && readout != null) && (state == SnifferState.SONG_STARTING || state == SnifferState.SONG_PLAYING || state == SnifferState.SONG_ENDING))
             {
+                // Get the appropriate album cover. In case of failure display returned text.
+                {
+                    (string? URL, string DisplayText) resultTuple = albumArtResolver.Get(songdetails);
+                    if (resultTuple.URL != null) rp.Assets.LargeImageKey = resultTuple.URL;
+                    rp.Assets.LargeImageText = resultTuple.DisplayText;
+                }
+
                 //Get the arrangement based on the arrangement id
                 var arrangement = songdetails.arrangements.FirstOrDefault(x => x.arrangementID == readout.arrangementID);
 
@@ -118,6 +126,9 @@ namespace RockSniffer.RPC
                         rp.Assets.SmallImageText = $"{section.name} | {rp.Assets.SmallImageText}";
                     }
                 }
+
+                if (string.IsNullOrEmpty(rp.Assets.SmallImageKey) && rp.Assets.LargeImageKey != "rocksmith")
+                    rp.Assets.SmallImageKey = "rocksmith";
             }
             else
             {
