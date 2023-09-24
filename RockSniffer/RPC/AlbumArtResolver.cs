@@ -84,10 +84,12 @@ namespace RockSniffer.RPC
                             if (bestResult == null)
                                 bestResult = appleResult;
 
-                            if ((appleResult.artistName.Contains(songInfo.artistName)
-                                 || songInfo.artistName.Contains(appleResult.artistName))
-                                && (appleResult.collectionName.Contains(songInfo.albumName)
-                                    || songInfo.albumName.Contains(appleResult.collectionName)))
+
+
+                            if ((appleResult.artistName.Contains(songInfo.artistName, StringComparison.OrdinalIgnoreCase)
+                                 || songInfo.artistName.Contains(appleResult.artistName, StringComparison.OrdinalIgnoreCase))
+                                && (appleResult.collectionName.Contains(songInfo.albumName, StringComparison.OrdinalIgnoreCase)
+                                    || songInfo.albumName.Contains(appleResult.collectionName, StringComparison.OrdinalIgnoreCase)))
                             {
                                 bestResult = appleResult;
                                 break;

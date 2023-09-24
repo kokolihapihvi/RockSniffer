@@ -75,7 +75,7 @@ namespace RockSniffer.RPC
                 {
                     (string? URL, string DisplayText) resultTuple = albumArtResolver.Get(songdetails);
                     if (resultTuple.URL != null) rp.Assets.LargeImageKey = resultTuple.URL;
-                    rp.Assets.LargeImageText = resultTuple.DisplayText;
+                    rp.Assets.LargeImageText = resultTuple.DisplayText.Substring(0, Math.Min(resultTuple.DisplayText.Length, 128));
                 }
 
                 //Get the arrangement based on the arrangement id
