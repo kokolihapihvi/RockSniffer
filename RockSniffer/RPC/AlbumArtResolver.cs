@@ -6,12 +6,14 @@ using System.Collections.Specialized;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace RockSniffer.RPC
 {
+    [Serializable]
     class AppleResult
     {
         public string artistName;
@@ -20,6 +22,7 @@ namespace RockSniffer.RPC
         public string artworkUrl100;
     }
 
+    [Serializable]
     class AppleRequestResponse {
         public int resultCount;
         public AppleResult[] results;
@@ -30,18 +33,23 @@ namespace RockSniffer.RPC
         private HttpClient httpClient = new HttpClient();
         private Dictionary<string, (string URL, string DisplayText)> cache = new Dictionary<string, (string URL, string DisplayText)>();
 
+
+        public AlbumArtResolver() {
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "RockSniffer");
+        }
+
         /// <summary>
         /// Attempt to obtain album cover
         /// </summary>
         /// <param name="songInfo">Details about the given song</param>
-        public (string? URL, string DisplayText) Get(SongDetails songInfo)
+        public (string URL, string DisplayText)? Get(SongDetails songInfo)
         {
             string key = $"{songInfo.artistName}|{songInfo.albumName}";
 
             // Use double-checked locking pattern, since there are multiple threads
-            if (!cache.Keys.Contains(key))
+            if (!cache.ContainsKey(key))
                 lock (this)
-                    if (!cache.Keys.Contains(key))
+                    if (!cache.ContainsKey(key))
                     {
                         //Console.WriteLine($"cache miss on {key}");
                         if (GetFromAppleMusic(songInfo) is (string, string) validResult)
@@ -50,7 +58,15 @@ namespace RockSniffer.RPC
                         }
                     }
 
-            return cache.Keys.Contains(key) ? cache[key] : (null, $"{key}");
+            if (cache.ContainsKey(key))
+            {
+                return cache[key];
+            }
+            else
+            {
+                Console.WriteLine($"Could not find any album art for '{key}'");
+                return null;
+            }
         }
 
         /// <summary>
@@ -59,9 +75,6 @@ namespace RockSniffer.RPC
         /// <param name="songInfo">Details about the given song</param>
         protected (string URL, string DisplayText)? GetFromAppleMusic(SongDetails songInfo)
         {
-            HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "RockSniffer");
-
             string baseUrl = "https://itunes.apple.com/search";
             NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
             queryString.Add("media", "music");
@@ -70,9 +83,26 @@ namespace RockSniffer.RPC
 
             var webRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl + "?" + queryString.ToString());
 
-            using (var reader = new StreamReader(httpClient.Send(webRequest).Content.ReadAsStream()))
+            HttpResponseMessage responseMessage = httpClient.Send(webRequest);
+
+            if (responseMessage.StatusCode != HttpStatusCode.OK)
+                return null;
+
+            using (var reader = new StreamReader(responseMessage.Content.ReadAsStream()))
             {
-                if (JsonConvert.DeserializeObject<AppleRequestResponse>(reader.ReadToEnd()) is AppleRequestResponse response)
+                // Attempt deserialization, return null on failure
+                AppleRequestResponse? responseOpt = null;
+                try
+                {
+                    responseOpt = JsonConvert.DeserializeObject<AppleRequestResponse>(reader.ReadToEnd());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"AlbumArtResolver::GetFromAppleMusic : {ex.Message}");
+                    return null;
+                }
+
+                if (responseOpt is AppleRequestResponse response)
                 {
                     AppleResult? bestResult = null;
 
@@ -83,8 +113,6 @@ namespace RockSniffer.RPC
                         {
                             if (bestResult == null)
                                 bestResult = appleResult;
-
-
 
                             if ((appleResult.artistName.Contains(songInfo.artistName, StringComparison.OrdinalIgnoreCase)
                                  || songInfo.artistName.Contains(appleResult.artistName, StringComparison.OrdinalIgnoreCase))
@@ -100,7 +128,7 @@ namespace RockSniffer.RPC
                     // If bestResult isn't null (is valid result, perhaps even full match), return the URL and description
                     if (bestResult is AppleResult appleResult1)
                     {
-                        return (bestResult.artworkUrl100, $"{bestResult.artistName} - {bestResult.collectionName} (fetched from Apple Music)");
+                        return (bestResult.artworkUrl100, $"{bestResult.artistName} - {bestResult.collectionName} (art from Apple Music)");
                     }
                 }
 

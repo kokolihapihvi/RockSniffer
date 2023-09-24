@@ -11,5 +11,6 @@ namespace RockSniffer.Configuration
     {
         public bool enabled = false;
         public string client_id = "573253140682375193";
+        public bool enableCoverArt = true;
     }
 }
