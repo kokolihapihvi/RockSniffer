@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RockSnifferLib.Logging;
 using RockSnifferLib.Sniffing;
 using System;
 using System.Collections.Generic;
@@ -51,7 +52,7 @@ namespace RockSniffer.RPC
                 lock (this)
                     if (!cache.ContainsKey(key))
                     {
-                        //Console.WriteLine($"cache miss on {key}");
+                        //Logger.Log("AlbumArtResolver::Get : Cache miss on {0}", key);
                         if (GetFromAppleMusic(songInfo) is (string, string) validResult)
                         {
                             cache[key] = validResult;
@@ -64,7 +65,7 @@ namespace RockSniffer.RPC
             }
             else
             {
-                Console.WriteLine($"Could not find any album art for '{key}'");
+                Logger.Log("AlbumArtResolver::Get : Could not find any album art for '{0}'", key);
                 return null;
             }
         }
@@ -98,7 +99,7 @@ namespace RockSniffer.RPC
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"AlbumArtResolver::GetFromAppleMusic : {ex.Message}");
+                    Logger.LogException(ex);
                     return null;
                 }
 
