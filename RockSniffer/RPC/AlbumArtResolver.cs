@@ -4,33 +4,30 @@ using RockSnifferLib.Sniffing;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Dynamic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RockSniffer.RPC
 {
-    [Serializable]
-    class AppleResult
-    {
-        public string artistName;
-        public string collectionName;
-        public string trackName;
-        public string artworkUrl100;
-    }
-
-    [Serializable]
-    class AppleRequestResponse {
-        public int resultCount;
-        public AppleResult[] results;
-    }
-
     public class AlbumArtResolver
     {
+        [Serializable]
+        private class AppleResult
+        {
+            public string artistName;
+            public string collectionName;
+            public string trackName;
+            public string artworkUrl100;
+        }
+
+        [Serializable]
+        private class AppleRequestResponse
+        {
+            public int resultCount;
+            public AppleResult[] results;
+        }
+
         private HttpClient httpClient = new HttpClient();
         private Dictionary<string, (string URL, string DisplayText)> cache = new Dictionary<string, (string URL, string DisplayText)>();
 
@@ -59,15 +56,13 @@ namespace RockSniffer.RPC
                         }
                     }
 
-            if (cache.ContainsKey(key))
-            {
-                return cache[key];
-            }
-            else
+            if (!cache.ContainsKey(key))
             {
                 Logger.Log("AlbumArtResolver::Get : Could not find any album art for '{0}'", key);
                 return null;
+                
             }
+            return cache[key];
         }
 
         /// <summary>
@@ -127,9 +122,9 @@ namespace RockSniffer.RPC
                     }
 
                     // If bestResult isn't null (is valid result, perhaps even full match), return the URL and description
-                    if (bestResult is AppleResult appleResult1)
+                    if (bestResult is AppleResult bestResultOk)
                     {
-                        return (bestResult.artworkUrl100, $"{bestResult.artistName} - {bestResult.collectionName} (art from Apple Music)");
+                        return (bestResultOk.artworkUrl100, $"{bestResultOk.artistName} - {bestResultOk.collectionName} (art from Apple Music)");
                     }
                 }
 

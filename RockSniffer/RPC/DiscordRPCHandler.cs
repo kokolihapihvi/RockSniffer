@@ -76,12 +76,16 @@ namespace RockSniffer.RPC
             //If we have a valid song and are playing a song
             if ((songdetails != null && readout != null) && (state == SnifferState.SONG_STARTING || state == SnifferState.SONG_PLAYING || state == SnifferState.SONG_ENDING))
             {
-                // Get the appropriate album cover
-                if (albumArtResolver != null && albumArtResolver.Get(songdetails) is (string URL, string DisplayText) resultTuple)
+                try
                 {
-                    rp.Assets.LargeImageKey = resultTuple.URL;
-                    rp.Assets.LargeImageText = resultTuple.DisplayText.Substring(0, Math.Min(resultTuple.DisplayText.Length, 128));
+                    // Get the appropriate album cover
+                    if (albumArtResolver != null && albumArtResolver.Get(songdetails) is (string resURL, string resDisplayText) resultTuple)
+                    {
+                        rp.Assets.LargeImageKey = resURL;
+                        rp.Assets.LargeImageText = resDisplayText.Substring(0, Math.Min(resDisplayText.Length, 128));
+                    }
                 }
+                catch (Exception ex) { Logger.LogException(ex); }
 
                 //Get the arrangement based on the arrangement id
                 var arrangement = songdetails.arrangements.FirstOrDefault(x => x.arrangementID == readout.arrangementID);
