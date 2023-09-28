@@ -78,7 +78,10 @@ namespace RockSniffer.RPC
         internal void CondUpdatePresence(Object source, ElapsedEventArgs e) {
             if (needsUpdate)
                 lock (this)
+                {
                     UpdatePresence();
+                    needsUpdate = false;
+                }
         }
 
         internal void UpdatePresence()
@@ -226,8 +229,8 @@ namespace RockSniffer.RPC
         {
             lock (this) {
                 songdetails = e.songDetails;
+                needsUpdate = true;
             }
-            needsUpdate = true;
         }
 
         private void Sniffer_OnMemoryReadout(object sender, RockSnifferLib.Events.OnMemoryReadoutArgs e)
@@ -235,8 +238,8 @@ namespace RockSniffer.RPC
             lock (this)
             {
                 readout = e.memoryReadout;
+                needsUpdate = true;
             }
-            needsUpdate = true;
         }
 
         private void Sniffer_OnStateChanged(object sender, RockSnifferLib.Events.OnStateChangedArgs e)
@@ -244,8 +247,8 @@ namespace RockSniffer.RPC
             lock (this)
             {
                 state = e.newState;
+                needsUpdate = true;
             }
-            needsUpdate = true;
         }
 
         public void Dispose()
