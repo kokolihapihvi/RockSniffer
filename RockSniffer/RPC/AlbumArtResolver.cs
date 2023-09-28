@@ -2,7 +2,7 @@
 using RockSnifferLib.Logging;
 using RockSnifferLib.Sniffing;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
@@ -29,7 +29,7 @@ namespace RockSniffer.RPC
         }
 
         private HttpClient httpClient = new HttpClient();
-        private Dictionary<string, (string URL, string DisplayText)> cache = new Dictionary<string, (string URL, string DisplayText)>();
+        private ConcurrentDictionary<string, (string URL, string DisplayText)?> cache = new ConcurrentDictionary<string, (string URL, string DisplayText)?>();
 
 
         public AlbumArtResolver() {
@@ -44,24 +44,8 @@ namespace RockSniffer.RPC
         {
             string key = $"{songInfo.artistName}|{songInfo.albumName}";
 
-            // Use double-checked locking pattern, since there are multiple threads
-            if (!cache.ContainsKey(key))
-                lock (this)
-                    if (!cache.ContainsKey(key))
-                    {
-                        //Logger.Log("AlbumArtResolver::Get : Cache miss on {0}", key);
-                        if (GetFromAppleMusic(songInfo) is (string, string) validResult)
-                        {
-                            cache[key] = validResult;
-                        }
-                    }
+            cache.AddOrUpdate(key, (key) => GetFromAppleMusic(songInfo), (key, value) => value);
 
-            if (!cache.ContainsKey(key))
-            {
-                Logger.Log("AlbumArtResolver::Get : Could not find any album art for '{0}'", key);
-                return null;
-                
-            }
             return cache[key];
         }
 
