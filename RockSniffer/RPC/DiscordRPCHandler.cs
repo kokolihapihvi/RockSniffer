@@ -7,6 +7,7 @@ using RockSnifferLib.Sniffing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 
 namespace RockSniffer.RPC
 {
@@ -17,6 +18,9 @@ namespace RockSniffer.RPC
         private SnifferState state = SnifferState.NONE;
         private SongDetails songdetails;
         private AlbumArtResolver? albumArtResolver;
+
+        private System.Timers.Timer timer;
+        private bool needsUpdate = false;
 
         private readonly Dictionary<string, string> gcadeGames = new Dictionary<string, string>()
         {
@@ -63,6 +67,18 @@ namespace RockSniffer.RPC
             sniffer.OnStateChanged += Sniffer_OnStateChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
             sniffer.OnSongChanged += Sniffer_OnSongChanged;
+
+            // Set up presence update timer
+            timer = new System.Timers.Timer(Program.config.rpcSettings.updatePeriodMs);
+            timer.Elapsed += CondUpdatePresence;
+            timer.AutoReset = true;
+            timer.Enabled = true;
+        }
+
+        internal void CondUpdatePresence(Object source, ElapsedEventArgs e) {
+            if (needsUpdate)
+                lock (this)
+                    UpdatePresence();
         }
 
         internal void UpdatePresence()
@@ -208,20 +224,28 @@ namespace RockSniffer.RPC
 
         private void Sniffer_OnSongChanged(object sender, RockSnifferLib.Events.OnSongChangedArgs e)
         {
-            songdetails = e.songDetails;
-            UpdatePresence();
+            lock (this) {
+                songdetails = e.songDetails;
+            }
+            needsUpdate = true;
         }
 
         private void Sniffer_OnMemoryReadout(object sender, RockSnifferLib.Events.OnMemoryReadoutArgs e)
         {
-            readout = e.memoryReadout;
-            UpdatePresence();
+            lock (this)
+            {
+                readout = e.memoryReadout;
+            }
+            needsUpdate = true;
         }
 
         private void Sniffer_OnStateChanged(object sender, RockSnifferLib.Events.OnStateChangedArgs e)
         {
-            state = e.newState;
-            UpdatePresence();
+            lock (this)
+            {
+                state = e.newState;
+            }
+            needsUpdate = true;
         }
 
         public void Dispose()
