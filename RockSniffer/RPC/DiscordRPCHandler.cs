@@ -20,7 +20,7 @@ namespace RockSniffer.RPC
         private AlbumArtResolver? albumArtResolver;
 
         private System.Timers.Timer timer;
-        private bool needsUpdate = false;
+        private readonly object membersLock = new object();
 
         private readonly Dictionary<string, string> gcadeGames = new Dictionary<string, string>()
         {
@@ -69,19 +69,17 @@ namespace RockSniffer.RPC
             sniffer.OnSongChanged += Sniffer_OnSongChanged;
 
             // Set up presence update timer
-            timer = new System.Timers.Timer(Program.config.rpcSettings.updatePeriodMs);
+            timer = new System.Timers.Timer(Math.Max(250, Program.config.rpcSettings.updatePeriodMs));
             timer.Elapsed += CondUpdatePresence;
             timer.AutoReset = true;
             timer.Enabled = true;
         }
 
         internal void CondUpdatePresence(Object source, ElapsedEventArgs e) {
-            if (needsUpdate)
-                lock (this)
-                {
-                    UpdatePresence();
-                    needsUpdate = false;
-                }
+            lock (membersLock)
+            {
+                UpdatePresence();
+            }
         }
 
         internal void UpdatePresence()
@@ -227,27 +225,24 @@ namespace RockSniffer.RPC
 
         private void Sniffer_OnSongChanged(object sender, RockSnifferLib.Events.OnSongChangedArgs e)
         {
-            lock (this) {
+            lock (membersLock) {
                 songdetails = e.songDetails;
-                needsUpdate = true;
             }
         }
 
         private void Sniffer_OnMemoryReadout(object sender, RockSnifferLib.Events.OnMemoryReadoutArgs e)
         {
-            lock (this)
+            lock (membersLock)
             {
                 readout = e.memoryReadout;
-                needsUpdate = true;
             }
         }
 
         private void Sniffer_OnStateChanged(object sender, RockSnifferLib.Events.OnStateChangedArgs e)
         {
-            lock (this)
+            lock (membersLock)
             {
                 state = e.newState;
-                needsUpdate = true;
             }
         }
 
