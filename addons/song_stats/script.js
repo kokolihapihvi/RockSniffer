@@ -60,7 +60,8 @@ var visible = false;
 
 //Remember previous percentage for the animation
 var prev_accuracy = 0;
-var prev_potential = 0;
+var prev_min = 0;
+var prev_max = 0;
 
 function refresh() {
 	//JSON query the addon service
@@ -79,20 +80,27 @@ function refresh() {
 				return;
 			}
 
+			var arrangement = details.arrangements.find(arrangement => arrangement.arrangementID === readout.arrangementID);
+			var totalNotes = arrangement.totalNotes;
+
+			//Hits
+			var hits = readout.noteData.TotalNotesHit;
+
+			//Misses
+			var misses = readout.noteData.TotalNotesMissed;
+
 			//Accuracy
 			var accuracy = readout.noteData.Accuracy;
+
+			//Min
+			var min = hits / totalNotes * 100;
+
+			//Max
+			var max = (totalNotes - misses) / totalNotes * 100;
 
 			//Streak
 			var streak = readout.noteData.CurrentHitStreak;
 			var streak_max = readout.noteData.HighestHitStreak;
-
-			//Misses
-			var misses = readout.noteData.TotalNotesMissed;
-			
-			//Potential
-			var arrangement = details.arrangements.find(arrangement => arrangement.arrangementID === readout.arrangementID);
-			var totalNotes = arrangement.totalNotes;
-			var potential = (totalNotes - misses) / totalNotes * 100;
 
 			if(animate_percentage) {
 				//Format it and apply it to the element
@@ -107,8 +115,19 @@ function refresh() {
 					}
 				}, pollrate);
 
-				$("h1.accuracy_potential").prop("number", prev_potential).finish().animateNumber({
-					number: potential,
+				$("h1.accuracy_min").prop("number", prev_min).finish().animateNumber({
+					number: min,
+					numberStep: function(now, tween) {
+						$(tween.elem).textStroke(now.toFixed(2)+"%");
+
+						if(animate_percentage_color) {
+							$(tween.elem).css("color", lerpColors(now/100));
+						}
+					}
+				}, pollrate);
+
+				$("h1.accuracy_max").prop("number", prev_max).finish().animateNumber({
+					number: max,
 					numberStep: function(now, tween) {
 						$(tween.elem).textStroke(now.toFixed(2)+"%");
 
@@ -120,10 +139,12 @@ function refresh() {
 
 				//Remember previous accuracy
 				prev_accuracy = accuracy;
-				prev_potential = potential;
+				prev_min = min;
+				prev_max = max;
 			} else {
 				$("h1.accuracy_percentage").textStroke(accuracy.toFixed(2)+"%");
-				$("h1.accuracy_potential").textStroke(potential.toFixed(2)+"%");
+				$("h1.accuracy_min").textStroke(min.toFixed(2)+"%");
+				$("h1.accuracy_max").textStroke(max.toFixed(2)+"%");
 			}
 
 			$("h1.streak").textStroke(streak);
