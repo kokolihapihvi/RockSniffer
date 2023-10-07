@@ -61,4 +61,6 @@ jobs:
           prerelease: true
           draft: true
           generateReleaseNotes: true
+          removeArtifacts: true
+          replacesArtifacts: true
           artifacts: "*.zip"
