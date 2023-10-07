@@ -16,7 +16,9 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Publish
-        run: dotnet publish -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false
+        run: |
+          dotnet publish -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true
+          cp ./addons ./publish
       - uses: actions/upload-artifact@v3
         with:
          name: publish
