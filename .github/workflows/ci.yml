@@ -18,6 +18,7 @@ jobs:
       - name: Publish
         run: |
           dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true
+          cp -r ./addons ./publish/addons
       - uses: actions/upload-artifact@v3
         with:
          name: publish
