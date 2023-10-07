@@ -22,7 +22,7 @@ jobs:
           dotnet build --configuration Release --no-restore
       - name: Publish
         env:
-          SNIFFER_VERSION=${{ steps.build.outputs.SNIFFER_VERSION }}
+          SNIFFER_VERSION: ${{ steps.build.outputs.SNIFFER_VERSION }}
         run: |
           dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true
           cp -r ./addons ./publish/addons
