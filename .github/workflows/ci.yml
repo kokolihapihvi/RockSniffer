@@ -14,7 +14,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: |
+          echo "SNIFFER_VERSION=$(sed -nr 's/^.*const string version.*"(.*)".*$/\1/pi' ./RockSniffer/Program.cs)" >> "$GITHUB_ENV"
+          echo "Sniffer version: $SNIFFER_VERSION"
+          dotnet build --configuration Release --no-restore
       - name: Publish
         run: |
           dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true
