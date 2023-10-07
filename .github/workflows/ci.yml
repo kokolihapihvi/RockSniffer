@@ -1,4 +1,4 @@
-on: [push, pull_request]
+on: [ push ]
 
 jobs:
   build:
@@ -27,7 +27,32 @@ jobs:
           dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true
           cp -r ./addons ./publish/addons
           (cd ./publish && zip -r "$OLDPWD/RockSniffer $SNIFFER_VERSION.zip" .)
+          echo "$SNIFFER_VERSION" > VERSION
       - uses: actions/upload-artifact@v3
         with:
-         name: RockSniffer-release
-         path: ./RockSniffer ${{ steps.build.outputs.SNIFFER_VERSION }}.zip
+          name: RockSniffer-release
+          path: |
+            VERSION
+            ./RockSniffer ${{ steps.build.outputs.SNIFFER_VERSION }}.zip
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: RockSniffer-release
+      - name: Get version
+        id: get-version
+        run: |
+          echo "SNIFFER_VERSION=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+      - uses: ncipollo/release-action@v1
+        with:
+          name: v${{ steps.get-version.outputs.SNIFFER_VERSION }}
+          tag: v${{ steps.get-version.outputs.SNIFFER_VERSION }}
+          updateOnlyUnreleased: true
+          commit: ${{ github.sha }}
+          prerelease: true
+          draft: true
+          generateReleaseNotes: true
+          artifacts: "*.zip"
