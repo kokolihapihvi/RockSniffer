@@ -21,10 +21,13 @@ jobs:
           echo "SNIFFER_VERSION=$VERSION" >> "$GITHUB_OUTPUT"
           dotnet build --configuration Release --no-restore
       - name: Publish
+        env:
+          SNIFFER_VERSION=${{ steps.build.outputs.SNIFFER_VERSION }}
         run: |
           dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true
           cp -r ./addons ./publish/addons
+          (cd ./publish && zip -r "$OLDPWD/RockSniffer $SNIFFER_VERSION.zip" .)
       - uses: actions/upload-artifact@v3
         with:
-         name: RockSniffer ${{ steps.build.outputs.SNIFFER_VERSION }}
-         path: ./publish
+         name: RockSniffer-release
+         path: ./RockSniffer ${{ steps.build.outputs.SNIFFER_VERSION }}.zip
