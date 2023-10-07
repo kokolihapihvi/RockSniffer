@@ -14,7 +14,7 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release --no-restore --runtime win-x64 --framework=net6.0-windows
       - name: Publish
         run: |
           dotnet publish RockSniffer --no-build -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true
