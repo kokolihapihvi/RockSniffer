@@ -36,6 +36,8 @@ jobs:
             ./RockSniffer ${{ steps.build.outputs.SNIFFER_VERSION }}.zip
   release:
     runs-on: ubuntu-latest
+    needs: 
+      - build
     permissions:
       contents: write
     steps:
