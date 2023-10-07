@@ -14,4 +14,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build --configuration Release --no-restore
+      - name: Publish
+        run: dotnet publish -c Release -o ./publish -r win-x64
+      - uses: actions/upload-artifact@v3
+        with:
+         name: publish
+         path: ./publish
