@@ -14,9 +14,11 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
+        id: build
         run: |
-          echo "SNIFFER_VERSION=$(sed -nr 's/^.*const string version.*"(.*)".*$/\1/pi' ./RockSniffer/Program.cs)" >> "$GITHUB_ENV"
-          echo "Sniffer version: $SNIFFER_VERSION"
+          VERSION=$(sed -nr 's/^.*const string version.*"(.*)".*$/\1/pi' ./RockSniffer/Program.cs)
+          echo "Sniffer version: $VERSION"
+          echo "SNIFFER_VERSION=$VERSION" >> "$GITHUB_OUTPUT"
           dotnet build --configuration Release --no-restore
       - name: Publish
         run: |
@@ -24,5 +26,5 @@ jobs:
           cp -r ./addons ./publish/addons
       - uses: actions/upload-artifact@v3
         with:
-         name: publish
+         name: RockSniffer ${{ steps.build.outputs.SNIFFER_VERSION }}
          path: ./publish
