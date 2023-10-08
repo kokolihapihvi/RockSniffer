@@ -62,6 +62,7 @@ jobs:
           draft: true
           generateReleaseNotes: true
           omitBodyDuringUpdate: true
+          omitDraftDuringUpdate: true
           removeArtifacts: true
           replacesArtifacts: true
           artifacts: "*.zip"
