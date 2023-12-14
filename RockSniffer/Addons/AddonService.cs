@@ -48,13 +48,22 @@ namespace RockSniffer.Addons
                 return true;
             }
 
-            // If running in development the path is different
+            // If running in rock buddy development the path is different
             path = "../../../../../addons";
             if (Directory.Exists(path))
             {
                 AddonsPath = path;
                 return true;
             }
+#if DEBUG
+            // If running in debug the path is different
+            path = "../../../../addons";
+            if (Directory.Exists(path))
+            {
+                AddonsPath = path;
+                return true;
+            }
+#endif
 
             return false;
         }
