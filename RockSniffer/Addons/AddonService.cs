@@ -47,14 +47,14 @@ namespace RockSniffer.Addons
                 AddonsPath = path;
                 return true;
             }
-#if DEBUG // Find addons from the git root, if running in debug mode for development
+
+            // If running in development the path is different
             path = "../../../../addons";
             if (Directory.Exists(path))
             {
                 AddonsPath = path;
                 return true;
             }
-#endif
 
             return false;
         }
