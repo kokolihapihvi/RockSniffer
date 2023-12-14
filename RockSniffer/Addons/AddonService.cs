@@ -49,7 +49,7 @@ namespace RockSniffer.Addons
             }
 
             // If running in development the path is different
-            path = "../../../../addons";
+            path = "../../../../../addons";
             if (Directory.Exists(path))
             {
                 AddonsPath = path;
