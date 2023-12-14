@@ -40,7 +40,7 @@ namespace RockSniffer.Addons
         /// </summary>
         private bool FindAddons()
         {
-            var path = "./addons";
+            var path = "../addons/RockSniffer/";
 
             if (Directory.Exists(path))
             {
