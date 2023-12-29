@@ -13,7 +13,7 @@ div.content {
 	font-family: Arial;
 	display: flex;
 	gap: 50px;
-	align-items: center;
+	justify-content: center;
 }
 
 /* This applies to the information text */
@@ -42,5 +42,5 @@ h1 {
 }
 
 body {
-	background-color: rgba(24, 25, 26, 255);
+	background-color: transparent;
 }
