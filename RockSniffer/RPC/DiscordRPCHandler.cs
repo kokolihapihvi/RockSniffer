@@ -7,6 +7,7 @@ using RockSnifferLib.Sniffing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 
 namespace RockSniffer.RPC
 {
@@ -16,6 +17,10 @@ namespace RockSniffer.RPC
         private RSMemoryReadout readout;
         private SnifferState state = SnifferState.NONE;
         private SongDetails songdetails;
+        private AlbumArtResolver? albumArtResolver;
+
+        private System.Timers.Timer timer;
+        private readonly object membersLock = new object();
 
         private readonly Dictionary<string, string> gcadeGames = new Dictionary<string, string>()
         {
@@ -38,6 +43,11 @@ namespace RockSniffer.RPC
         {
             client = new DiscordRpcClient(Program.config.rpcSettings.client_id);
 
+            if (Program.config.rpcSettings.enableCoverArt)
+            {
+                 albumArtResolver = new AlbumArtResolver();
+            }
+
             //Set the logger
             client.Logger = new ConsoleLogger() { Level = LogLevel.Warning };
 
@@ -57,6 +67,19 @@ namespace RockSniffer.RPC
             sniffer.OnStateChanged += Sniffer_OnStateChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
             sniffer.OnSongChanged += Sniffer_OnSongChanged;
+
+            // Set up presence update timer
+            timer = new System.Timers.Timer(Math.Max(250, Program.config.rpcSettings.updatePeriodMs));
+            timer.Elapsed += CondUpdatePresence;
+            timer.AutoReset = true;
+            timer.Enabled = true;
+        }
+
+        internal void CondUpdatePresence(Object source, ElapsedEventArgs e) {
+            lock (membersLock)
+            {
+                UpdatePresence();
+            }
         }
 
         internal void UpdatePresence()
@@ -70,6 +93,17 @@ namespace RockSniffer.RPC
             //If we have a valid song and are playing a song
             if ((songdetails != null && readout != null) && (state == SnifferState.SONG_STARTING || state == SnifferState.SONG_PLAYING || state == SnifferState.SONG_ENDING))
             {
+                try
+                {
+                    // Get the appropriate album cover
+                    if (albumArtResolver != null && albumArtResolver.Get(songdetails) is (string resURL, string resDisplayText) resultTuple)
+                    {
+                        rp.Assets.LargeImageKey = resURL;
+                        rp.Assets.LargeImageText = resDisplayText.Substring(0, Math.Min(resDisplayText.Length, 128));
+                    }
+                }
+                catch (Exception ex) { Logger.LogException(ex); }
+
                 //Get the arrangement based on the arrangement id
                 var arrangement = songdetails.arrangements.FirstOrDefault(x => x.arrangementID == readout.arrangementID);
 
@@ -118,6 +152,9 @@ namespace RockSniffer.RPC
                         rp.Assets.SmallImageText = $"{section.name} | {rp.Assets.SmallImageText}";
                     }
                 }
+
+                if (string.IsNullOrEmpty(rp.Assets.SmallImageKey) && rp.Assets.LargeImageKey != "rocksmith")
+                    rp.Assets.SmallImageKey = "rocksmith";
             }
             else
             {
@@ -188,20 +225,25 @@ namespace RockSniffer.RPC
 
         private void Sniffer_OnSongChanged(object sender, RockSnifferLib.Events.OnSongChangedArgs e)
         {
-            songdetails = e.songDetails;
-            UpdatePresence();
+            lock (membersLock) {
+                songdetails = e.songDetails;
+            }
         }
 
         private void Sniffer_OnMemoryReadout(object sender, RockSnifferLib.Events.OnMemoryReadoutArgs e)
         {
-            readout = e.memoryReadout;
-            UpdatePresence();
+            lock (membersLock)
+            {
+                readout = e.memoryReadout;
+            }
         }
 
         private void Sniffer_OnStateChanged(object sender, RockSnifferLib.Events.OnStateChangedArgs e)
         {
-            state = e.newState;
-            UpdatePresence();
+            lock (membersLock)
+            {
+                state = e.newState;
+            }
         }
 
         public void Dispose()

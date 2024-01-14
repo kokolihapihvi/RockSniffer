@@ -14,7 +14,8 @@ namespace RockSniffer.Addons.Storage
             {
                 SQLiteConnection.CreateFile("addonstorage.sqlite");
             }
-
+            
+            Environment.SetEnvironmentVariable("SQLite_ConfigureDirectory", ".");
             Connection = new SQLiteConnection("Data Source=addonstorage.sqlite;");
             Connection.Open();
         }

@@ -1,0 +1,68 @@
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        id: build
+        run: |
+          VERSION=$(sed -nr 's/^.*const string version.*"(.*)".*$/\1/pi' ./RockSniffer/Program.cs)
+          echo "Sniffer version: $VERSION"
+          echo "SNIFFER_VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          dotnet build --configuration Release --no-restore
+      - name: Publish
+        env:
+          SNIFFER_VERSION: ${{ steps.build.outputs.SNIFFER_VERSION }}
+        run: |
+          dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          cp -r ./addons ./publish/addons
+          (cd ./publish && zip -r "$OLDPWD/RockSniffer $SNIFFER_VERSION.zip" .)
+          echo "$SNIFFER_VERSION" > VERSION
+      - uses: actions/upload-artifact@v3
+        with:
+          name: RockSniffer-release
+          path: |
+            VERSION
+            ./RockSniffer ${{ steps.build.outputs.SNIFFER_VERSION }}.zip
+  release:
+    runs-on: ubuntu-latest
+    needs: 
+      - build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: RockSniffer-release
+      - name: Get version
+        id: get-version
+        run: |
+          echo "SNIFFER_VERSION=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+      - uses: ncipollo/release-action@v1
+        with:
+          name: v${{ steps.get-version.outputs.SNIFFER_VERSION }}
+          tag: v${{ steps.get-version.outputs.SNIFFER_VERSION }}
+          allowUpdates: true
+          updateOnlyUnreleased: true
+          commit: ${{ github.sha }}
+          prerelease: true
+          draft: true
+          generateReleaseNotes: true
+          omitBodyDuringUpdate: true
+          omitDraftDuringUpdate: true
+          removeArtifacts: true
+          replacesArtifacts: true
+          artifacts: "*.zip"
