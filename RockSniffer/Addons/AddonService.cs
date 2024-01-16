@@ -98,6 +98,7 @@ var port = {settings.port};
             sniffer.OnSongChanged += listener.OnCurrentSongChanged;
             sniffer.OnMemoryReadout += listener.OnMemoryReadout;
             sniffer.OnStateChanged += listener.OnStateChanged;
+            sniffer.OnPsarcProcessingCountChanged += listener.OnPsarcProcessingCountChanged;
         }
     }
 }
