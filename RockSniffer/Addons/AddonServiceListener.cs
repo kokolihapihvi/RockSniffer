@@ -27,6 +27,21 @@ namespace RockSniffer.Addons
             public SongDetails songDetails;
             public int psarcProcessingCount = 0;
 
+            public bool RocksmithFound
+            {
+                get
+                {
+                    if (Program.rsProcess != null)
+                    {
+                        return Program.rsProcess.Responding;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+
             public string Version
             {
                 get
