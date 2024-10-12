@@ -13,7 +13,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
@@ -27,7 +27,7 @@ jobs:
         env:
           SNIFFER_VERSION: ${{ steps.build.outputs.SNIFFER_VERSION }}
         run: |
-          dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net6.0-windows --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          dotnet publish RockSniffer -c Release -o ./publish --runtime win-x64 --framework=net8.0 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           cp -r ./addons ./publish/addons
           (cd ./publish && zip -r "$OLDPWD/RockSniffer $SNIFFER_VERSION.zip" .)
           echo "$SNIFFER_VERSION" > VERSION
