@@ -114,7 +114,7 @@ namespace RockSniffer.RPC
                 rp.State = $"by {songdetails.artistName}";
 
                 //Set song timer
-                rp.Timestamps = new Timestamps(DateTime.UtcNow, DateTime.UtcNow.AddSeconds(songdetails.songLength - readout.songTimer));
+                rp.Timestamps = new Timestamps(DateTime.UtcNow.AddSeconds(-readout.songTimer), DateTime.UtcNow.AddSeconds(songdetails.songLength - readout.songTimer));
 
                 //Calculate accuracy
                 float accuracy = readout.noteData.Accuracy;
