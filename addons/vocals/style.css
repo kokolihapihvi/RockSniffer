@@ -1,0 +1,16 @@
+body {
+	font-family: 'Verdana', sans-serif;
+	font-size: 36px;
+	padding: 4px;
+	margin: 0;
+	text-align: left;
+	text-shadow: 4px 4px 4px black;
+}
+
+div.vocal {
+	color: #009999;
+}
+
+span.lyric {
+	color: #004d4d;
+}
