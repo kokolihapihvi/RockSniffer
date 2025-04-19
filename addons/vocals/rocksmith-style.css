@@ -17,17 +17,12 @@ body {
 	text-align: left;
 }
 
-body {
-    background-color: var(--darkest); /* Dark background for the list */
-    opacity: 0.92; /* Instead of using a shadow, i'll give it a str0ng opaque black background. */
-}
-
 /* All text */
 div.vocal {   
-    color: var(--rocksmith-grey); /* Default text color for list items */	   
+    color: var(--rocksmith-grey); 
 }
 
 /* Active text */
 span.lyric {
-	color: var(--rocksmith-blue); /* Default text color for list items */
+	color: var(--rocksmith-blue);
 }

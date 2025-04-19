@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
 :root {
     --kick-green: #53fc18; /* Neon Green */
-    --darkest: #0b0e0f; /* dark black */
+    --darkest: #0b0e0f; /* dark black: rgb: 11, 14, 15*/
     --darker: #191b1f; /* black */
     --dark: #24272c; /* light black */
     --gray: #474f54; /* gray */   
@@ -19,14 +19,12 @@ body {
 	text-align: left;
 }
 
-body {
-    background-color: var(--darkest); /* Dark background for the widget */
-    opacity: 0.92; /* Instead of using a shadow, i'll give it a strong opaque black background. */
-}
-
 /* All text */
-div.vocal {   
+div.vocal {       
+    padding-left: 16px;
+    border-radius: 0 20px 20px 0;    
     color: var(--gray);	   
+    background-color: rgba(11, 14, 15, 0.92);
 }
 
 /* Active text */
