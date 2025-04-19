@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
 :root {
-    --rocksmith-blue: #2dd9ee; 
+    --rocksmith-blue: #1189cd; 
     --darkest: #0b0e0f; /* dark black */
     --rocksmith-grey: #424242;  
   }
@@ -8,13 +8,14 @@
 body {
 	font-family: "Nunito Sans", sans-serif;
     font-optical-sizing: auto;
-    font-weight: 400;
+    font-weight: 800;    
     font-style: normal;
     font-variation-settings: "wdth" 100, "YTLC" 500;
 	font-size: 36px;
 	padding: 4px;
 	margin: 0;
 	text-align: left;
+    text-shadow: 2px 2px 2px black;
 }
 
 /* All text */
