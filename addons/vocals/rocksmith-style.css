@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+:root {
+    --rocksmith-blue: #2dd9ee; 
+    --darkest: #0b0e0f; /* dark black */
+    --rocksmith-grey: #424242;  
+  }
+
+body {
+	font-family: "Nunito Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "wdth" 100, "YTLC" 500;
+	font-size: 36px;
+	padding: 4px;
+	margin: 0;
+	text-align: left;
+}
+
+body {
+    background-color: var(--darkest); /* Dark background for the list */
+    opacity: 0.92; /* Instead of using a shadow, i'll give it a str0ng opaque black background. */
+}
+
+/* All text */
+div.vocal {   
+    color: var(--rocksmith-grey); /* Default text color for list items */	   
+}
+
+/* Active text */
+span.lyric {
+	color: var(--rocksmith-blue); /* Default text color for list items */
+}

@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+:root {
+    --kick-green: #53fc18; /* Neon Green */
+    --darkest: #0b0e0f; /* dark black */
+    --darker: #191b1f; /* black */
+    --dark: #24272c; /* light black */
+    --gray: #474f54; /* gray */   
+}
+  
+body {
+	font-family: "Nunito Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "wdth" 100, "YTLC" 500;
+	font-size: 36px;
+	padding: 4px;
+	margin: 0;
+	text-align: left;
+}
+
+body {
+    background-color: var(--darkest); /* Dark background for the widget */
+    opacity: 0.92; /* Instead of using a shadow, i'll give it a strong opaque black background. */
+}
+
+/* All text */
+div.vocal {   
+    color: var(--gray);	   
+}
+
+/* Active text */
+span.lyric {
+	color: var(--kick-green);
+}
