@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+body {
+	font-family: 'Verdana', sans-serif;
+	font-size: 36px;
+	padding: 4px;
+	margin: 0;
+	text-align: left;
+	text-shadow: 4px 4px 4px black;
+}
+
+/* Active text */
+div.vocal {
+	color: #009999;
+}
+
+/* All text */
+span.lyric {
+	color: #004d4d;
+}
