@@ -1,0 +1,46 @@
+/* This applies to all the text */
+body {
+	font-family: arial;
+}
+
+/* This is the popup container, hide it by default */
+div.popup {
+	display: none;
+}
+
+/* This is the content of the popup, the section containing the text "ACCURACY:" */
+div.content {
+	font-family: Arial;
+	display: flex;
+	gap: 50px;
+	justify-content: center;
+}
+
+/* This applies to the information text */
+h1 {
+	margin: 0px;
+	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	color: white;
+}
+
+/* Classes for outlined stroke text */
+.stroke {
+	position: relative;
+	z-index: 0;
+}
+
+.stroke:before {
+	position: absolute;
+	content: attr(data-stroke);
+	-webkit-text-stroke: 0.1em #000000;
+	z-index: -1;
+}
+
+.section {
+	display: flex;
+	gap: 5px;
+}
+
+body {
+	background-color: transparent;
+}

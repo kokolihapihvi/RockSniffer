@@ -25,6 +25,22 @@ namespace RockSniffer.Addons
             public SnifferState currentState = SnifferState.NONE;
             public RSMemoryReadout memoryReadout;
             public SongDetails songDetails;
+            public int psarcProcessingCount = 0;
+
+            public bool RocksmithFound
+            {
+                get
+                {
+                    if (Program.rsProcess != null)
+                    {
+                        return Program.rsProcess.Responding;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
 
             public string Version
             {
@@ -77,6 +93,11 @@ namespace RockSniffer.Addons
         internal void OnStateChanged(object sender, OnStateChangedArgs args)
         {
             jsResp.currentState = args.newState;
+        }
+
+        internal void OnPsarcProcessingCountChanged(object sender, OnPsarcProcessingCountChangedArgs args)
+        {
+            jsResp.psarcProcessingCount = args.count;
         }
 
         private void Listen()

@@ -40,14 +40,33 @@ namespace RockSniffer.Addons
         /// </summary>
         private bool FindAddons()
         {
-            var path = "./addons";
+            // Running Rock Buddy in release mode
+            var path = "../addons/RockSniffer";
 
             if (Directory.Exists(path))
             {
                 AddonsPath = path;
                 return true;
             }
-#if DEBUG // Find addons from the git root, if running in debug mode for development
+
+            // Running Rock Buddy in dev mode
+            path = "../../../../../addons";
+            if (Directory.Exists(path))
+            {
+                AddonsPath = path;
+                return true;
+            }
+
+            // Running Rocksniffer in standalone release mode
+            path = "./config";
+            if (Directory.Exists(path))
+            {
+                AddonsPath = path;
+                return true;
+            }
+
+#if DEBUG
+            // If running in debug the path is different
             path = "../../../../addons";
             if (Directory.Exists(path))
             {
@@ -79,6 +98,7 @@ var port = {settings.port};
             sniffer.OnSongChanged += listener.OnCurrentSongChanged;
             sniffer.OnMemoryReadout += listener.OnMemoryReadout;
             sniffer.OnStateChanged += listener.OnStateChanged;
+            sniffer.OnPsarcProcessingCountChanged += listener.OnPsarcProcessingCountChanged;
         }
     }
 }
