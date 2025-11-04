@@ -10,6 +10,7 @@ using RockSnifferLib.RSHelpers;
 using RockSnifferLib.RSHelpers.NoteData;
 using RockSnifferLib.Sniffing;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -23,7 +24,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.5.0-buddy";
+        internal const string version = "0.6.3-buddy";
 
         internal static ICache cache;
         internal static Config config;
@@ -238,21 +239,32 @@ namespace RockSniffer
 
             Logger.Log("Rocksmith found! Sniffing...");
 
+            var rocksmithEditionHashes = new Dictionary<string, RSEdition>
+            {
+                { "HtUXPbqP7r9hrd5sRV8Seg==", RSEdition.Remastered },
+                { "KM0Hh0ZvOd/G3nf3dhAiBg==", RSEdition.Remastered_Learn_And_Play },
+                { "GxT+/TXLpUFys+Cysek8zg==", RSEdition.Remastered_Just_In_Case_We_Need_It_Beta },
+            };
+
             //Check rocksmith executable hash to make sure its the correct version
             string hash = PSARCUtil.GetFileHash(new FileInfo(rsProcess.MainModule.FileName));
 
             Logger.Log($"Rocksmith executable hash: {hash}");
 
-            if (!hash.Equals("HtUXPbqP7r9hrd5sRV8Seg=="))
+            if (!rocksmithEditionHashes.ContainsKey(hash))
             {
                 Logger.LogError("Executable hash does not match expected hash, make sure you have the correct version");
                 Logger.Log("Press any key to exit");
                 Console.ReadKey();
                 Environment.Exit(0);
             }
+            
+            var edition = rocksmithEditionHashes[hash];
+            
+            Logger.Log("Detected Rocksmith edition: {0}", edition);
 
             //Initialize file handle reader and memory reader
-            Sniffer sniffer = new Sniffer(rsProcess, cache, config.snifferSettings);
+            Sniffer sniffer = new Sniffer(rsProcess, cache, edition, config.snifferSettings);
 
             //Listen for events
             sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;
