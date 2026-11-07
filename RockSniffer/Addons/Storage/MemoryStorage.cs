@@ -4,34 +4,34 @@ namespace RockSniffer.Addons.Storage
 {
     public class MemoryStorage : IAddonStorage
     {
-        public Dictionary<string, Dictionary<string, string>> storage = new Dictionary<string, Dictionary<string, string>>();
+        private readonly Dictionary<string, Dictionary<string, string>> storage = new Dictionary<string, Dictionary<string, string>>();
 
-        public string GetValue(string addonid, string key)
+        public string? GetValue(string addonId, string key)
         {
-            if (storage.ContainsKey(addonid))
+            if (storage.ContainsKey(addonId))
             {
-                if (storage[addonid].ContainsKey(key))
+                if (storage[addonId].ContainsKey(key))
                 {
-                    return storage[addonid][key];
+                    return storage[addonId][key];
                 }
             }
 
             return null;
         }
 
-        public void SetValue(string addonid, string key, string value)
+        public void SetValue(string addonId, string key, string value)
         {
-            if (!storage.ContainsKey(addonid))
+            if (!storage.ContainsKey(addonId))
             {
-                storage.Add(addonid, new Dictionary<string, string>());
+                storage.Add(addonId, new Dictionary<string, string>());
             }
 
-            if (!storage[addonid].ContainsKey(key))
+            if (!storage[addonId].ContainsKey(key))
             {
-                storage[addonid].Add(key, value);
+                storage[addonId].Add(key, value);
             }
 
-            storage[addonid][key] = value;
+            storage[addonId][key] = value;
         }
     }
 }

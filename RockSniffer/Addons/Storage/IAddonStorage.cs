@@ -2,7 +2,7 @@
 {
     public interface IAddonStorage
     {
-        string GetValue(string addonid, string key);
-        void SetValue(string addonid, string key, string value);
+        string? GetValue(string addonId, string key);
+        void SetValue(string addonId, string key, string value);
     }
 }
