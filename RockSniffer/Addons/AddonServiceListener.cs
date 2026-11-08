@@ -106,8 +106,6 @@ namespace RockSniffer.Addons
         {
             var request = context.Request;
             using var response = context.Response;
-            response.AddHeader("Access-Control-Allow-Methods", "*");
-            response.AddHeader("Access-Control-Allow-Origin", "*");
 
             try
             {
