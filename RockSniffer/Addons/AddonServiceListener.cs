@@ -215,9 +215,30 @@ namespace RockSniffer.Addons
             Respond(response, resp, contentType);
         }
 
-        private void RespondFile(HttpListenerResponse response, string filename, string contentType)
+        private void RespondFile(HttpListenerResponse response, string filePath)
         {
-            var fileBytes = File.ReadAllBytes(filename);
+            // Attempt to find a proper mime type for the file, so browsers accept the file in context
+            var contentType = Path.GetExtension(filePath).ToLowerInvariant() switch
+            {
+                ".htm" or ".html" => "text/html",
+                ".css" => "text/css",
+                ".js" => "text/javascript",
+                
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".svg" => "image/svg+xml",
+                ".webp" => "image/webp",
+                
+                ".woff" => "font/woff",
+                ".woff2" => "font/woff2",
+                ".ttf" => "font/ttf",
+                ".otf" => "font/otf",
+                
+                _ => "text/plain"
+            };
+            
+            var fileBytes = File.ReadAllBytes(filePath);
 
             Respond(response, fileBytes, contentType);
         }
@@ -272,65 +293,63 @@ namespace RockSniffer.Addons
                 return;
             }
 
-            try
+            // If the request hits a directory, attempt to resolve to index.html
+            if (Directory.Exists(requestedFilePath))
             {
-                //Serve file
-                if (Path.HasExtension(requestedFilePath))
+                // Path doesn't end with /, it's requesting the directory as a file
+                if (!requestPath.EndsWith('/'))
                 {
-                    Logger.Log("[AddonService] Serving {0}", requestedFilePath);
-
-                    if (!File.Exists(requestedFilePath))
-                    {
-                        Logger.LogError("[AddonService] File does not exist");
-                        RespondWithCode(response, HttpStatusCode.NotFound, "File Not Found");
-                        return;
-                    }
-
-                    var contentType = Path.GetExtension(requestedFilePath) switch
-                    {
-                        ".htm" or ".html" => "text/html",
-                        ".css" => "text/css",
-                        ".js" => "text/javascript",
-                        ".jpg" or ".jpeg" => "image/jpeg",
-                        ".png" => "image/png",
-                        _ => "text/plain"
-                    };
-
-                    RespondFile(response, requestedFilePath, contentType);
+                    // Redirect the browser into the directory
+                    response.Redirect(requestPath + "/");
+                    return;
                 }
-                else //Serve addon index
+
+                // Handle the /addons/ root, serve index of addons
+                if (requestedFilePath.Equals(addonsDirectory, StringComparison.OrdinalIgnoreCase))
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("<html><head><title>Rocksniffer Addon Index</title></head><body>");
-
-                    sb.Append("<h1>Available Addons:</h1>");
-
-                    sb.Append("<ul>");
-
-                    foreach (string dir in Directory.GetDirectories(AddonService.AddonsPath))
-                    {
-                        string addon = Path.GetFileName(dir);
-
-                        //Skip the deps folder
-                        if (addon.Equals("_deps")) continue;
-
-                        sb.Append($"<li><a href='/addons/{addon}/{addon}.html'>{Path.GetFileName(dir)}</a></li>");
-                    }
-
-                    sb.Append("</ul>");
-
-
-                    sb.Append("</body></html>");
-
-                    RespondText(response, sb.ToString(), "text/html");
+                    ServeAddonIndex(response);
+                    return;
                 }
+
+                // Requesting a directory, attempt to serve index.html from the directory
+                requestedFilePath = Path.Combine(requestedFilePath, "index.html");
             }
-            catch (Exception e)
+            
+            //Serve file
+            Logger.Log("[AddonService] Serving {0}", requestedFilePath);
+
+            if (!File.Exists(requestedFilePath))
             {
-                RespondWithCode(response, HttpStatusCode.InternalServerError, "Unable to serve addons, see console for details");
-                Logger.LogError("Unable to serve {0}", requestPath);
-                Logger.LogException(e);
+                Logger.LogError("[AddonService] File does not exist");
+                RespondWithCode(response, HttpStatusCode.NotFound, "File Not Found");
+                return;
             }
+
+            RespondFile(response, requestedFilePath);
+        }
+
+        private void ServeAddonIndex(HttpListenerResponse response)
+        {
+            Logger.Log("[AddonService] Serving addon index");
+            
+            var sb = new StringBuilder();
+            sb.Append("<html><head><title>Rocksniffer Addon Index</title></head><body>");
+            sb.Append("<h1>Available Addons:</h1>");
+
+            sb.Append("<ul>");
+            foreach (var dir in Directory.GetDirectories(AddonService.AddonsPath))
+            {
+                var addon = Path.GetFileName(dir);
+
+                //Skip the deps folder
+                if (addon.Equals("_deps")) continue;
+
+                sb.Append($"<li><a href='/addons/{Uri.EscapeDataString(addon)}/'>{WebUtility.HtmlEncode(addon)}</a></li>");
+            }
+            sb.Append("</ul>");
+            sb.Append("</body></html>");
+
+            RespondText(response, sb.ToString(), "text/html");
         }
     }
 }
