@@ -29,6 +29,7 @@ namespace RockSniffer.Addons
         }
 
         private HttpListener listener;
+        private IPAddress ip;
 
         private Thread listenThread;
 
@@ -44,6 +45,7 @@ namespace RockSniffer.Addons
         {
             this.settings = settings;
             this.storage = storage;
+            this.ip = ip;
 
             listener = new HttpListener();
             listener.Prefixes.Add($"http://{ip}:{settings.port}/");
@@ -79,19 +81,19 @@ namespace RockSniffer.Addons
         {
             while (true)
             {
-                var context = listener.GetContext();
-
-                if (memReadout != null && songDetails != null && songDetails.IsValid())
-                {
-                    jsResp.success = true;
-                }
-                else
-                {
-                    jsResp.success = false;
-                }
-
                 try
                 {
+                    var context = listener.GetContext();
+                    
+                    if (memReadout != null && songDetails != null && songDetails.IsValid())
+                    {
+                        jsResp.success = true;
+                    }
+                    else
+                    {
+                        jsResp.success = false;
+                    }
+
                     ServeClient(context);
                 }
                 catch (Exception e)
@@ -110,17 +112,43 @@ namespace RockSniffer.Addons
             try
             {
                 var method = HttpMethod.Parse(request.HttpMethod);
+                var url = request.Url;
+                if (url is null)
+                {
+                    RespondWithCode(response, HttpStatusCode.BadRequest);
+                    return;
+                }
+                
+                var host = url.Host;
+
+                // When the Host header does not match our configured listen address
+                if (!string.Equals(host, ip.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    // Redirect "localhost" to the configured ip:port address
+                    if (string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase))
+                    {
+                        response.StatusCode = (int)HttpStatusCode.TemporaryRedirect;
+                        response.RedirectLocation = $"http://{ip}:{settings.port}{url.PathAndQuery}";
+                        return;
+                    }
+
+                    // Host header did not match, and not using localhost
+                    RespondWithCode(response, HttpStatusCode.BadRequest);
+                    return;
+                }
+                
                 // Handle OPTIONS requests before anything
                 if (method == HttpMethod.Options)
                 {
                     RespondWithCode(response,  HttpStatusCode.NoContent);
                     return;
                 }
-                
-                var url = request.Url;
-                if (url is null)
+
+                // Only allow GET and PUT requests
+                if (method != HttpMethod.Get && method != HttpMethod.Put)
                 {
-                    RespondWithCode(response, HttpStatusCode.InternalServerError, "Missing url");
+                    response.AddHeader("Allow", "GET, PUT, OPTIONS");
+                    RespondWithCode(response, HttpStatusCode.MethodNotAllowed);
                     return;
                 }
 
