@@ -1,10 +1,19 @@
 let poller = new SnifferPoller({
-
+	
+	// Polling interval in ms
 	interval: 30,
+	
+	// Latency compensation in second
+	// If the lyrics are displayed with a delay, this value must be increased
+	// It depends on the power of your PC and the usage of your network
 	latencyCompensation: 0.3,
+
+	// Time in second for display vocal before lyric start
 	preVocalDisplayTime: 2,
-	postVocalDisplayTime: 0,
+	// Number of line displayed, This value can be exceeded when it sings fast
 	numberOfLinesDisplayed: 2,
+	
+	// Max note kepping, Use for compatibility with bad length of vocal
 	maxNoteKepping: 2.5,
 
 	// Line slide duration in seconds, 0 disables it
