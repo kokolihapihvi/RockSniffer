@@ -24,8 +24,16 @@ namespace RockSniffer.Configuration
             { "song_timer.txt", "%SONG_TIMER%/%SONG_LENGTH%" },
             { "notes.txt", "%NOTES_HIT%/%TOTAL_NOTES%" },
             { "accuracy.txt", "%CURRENT_ACCURACY%" },
-            { "streaks.txt", "%CURRENT_STREAK%/%HIGHEST_STREAK%" }
+            { "streaks.txt", "%CURRENT_STREAK%/%HIGHEST_STREAK%" },
+            { "game_stage.txt", "%GAME_STAGE%" },
+            { "game_state.txt", "%GAME_STATE%" },
+            { "path.txt", "%CURRENT_PATH%" },
+            { "current_section.txt", "%CURRENT_SECTION%" },
+            { "current_phrase.txt", "%CURRENT_PHRASE%" }
         };
+
+        // Also write song start, pause, resume and end to output/events.log
+        public bool enableEventLog = false;
 
         //Convert dictionary to array
         private void ConvertToArray()

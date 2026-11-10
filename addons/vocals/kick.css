@@ -1,4 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+/* Fonts are bundled so visitor IPs aren't sent to Google Fonts (GDPR, LG Muenchen 3 O 17493/20) */
+@font-face {
+    font-family: 'Nunito Sans';
+    src: url('../_deps/fonts/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf') format('truetype-variations');
+    font-weight: 200 1000;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Nunito Sans';
+    src: url('../_deps/fonts/NunitoSans-Italic-VariableFont_YTLC,opsz,wdth,wght.ttf') format('truetype-variations');
+    font-weight: 200 1000;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root {
     --kick-green: #53fc18; /* Neon Green */
     --darkest: #0b0e0f; /* dark black: rgb: 11, 14, 15*/

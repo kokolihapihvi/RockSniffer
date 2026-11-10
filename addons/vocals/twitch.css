@@ -1,0 +1,50 @@
+/* Fonts are bundled so visitor IPs aren't sent to Google Fonts (GDPR, LG Muenchen 3 O 17493/20) */
+@font-face {
+    font-family: 'Inter';
+    src: url('../_deps/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../_deps/fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype-variations');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+:root {
+    --twitch-purple: #9146FF;    /* Signature Purple */
+    --twitch-vibrant: #bf94ff;   /* Lighter Purple for readability */
+    --twitch-bg-dark: #0e0e10;   /* Twitch Body Background */
+    --twitch-bg-alt: #18181b;    /* Twitch Component Background */
+    --twitch-text-muted: #adadb8; /* Muted text color */
+    --white: #efeff1;
+}
+  
+body {
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 36px;
+    padding: 4px;
+    margin: 0;
+    text-align: left;
+    color: var(--white);
+}
+
+/* All text container */
+div.vocal {       
+    padding-left: 16px;
+    border-radius: 0 4px 4px 0;
+    color: var(--twitch-text-muted);     
+    background-color: rgba(14, 14, 16, 0.95);
+    border-left: 4px solid var(--twitch-purple);
+}
+
+/* Active text */
+span.lyric {
+    color: var(--twitch-vibrant);
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(145, 70, 255, 0.4); /* Subtle purple glow */
+}

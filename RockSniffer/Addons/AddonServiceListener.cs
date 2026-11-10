@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using RockSniffer.Addons.Storage;
 using RockSniffer.Configuration;
 using RockSnifferLib.Events;
@@ -21,6 +22,7 @@ namespace RockSniffer.Addons
         private class JsonResponse
         {
             public bool success = false;
+            [JsonConverter(typeof(StringEnumConverter))]
             public SnifferState currentState = SnifferState.NONE;
             public RSMemoryReadout memoryReadout;
             public SongDetails songDetails;

@@ -15,9 +15,11 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
+using RockSniffer.History;
 
 namespace RockSniffer
 {
@@ -30,8 +32,6 @@ namespace RockSniffer
 
         internal static Process rsProcess;
 
-        private static readonly Random random = new Random();
-
         private static readonly bool Is64Bits = (IntPtr.Size == 8);
 
         private static AddonService addonService;
@@ -40,6 +40,11 @@ namespace RockSniffer
         private RSMemoryReadout memReadout = new RSMemoryReadout();
         private SongDetails details = new SongDetails();
         private DiscordRPCHandler rpcHandler;
+        private string gameState;
+        private PlaythroughHistory playthroughHistory;
+
+        // Last content written to each output file
+        private Dictionary<string, string> _outputCache = new Dictionary<string, string>();
 
         static void Main(string[] args)
         {
@@ -100,6 +105,17 @@ namespace RockSniffer
 
             //Create directories
             Directory.CreateDirectory("output");
+
+            //Initialize playthrough history
+            if (config.historySettings.enableSqliteHistory || config.historySettings.enableCsvHistory)
+            {
+                playthroughHistory = new PlaythroughHistory(
+                    config.historySettings.enableSqliteHistory,
+                    config.historySettings.sqliteHistoryPath,
+                    config.historySettings.enableCsvHistory,
+                    config.historySettings.csvHistoryPath
+                );
+            }
 
             //Enable addon service if configured
             if (config.addonSettings.enableAddons)
@@ -275,6 +291,16 @@ namespace RockSniffer
             sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
 
+            RockSniffer.Logging.EventLogger.Attach(sniffer, config.outputSettings.enableEventLog);
+
+            //Add playthrough history listeners
+            if (playthroughHistory != null)
+            {
+                sniffer.OnSongSelected += (sender, args) => playthroughHistory.OnSongSelected();
+                sniffer.OnSongStarted += (sender, args) => playthroughHistory.OnSongStarted(args);
+                sniffer.OnSongEnded += (sender, args) => playthroughHistory.OnSongEnded(args);
+            }
+
             //Add RPC event listeners
             if (config.rpcSettings.enabled)
             {
@@ -294,15 +320,12 @@ namespace RockSniffer
                     break;
                 }
 
+                gameState = sniffer.currentState.ToString();
+
                 OutputDetails();
 
                 //GOTTA GO FAST
                 Thread.Sleep(1000);
-
-                if (random.Next(100) == 0)
-                {
-                    Console.WriteLine("*sniff sniff*");
-                }
             }
 
             sniffer.Stop();
@@ -350,7 +373,6 @@ namespace RockSniffer
 
         private void OutputDetails()
         {
-            //TODO: remember state of each file and only update the ones that have changed!
             foreach (OutputFile of in config.outputSettings.output)
             {
                 //Clone the output text format so we can replace strings in it without changing the original
@@ -363,6 +385,8 @@ namespace RockSniffer
                 outputtext = outputtext.Replace("%SONG_ALBUM%", details.albumName);
                 outputtext = outputtext.Replace("%ALBUM_YEAR%", details.albumYear.ToString());
                 outputtext = outputtext.Replace("%SONG_LENGTH%", FormatTime(details.songLength));
+                outputtext = outputtext.Replace("%GAME_STAGE%", memReadout.gameStage);
+                outputtext = outputtext.Replace("%GAME_STATE%", gameState);
 
                 //Toolkit details
                 if (details.toolkit != null)
@@ -372,6 +396,26 @@ namespace RockSniffer
                     outputtext = outputtext.Replace("%TOOLKIT_PACKAGE_VERSION%", details.toolkit.package_version);
                     outputtext = outputtext.Replace("%TOOLKIT_COMMENT%", details.toolkit.comment);
                 }
+
+                // Empty when unresolved, so OBS text sources hide
+                string tuningName = "";
+                string currentSectionName = "";
+                string currentPhraseName = "";
+                var arrangement = string.IsNullOrEmpty(memReadout.arrangementID) ? null
+                    : details.arrangements?.Find(a => a.arrangementID == memReadout.arrangementID);
+                if (arrangement != null)
+                {
+                    tuningName = arrangement.tuning?.TuningName ?? "";
+
+                    if (memReadout.songTimer > 0)
+                    {
+                        currentSectionName = arrangement.sections?.LastOrDefault(sec => memReadout.songTimer > sec.startTime)?.name ?? "";
+                        currentPhraseName = arrangement.phraseIterations?.LastOrDefault(ph => memReadout.songTimer > ph.startTime)?.name ?? "";
+                    }
+                }
+                outputtext = outputtext.Replace("%TUNING%", tuningName);
+                outputtext = outputtext.Replace("%CURRENT_SECTION%", currentSectionName);
+                outputtext = outputtext.Replace("%CURRENT_PHRASE%", currentPhraseName);
 
                 //If this output contained song detail information
                 if (outputtext != of.format)
@@ -395,13 +439,25 @@ namespace RockSniffer
                 outputtext = outputtext.Replace("%TOTAL_NOTES%", nd.TotalNotes.ToString());
                 outputtext = outputtext.Replace("%CURRENT_ACCURACY%", FormatPercentage(nd.Accuracy));
 
-                //Write to output
+                // Not song-specific, so path.txt also updates with no song loaded
+                outputtext = outputtext.Replace("%CURRENT_PATH%",
+                    memReadout.currentPath == RSPath.Unknown ? "" : memReadout.currentPath.ToString());
+
+                //Only write files whose content changed
+                if (_outputCache.TryGetValue(of.filename, out string cachedValue) && cachedValue == outputtext)
+                {
+                    continue;
+                }
+
+                _outputCache[of.filename] = outputtext;
                 WriteTextToFileLocking("output/" + of.filename, outputtext);
             }
         }
 
         private void ClearOutput()
         {
+            _outputCache.Clear();
+
             //Clear all output files
             foreach (OutputFile of in config.outputSettings.output)
             {
