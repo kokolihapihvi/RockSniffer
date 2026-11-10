@@ -12,7 +12,7 @@ namespace RockSniffer.History
 {
     /// <summary>
     /// Handles playthrough history logging to SQL and CSV
-    /// Uses EXACT timestamps from Sniffer.cs Logger.Log calls
+    /// Timestamps come from the sniffer's song events
     /// Supports Score Attack mode with additional stats
     /// </summary>
     public class PlaythroughHistory
@@ -23,9 +23,9 @@ namespace RockSniffer.History
         private bool csvEnabled;
 
         private SQLiteConnection sqliteConnection;
-        private DateTime metadataTimestamp;      // When metadata loaded (OnSongStarted)
-        private DateTime actualStartTimestamp;    // When song ACTUALLY started (Logger.Log EVENT=START)
-        private DateTime actualEndTimestamp;      // When song ACTUALLY ended (Logger.Log EVENT=END)
+        private DateTime metadataTimestamp;      // Song selected (OnSongSelected)
+        private DateTime actualStartTimestamp;    // Gameplay started (OnSongStarted)
+        private DateTime actualEndTimestamp;      // Gameplay ended (OnSongEnded)
         private RSMemoryReadout startReadout;
         private string arrangementPath;          // Arrangement type (Lead/Rhythm/Bass)
         private string arrangementTuning;        // Tuning (e.g., "E Standard", "D Standard (Capo Fret 2)")
@@ -140,7 +140,7 @@ namespace RockSniffer.History
         }
 
         /// <summary>
-        /// Called when song metadata is loaded (OnSongStarted event)
+        /// Called when a selected song starts loading (OnSongSelected)
         /// </summary>
         public void OnMetadataLoaded(SongDetails song, RSMemoryReadout readout)
         {
@@ -149,24 +149,24 @@ namespace RockSniffer.History
         }
 
         /// <summary>
-        /// Called when Sniffer.cs logs EVENT=START - this is the ACTUAL song start
+        /// Called when gameplay starts (OnSongStarted)
         /// </summary>
-        public void OnActualSongStart(RockSnifferLib.Events.OnActualSongStartArgs e)
+        public void OnSongStarted(RockSnifferLib.Events.OnSongStartedArgs e)
         {
             actualStartTimestamp = e.timestamp;
             arrangementPath = e.path ?? "";
             arrangementTuning = e.tuning ?? "";
             // arrangementID is also available on e (e.arrangementID) but Program.cs
             // doesn't propagate it as a field here; the end-of-song event carries the
-            // run-context arrangementID directly via e.arrangementID at OnActualSongEnd.
+            // run-context arrangementID directly via e.arrangementID at OnSongEnded.
         }
 
         /// <summary>
-        /// Called when Sniffer.cs fires OnActualSongEnd. The args carry the arrangement
+        /// Called when gameplay ends (OnSongEnded). The args carry the arrangement
         /// context captured at song start (preserved even if currentMemoryReadout has
         /// advanced to a later song), keeping arrangement columns correct in Nonstop Play.
         /// </summary>
-        public void OnActualSongEnd(RockSnifferLib.Events.OnActualSongEndArgs e)
+        public void OnSongEnded(RockSnifferLib.Events.OnSongEndedArgs e)
         {
             if (e == null || e.song == null || !e.song.IsValid())
             {
@@ -175,7 +175,7 @@ namespace RockSniffer.History
 
             // Skip history writes (CSV and SQLite) for Multiplayer plays - multi-user note
             // data isn't tracked, so rows would carry wrong single-user values.
-            // wasMultiplayerMode is captured at song start in Sniffer.cs. EVENT=END logging,
+            // wasMultiplayerMode is captured at song start in Sniffer.cs. events.log,
             // Discord RPC, and live overlays are unaffected.
             if (e.wasMultiplayerMode)
             {
@@ -185,7 +185,7 @@ namespace RockSniffer.History
             // e.wasNonstopMode remains populated on the event args for downstream
             // consumers; it no longer gates history writes.
 
-            // Prefer the snapshot readout captured inside Sniffer.LogSongEnd (so we get
+            // Prefer the snapshot readout captured inside Sniffer.EndSongRun (so we get
             // accurate end-of-song noteData / mode even if currentMemoryReadout has since
             // been updated). Fall back to a defensive empty readout if the snapshot is
             // somehow null.
@@ -196,7 +196,7 @@ namespace RockSniffer.History
 
             // Resolve arrangement metadata, preferring the run-context values from the
             // event args (captured at song start in Sniffer.cs). Fall back to the
-            // OnActualSongStart-set fields if the args don't have them, and finally to the
+            // OnSongStarted-set fields if the args don't have them, and finally to the
             // readout's arrangementID. This layered approach keeps the path/tuning correct
             // for Nonstop and recovers gracefully for any edge case where the args are
             // missing values.

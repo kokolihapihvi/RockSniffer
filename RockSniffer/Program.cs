@@ -102,11 +102,6 @@ namespace RockSniffer
             Logger.logSystemHandleQuery = config.debugSettings.debugSystemHandleQuery;
             Logger.logProcessingQueue = config.debugSettings.debugProcessingQueue;
 
-            //Initialize EventLogger
-            RockSniffer.Logging.EventLogger.eventLogMode = config.outputSettings.eventLogMode;
-            RockSniffer.Logging.EventLogger.Initialize();
-
-
             //Initialize cache
             cache = new SQLiteCache();
 
@@ -298,26 +293,28 @@ namespace RockSniffer
             sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
 
+            if (config.outputSettings.enableEventLog)
+            {
+                RockSniffer.Logging.EventLogger.Attach(sniffer);
+            }
+
             //Add playthrough history listeners
             if (playthroughHistory != null)
             {
-                // Metadata loaded (when song is selected)
-                sniffer.OnSongStarted += (sender, args) => {
+                sniffer.OnSongSelected += (sender, args) => {
                     currentSong = args.song;
                     playthroughHistory.OnMetadataLoaded(args.song, memReadout);
                 };
 
-                // Actual gameplay start (when Sniffer.cs logs EVENT=START)
-                sniffer.OnActualSongStart += (sender, args) => {
-                    playthroughHistory.OnActualSongStart(args);
+                sniffer.OnSongStarted += (sender, args) => {
+                    playthroughHistory.OnSongStarted(args);
                 };
 
-                // Actual gameplay end (Sniffer.cs OnActualSongEnd). The args carry the
-                // arrangement context captured at song start, which keeps playthrough_history
-                // correct during Nonstop Play. sniffer is a fresh instance per Run(), so no
-                // handler cleanup is needed.
-                sniffer.OnActualSongEnd += (sender, args) => {
-                    playthroughHistory.OnActualSongEnd(args);
+                // The args carry the arrangement context captured at song start, which keeps
+                // playthrough_history correct during Nonstop Play. sniffer is a fresh instance
+                // per Run(), so no handler cleanup is needed.
+                sniffer.OnSongEnded += (sender, args) => {
+                    playthroughHistory.OnSongEnded(args);
                 };
             }
 

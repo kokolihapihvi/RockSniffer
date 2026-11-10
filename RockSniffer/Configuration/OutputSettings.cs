@@ -38,8 +38,8 @@ namespace RockSniffer.Configuration
         };
 
 
-        // EVENT START/END log output mode
-        public EventLogMode eventLogMode = EventLogMode.Disabled;
+        // Write one line per song start and end to output/events.log
+        public bool enableEventLog = false;
 
 
         //Convert dictionary to array

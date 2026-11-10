@@ -1,133 +1,88 @@
-using RockSniffer.Configuration;
+using RockSnifferLib.Events;
+using RockSnifferLib.Logging;
+using RockSnifferLib.RSHelpers;
+using RockSnifferLib.RSHelpers.NoteData;
+using RockSnifferLib.Sniffing;
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 
 namespace RockSniffer.Logging
 {
     /// <summary>
-    /// Handles configurable EVENT START/END logging to console and sniffer.log
+    /// Appends one line per song start and end to output/events.log, for external
+    /// tools that tail the file (scene switching, recording markers). Nothing goes
+    /// to the console or sniffer.log.
     /// </summary>
-    public static class EventLogger
+    internal static class EventLogger
     {
-        public static EventLogMode eventLogMode = EventLogMode.Disabled;
+        private const string logPath = "output/events.log";
 
-        public static void Initialize()
+        // Start and end can fire from the readout loop and the state machine loop.
+        private static readonly object fileLock = new object();
+
+        private static readonly Encoding utf8NoBom = new UTF8Encoding(false);
+
+        public static void Attach(Sniffer sniffer)
         {
-            // Subscribe to Logger events
-            RockSnifferLib.Logging.Logger.OnEventStartLogged += OnEventStart;
-            RockSnifferLib.Logging.Logger.OnEventEndLogged += OnEventEnd;
+            sniffer.OnSongStarted += OnSongStarted;
+            sniffer.OnSongEnded += OnSongEnded;
         }
 
-        private static void OnEventStart(object sender, RockSnifferLib.Logging.EventLoggedArgs e)
+        private static void OnSongStarted(object? sender, OnSongStartedArgs e)
         {
-            if (eventLogMode == EventLogMode.Disabled) return;
-            if (eventLogMode == EventLogMode.Enabled)
+            SongDetails song = e.song;
+            string author = (song.toolkit?.author ?? "").Trim();
+
+            Write(e.timestamp, string.Create(CultureInfo.InvariantCulture,
+                $"EVENT=START;artist={song.artistName};album={song.albumName};year={song.albumYear};" +
+                $"song={song.songName};length={song.songLength};path={e.path};tuning={e.tuning};author={author};"));
+        }
+
+        private static void OnSongEnded(object? sender, OnSongEndedArgs e)
+        {
+            INoteData? noteData = e.readout?.noteData;
+
+            string line = string.Create(CultureInfo.InvariantCulture,
+                $"EVENT=END;completed={e.completed};paused={e.paused};");
+
+            if (noteData != null)
             {
-                LogPrettyStart(e.Timestamp, e.Message);
-            }
-            else if (eventLogMode == EventLogMode.Legacy)
-            {
-                LogLegacy(e.Timestamp, e.Message);
-            }
-        }
-
-        private static void OnEventEnd(object sender, RockSnifferLib.Logging.EventLoggedArgs e)
-        {
-            if (eventLogMode == EventLogMode.Disabled) return;
-            if (eventLogMode == EventLogMode.Enabled)
-            {
-                LogPrettyEnd(e.Timestamp, e.Message);
-            }
-            else if (eventLogMode == EventLogMode.Legacy)
-            {
-                LogLegacy(e.Timestamp, e.Message);
-            }
-        }
-
-        private static void LogLegacy(DateTime timestamp, string message)
-        {
-            // Format exactly like Sniffer.cs does: [timestamp] message
-            string output = $"[{timestamp}] {message}";
-            
-            Console.WriteLine(output);
-            WriteToLog(output);
-        }
-
-        private static void LogPrettyStart(DateTime timestamp, string message)
-        {
-            var data = ParseEventMessage(message);
-
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("______________________");
-            sb.AppendLine("===== SONG START =====");
-            sb.AppendLine($"Time: {timestamp:yyyy-MM-dd HH:mm:ss}");
-            sb.AppendLine($"Song: {data.GetValueOrDefault("song", "Unknown")} by {data.GetValueOrDefault("artist", "Unknown")}");
-            sb.AppendLine($"Album: {data.GetValueOrDefault("album", "Unknown")} ({data.GetValueOrDefault("year", "Unknown")})");
-            sb.AppendLine($"Author: {data.GetValueOrDefault("author", "Official DLC")}");
-            sb.AppendLine($"Path: {data.GetValueOrDefault("path", "Unknown")}");
-            sb.AppendLine($"Tuning: {data.GetValueOrDefault("tuning", "Unknown")}");
-            sb.AppendLine($"Length: {data.GetValueOrDefault("length", "Unknown")}s");
-
-            Console.WriteLine(sb.ToString());
-            WriteToLog(sb.ToString());
-        }
-
-        private static void LogPrettyEnd(DateTime timestamp, string message)
-        {
-            var data = ParseEventMessage(message);
-
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("====== SONG END ======");
-            sb.AppendLine($"Time: {timestamp:yyyy-MM-dd HH:mm:ss}");
-            sb.AppendLine($"Completed: {data.GetValueOrDefault("completed", "Unknown")}");
-            sb.AppendLine($"Paused: {data.GetValueOrDefault("paused", "Unknown")}");
-            sb.AppendLine($"Performance:");
-            sb.AppendLine($"  Accuracy: {data.GetValueOrDefault("accuracy", "Unknown")}");
-            sb.AppendLine($"  Total Notes: {data.GetValueOrDefault("totalNotes", "Unknown")}");
-            sb.AppendLine($"  Notes Hit: {data.GetValueOrDefault("notesHit", "Unknown")}");
-            sb.AppendLine($"  Highest Streak: {data.GetValueOrDefault("highestStreak", "Unknown")}");
-            sb.AppendLine("______________________");
-
-            Console.WriteLine(sb.ToString());
-            WriteToLog(sb.ToString());
-        }
-
-        private static Dictionary<string, string> ParseEventMessage(string message)
-        {
-            var data = new Dictionary<string, string>();
-            
-            string[] parts = message.Split(';');
-            foreach (string part in parts)
-            {
-                if (string.IsNullOrEmpty(part)) continue;
-
-                int equalsIndex = part.IndexOf('=');
-                if (equalsIndex > 0)
-                {
-                    string key = part.Substring(0, equalsIndex).Trim();
-                    string value = part.Substring(equalsIndex + 1).Trim();
-                    data[key] = value;
-                }
+                line += string.Create(CultureInfo.InvariantCulture,
+                    $"accuracy={Math.Round(noteData.Accuracy, 1)}%;totalNotes={noteData.TotalNotes};" +
+                    $"notesHit={noteData.TotalNotesHit};highestStreak={noteData.HighestHitStreak};");
             }
 
-            return data;
+            if (e.readout?.mode == RSMode.SCOREATTACK && noteData is ScoreAttackNoteData sa)
+            {
+                line += string.Create(CultureInfo.InvariantCulture,
+                    $"Mode=true;TotalPerfectHits={sa.TotalPerfectHits};PerfectPhrases={sa.PerfectPhrases};" +
+                    $"GoodPhrases={sa.GoodPhrases};PassedPhrases={sa.PassedPhrases};FailedPhrases={sa.FailedPhrases};" +
+                    $"HighestPerfectPhraseStreak={sa.HighestPerfectPhraseStreak};HighestGoodPhraseStreak={sa.HighestGoodPhraseStreak};" +
+                    $"HighestPassedPhraseStreak={sa.HighestPassedPhraseStreak};HighestFailedPhraseStreak={sa.HighestFailedPhraseStreak};" +
+                    $"CurrentScore={sa.CurrentScore};HighestMultiplier={sa.HighestMultiplier};");
+            }
+
+            Write(e.timestamp, line);
         }
 
-        private static void WriteToLog(string text)
+        private static void Write(DateTime timestamp, string message)
         {
+            string line = $"[{timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}] {message}\r\n";
+
+            // These handlers run inside the sniffer's loops; an exception here would
+            // abort the rest of that poll, including the run reset after an end.
             try
             {
-                using (var fstream = new FileStream("sniffer.log", FileMode.Append, FileAccess.Write, FileShare.Read))
+                lock (fileLock)
                 {
-                    byte[] bytes = Encoding.UTF8.GetBytes(text + "\r\n");
-                    fstream.Write(bytes, 0, bytes.Length);
+                    File.AppendAllText(logPath, line, utf8NoBom);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Silently fail
+                Logger.LogError("Could not write {0}: {1}", logPath, ex.Message);
             }
         }
     }
