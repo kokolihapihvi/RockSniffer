@@ -1,7 +1,7 @@
-const widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth; //Get width of UI
+var widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth; //Get width of UI
 
 //create dictionary for translating phrase grades into color 
-const gradeCode = {
+var gradeCode = {
 	NaN : 'white',
 	'error' : 'white',
 	'No Data' : 'grey',
@@ -16,22 +16,19 @@ const gradeCode = {
 function accuracyGradient(accuracy){
 	if (accuracy == "Rest"){return "grey"}
 	if (accuracy < 50){return "rgb(255, 0, 0)"}
-	const red = Math.min(((100 - accuracy)/25),1) * 255;
-	const green = Math.min(((accuracy - 50)/25),1) * 255;
+	var red = Math.min(((100 - accuracy)/25),1) * 255;
+	var green = Math.min(((accuracy - 50)/25),1) * 255;
 	return "rgb("+red+","+green+", 0)";
 };
 
-
 //Edit poller functions
-const poller = new SnifferPoller({
+var poller = new SnifferPoller({
 	interval: 100,
 
 	onData: function(data) {
 		app.snifferData = data;
 	},
-
-
-
+	
 	onSongEnded: function(data) {
 		app.prevData = app.snifferData;
 		// Finalize and snapshot before the tracker's own onSongEnded resets it
@@ -43,16 +40,15 @@ const poller = new SnifferPoller({
 		app.mode = 1;
 		poller.resultsHold.markShown();
 		generateFeedback();
-	},
-
+	}
 });
 
 //Get tracker functions
-const tracker = new PlaythroughTracker(poller);
+var tracker = new PlaythroughTracker(poller);
 
 
 //Create app
-const app = new Vue({
+var app = new Vue({
 	el: "#app",
 	//create variable for data storage
 	data: {
@@ -79,7 +75,7 @@ const app = new Vue({
 		//Scroll song if larger than UI
         doScrollSong: function() {
 			if(this.song == null){
-				let width = 0;
+				var width = 0;
 				} else {				
 				var width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth);
 				}
@@ -105,7 +101,7 @@ const app = new Vue({
 			}
 			return tracker.hasPreviousBest();
 		},
-
+		
 		//Return trackerScore
 		trackerScore: function() {
 			if (this.mode === 1 && this.snapshotFinal !== null) {
@@ -167,7 +163,7 @@ const app = new Vue({
 		//get Phrase Start Time
 		phraseStartTime: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			const currentPhrase = poller.getCurrentPhrase();
+			var currentPhrase = poller.getCurrentPhrase();
 			if(currentPhrase == null){return 0;}
 			if(currentPhrase.index == 0){return 0;}
 			return (currentPhrase.startTime / this.song.songLength) * 100;
@@ -176,9 +172,9 @@ const app = new Vue({
 		//Calculate phrase height from difficulty
 		phraseHeight: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			let phraseHeight = 1;
-			let maxDif = poller.getMaxDif();
-			let phrase = poller.getCurrentPhrase();
+			var phraseHeight = 1;
+			var maxDif = poller.getMaxDif();
+			var phrase = poller.getCurrentPhrase();
 			if(maxDif != 0){
 				phraseHeight = phrase.maxDifficulty/maxDif;
 			}
@@ -203,13 +199,13 @@ const app = new Vue({
 
 			if(arrangement == null) {return null;}			
 			
-			let sections = arrangement.sections;
+			var sections = arrangement.sections;
 
-			let songLength = this.song.songLength;
+			var songLength = this.song.songLength;
 			
 			//Cycle through all sections and draw
-			for (let i = 0; i < sections.length; i++) {
-				let section = sections[i];
+			for (var i = 0; i < sections.length; i++) {
+				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -235,7 +231,7 @@ const app = new Vue({
 					section.style.backgroundColor = "royalblue";
 				}
 				
-				//If has previous best, color based on that. If not, then color using accuracy gradient.
+				//If has previous best, color based on that. If not, then color using accuracy gradient
 				if (this.readout.songTimer > section.endTime || this.readout.gameStage == "panel_bib" || this.readout.gameStage == "sa_songreview" || this.readout.gameStage == "las_songreview"){
 					if(tracker.hasPreviousBest() && tracker.getSectionAccuracy((section.startTime + section.endTime)/2) != 'Rest') {
 						section.style.backgroundColor = (tracker.isBetterRelative((section.startTime + section.endTime)/2) ? "lime" : "red");
@@ -256,14 +252,14 @@ const app = new Vue({
 
 			if(arrangement == null) {return null;}			
 			
-			let phraseIterations = arrangement.phraseIterations;
+			var phraseIterations = arrangement.phraseIterations;
 
 			var songLength = this.song.songLength;
 					
 			var maxDif = poller.getMaxDif();		
 			
 			//Cycle through phrases and draw
-			for (let i = 0; i < phraseIterations.length; i++) {
+			for (var i = 0; i < phraseIterations.length; i++) {
 				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
@@ -336,7 +332,7 @@ const app = new Vue({
 			if(this.prevSong == null) {return null;}
 			if(this.prevSong.arrangements == null) {return null;}
 			
-			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
+			for (var i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
 				var arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID.length == 32 && arrangement.arrangementID == this.prevReadout.arrangementID) {
@@ -363,7 +359,7 @@ const app = new Vue({
 
 			var songLength = this.prevSong.songLength;
 
-			for (let i = 0; i < sections.length; i++) {
+			for (var i = 0; i < sections.length; i++) {
 				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
@@ -409,7 +405,7 @@ const app = new Vue({
 			
 			var maxDif = poller.getMaxDif();		
 			
-			for (let i = 0; i < phraseIterations.length; i++) {
+			for (var i = 0; i < phraseIterations.length; i++) {
 				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
@@ -456,14 +452,14 @@ const app = new Vue({
 
 //Format timer
 function formatTimer(time) {
-	if (time < 0) {
+	var minutes = Math.floor(time/60);
+	var seconds = time % 60;
+
+	if(time < 0) {
 		return "";
 	}
 
-	const minutes = Math.floor(time / 60);
-	const seconds = time % 60;
-
-	return [minutes, seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
+	return [minutes,seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
 }
 
 //Generate feedback
@@ -475,17 +471,17 @@ function generateFeedback() {
 	if(arrangement == null) {
 		app.feedback = ["YOU TRIED!"];
 		app.cycleFeedback();
-		var hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
+		hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 		return;
 	}
 	var sections = arrangement.sections;
-	let feedback = []
+	var feedback = []
 
-	let greens = 0;
+	var greens = 0;
 
-	for (let i = sections.length - 1; i >= 0; i--) {
+	for (var i = sections.length - 1; i >= 0; i--) {
 		var section = sections[i];
-		const rel = tracker.getRelative(section.endTime);
+		var rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
 			continue;

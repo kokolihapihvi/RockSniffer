@@ -152,7 +152,7 @@ class SnifferPoller {
 		this._prevdata = data;
 
 		//Don't fire song started before we have a valid arrangement.
-		//SONG_ENDING too, Nonstop Play can stay in it for the whole next song.
+		//SONG_ENDING too: Nonstop Play can stay in it for the whole next song
 		if(!this.songStarted) {
 			if(data.currentState == STATE_SONG_STARTING || data.currentState == STATE_SONG_PLAYING || data.currentState == STATE_SONG_ENDING) {
 				if(this.getCurrentArrangement() != null) {
@@ -251,9 +251,8 @@ class SnifferPoller {
 		return null;
 	}
 
-	// Keeps the results view (app.mode 1) up for one full pass through app.feedback
-	// before going back to mode 0. In Nonstop Play the next song loads right away,
-	// which would otherwise hide the results immediately. Starting a song skips the wait.
+	// Keeps the results view (app.mode 1) up for one pass through app.feedback, since
+	// in Nonstop Play the next song loads right away. Starting a song skips the wait.
 	// Call resultsHold.markShown() when switching to mode 1.
 	enableResultsHold(app, options) {
 		options = options || {};

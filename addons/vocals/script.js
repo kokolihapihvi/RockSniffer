@@ -7,13 +7,12 @@ let poller = new SnifferPoller({
 	numberOfLinesDisplayed: 2,
 	maxNoteKepping: 2.5,
 
-	// Karaoke line-slide animation duration (seconds). 0 disables animation.
+	// Line slide duration in seconds, 0 disables it
 	lineAnimationDuration: 0.5,
 
-	// Per-line height. Bump proportionally if you change font-size.
+	// Per-line height, scale with font-size
 	lineHeight: '1.2em',
 
-	// State across polls.
 	_lineStructure: null,
 	_vocalsRef: null,
 	_displayedLines: {},
@@ -45,9 +44,7 @@ let poller = new SnifferPoller({
 			return;
 		}
 
-		// Active line = most recently STARTED line (not first with endTime in future).
-		// Keeps the just-sung line visible during gaps between lines, matching
-		// Rocksmith's in-game behavior.
+		// The active line is the last one that started, so it stays up between lines like in game
 		let activeLineIdx = -1;
 		for (let i = 0; i < this._lineStructure.length; i++) {
 			if (this._lineStructure[i].startTime <= currentTime) {
@@ -57,7 +54,7 @@ let poller = new SnifferPoller({
 			}
 		}
 
-		// Pre-song: anticipate the first line if within preVocalDisplayTime.
+		// Show the first line preVocalDisplayTime early
 		let isAnticipating = false;
 		if (activeLineIdx === -1) {
 			if (this._lineStructure[0].startTime - currentTime <= this.preVocalDisplayTime) {
@@ -81,7 +78,6 @@ let poller = new SnifferPoller({
 			}
 		}
 
-		// Update existing + create new lines.
 		for (let idxStr in targetSlots) {
 			let lineIdx = parseInt(idxStr);
 			let targetSlot = targetSlots[lineIdx];
@@ -100,7 +96,6 @@ let poller = new SnifferPoller({
 			}
 		}
 
-		// Mark no-longer-visible lines as outgoing and schedule DOM removal.
 		for (let idxStr in this._displayedLines) {
 			let lineIdx = parseInt(idxStr);
 			let state = this._displayedLines[lineIdx];
@@ -111,7 +106,6 @@ let poller = new SnifferPoller({
 			}
 		}
 
-		// Update per-syllable classes (past/current/future) on visible lines.
 		for (let idxStr in targetSlots) {
 			let lineIdx = parseInt(idxStr);
 			this._updateSyllableClasses(
@@ -201,7 +195,7 @@ let poller = new SnifferPoller({
 			removalTimer: null
 		};
 
-		// Force reflow before applying target slot so the transition fires.
+		// Reflow first, or the transition doesn't run
 		void div[0].offsetHeight;
 
 		let self = this;

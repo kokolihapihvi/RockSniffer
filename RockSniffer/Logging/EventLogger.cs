@@ -11,22 +11,21 @@ using System.Text;
 namespace RockSniffer.Logging
 {
     /// <summary>
-    /// Reports song start, pause, resume and end: one short line on the console and
-    /// in sniffer.log, and optionally one key=value line in output/events.log for
-    /// external tools that tail the file (scene switching, recording markers).
+    /// Reports song start, pause, resume and end on the console and in sniffer.log,
+    /// and optionally as key=value lines in output/events.log for other tools
     /// </summary>
     internal static class EventLogger
     {
         private const string logPath = "output/events.log";
 
-        // Start and end can fire from the readout loop and the state machine loop.
+        // Events come from both the readout loop and the state machine loop
         private static readonly object fileLock = new object();
 
         private static readonly Encoding utf8NoBom = new UTF8Encoding(false);
 
         private static bool writeFile;
 
-        // Pause and resume arrive as state changes, which carry no readout or song.
+        // State changes carry no readout or song
         private static RSMemoryReadout? lastReadout;
         private static SongDetails? currentSong;
 
@@ -42,8 +41,7 @@ namespace RockSniffer.Logging
 
         private static void OnStateChanged(object? sender, OnStateChangedArgs e)
         {
-            // SONG_PAUSED is only entered from SONG_PLAYING and only returns to it on a
-            // resume; quit and restart from pause leave to IN_MENUS and end the run.
+            // Quit and restart from pause go to IN_MENUS, so these are only pause and resume
             bool pause = e.oldState == SnifferState.SONG_PLAYING && e.newState == SnifferState.SONG_PAUSED;
             bool resume = e.oldState == SnifferState.SONG_PAUSED && e.newState == SnifferState.SONG_PLAYING;
 
@@ -131,8 +129,7 @@ namespace RockSniffer.Logging
 
             string line = $"[{timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}] {message}\r\n";
 
-            // These handlers run inside the sniffer's loops; an exception here would
-            // abort the rest of that poll, including the run reset after an end.
+            // An exception here would abort the rest of the sniffer's poll
             try
             {
                 lock (fileLock)

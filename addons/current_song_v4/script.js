@@ -4,8 +4,7 @@
 // Custom CSS:
 // body { background-color: rgba(0, 0, 0, 0); margin: 6px 6px 6px 6px; overflow: hidden; }
 
-
-const poller = new SnifferPoller({
+var poller = new SnifferPoller({
 	interval: 500,
 
 	onData: function(data) {
@@ -20,12 +19,12 @@ const poller = new SnifferPoller({
 		poller.resultsHold.markShown();
 
 		generateFeedback();
-	},
+	}
 });
 
-const tracker = new PlaythroughTracker(poller);
+var tracker = new PlaythroughTracker(poller);
 
-const app = new Vue({
+var app = new Vue({
 	el: "#app",
 	data: {
 		visible: false,
@@ -93,12 +92,12 @@ const app = new Vue({
 
 			if(arrangement == null) {return null;}
 
-			let sections = arrangement.sections;
+			var sections = arrangement.sections;
 
-			let songLength = this.song.songLength;
+			var songLength = this.song.songLength;
 
-			for (let i = 0; i < sections.length; i++) {
-				let section = sections[i];
+			for (var i = 0; i < sections.length; i++) {
+				var section = sections[i];
 
 				if(this.readout.songTimer < section.endTime) {
 					break;
@@ -151,7 +150,7 @@ const app = new Vue({
 			if(this.prevSong == null) {return null;}
 			if(this.prevSong.arrangements == null) {return null;}
 
-			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
+			for (var i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
 				var arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID == this.prevReadout.arrangementID) {
@@ -170,7 +169,7 @@ const app = new Vue({
 
 			var songLength = this.prevSong.songLength;
 
-			for (let i = 0; i < sections.length; i++) {
+			for (var i = 0; i < sections.length; i++) {
 				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
@@ -202,29 +201,29 @@ const app = new Vue({
 });
 
 function formatTimer(time) {
+	var minutes = Math.floor(time/60);
+	var seconds = time % 60;
+
 	if(time < 0) {
 		return "";
 	}
 
-	const minutes = Math.floor(time / 60);
-	const seconds = time % 60;
-
 	return [minutes,seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
 }
 
-let hideTimeout = null;
+var hideTimeout = null;
 function generateFeedback() {
 	app.feedback = [];
 
 	var arrangement = poller.getCurrentArrangement();
 	var sections = arrangement.sections;
-	let feedback = []
+	var feedback = []
 
-	let greens = 0;
+	var greens = 0;
 
-	for (let i = sections.length - 1; i >= 0; i--) {
+	for (var i = sections.length - 1; i >= 0; i--) {
 		var section = sections[i];
-		const rel = tracker.getRelative(section.endTime);
+		var rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
 			continue;

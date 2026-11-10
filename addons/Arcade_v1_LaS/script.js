@@ -1,5 +1,5 @@
-const widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth;
-const gradeCode = {
+var widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth;
+var gradeCode = {
 	NaN : 'white',
 	'error' : 'white',
 	'No Data' : 'grey',
@@ -12,21 +12,18 @@ const gradeCode = {
 function accuracyGradient(accuracy){
 	if (accuracy == "Rest"){return "grey"}
 	if (accuracy < 50){return "rgb(255, 0, 0)"}
-	const red = (Math.floor(Math.min(((100 - accuracy)/25),1) * 8)/ 8) * 255;
-	const green = (Math.floor(Math.min(((accuracy - 50)/25),1) * 8) / 8) * 255;
+	var red = (Math.floor(Math.min(((100 - accuracy)/25),1) * 8)/ 8) * 255;
+	var green = (Math.floor(Math.min(((accuracy - 50)/25),1) * 8) / 8) * 255;
 	return "rgb("+red+","+green+", 0)";
 };
 
-
-const poller = new SnifferPoller({
+var poller = new SnifferPoller({
 	interval: 100,
 
 	onData: function(data) {
 		app.snifferData = data;
 	},
-
-
-
+	
 	onSongEnded: function(data) {
 		app.prevData = app.snifferData;
 		// Finalize and snapshot before the tracker's own onSongEnded resets it
@@ -38,13 +35,12 @@ const poller = new SnifferPoller({
 		app.mode = 1;
 		poller.resultsHold.markShown();
 		generateFeedback();
-	},
-
+	}
 });
 
-const tracker = new PlaythroughTracker(poller);
+var tracker = new PlaythroughTracker(poller);
 
-const app = new Vue({
+var app = new Vue({
 	el: "#app",
 	data: {
 		visible: true,
@@ -64,7 +60,7 @@ const app = new Vue({
 	methods: {
         doScrollSong: function() {
 			if(this.song == null){
-				let width = 0;
+				var width = 0;
 				} else {				
 				var width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth)+10;
 				}
@@ -131,16 +127,16 @@ const app = new Vue({
 		},
 		phraseStartTime: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			const currentPhrase = poller.getCurrentPhrase();
+			var currentPhrase = poller.getCurrentPhrase();
 			if(currentPhrase == null){return 0;}
 			if(currentPhrase.index == 0){return 0;}
 			return (currentPhrase.startTime / this.song.songLength) * 100;
 		},
 		phraseHeight: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			let phraseHeight = 1;
-			let maxDif = poller.getMaxDif();
-			let phrase = poller.getCurrentPhrase();
+			var phraseHeight = 1;
+			var maxDif = poller.getMaxDif();
+			var phrase = poller.getCurrentPhrase();
 			if(maxDif != 0){
 				phraseHeight = phrase.maxDifficulty/maxDif;
 			}
@@ -148,19 +144,19 @@ const app = new Vue({
 		},			
 		hitDisplay: function(){
 			$("div.hitDisplay").removeAttr('style');
-			let accHit = '0000';
-			let notesHit = '0000';
-			let totalNotes = '0000';
+			var accHit = '0000';
+			var notesHit = '0000';
+			var totalNotes = '0000';
 			if (this.readout.songTimer == 0){
 				return accHit.substr(accHit.length-4)+'% '+notesHit.substr(notesHit.length-4)+'/'+totalNotes.substr(totalNotes.length-4);
 			}
-			const songProg = this.songProgress;
-			let acc = this.notes.Accuracy;
-			let totN = this.notes.TotalNotes;
+			var songProg = this.songProgress;
+			var acc = this.notes.Accuracy;
+			var totN = this.notes.TotalNotes;
 			if(acc == 100){
-				accHit = accHit + '0100'
+				var accHit = accHit + '0100'
 			}else{
-				accHit = accHit + String(acc.toFixed(1));
+				var accHit = accHit + String(acc.toFixed(1));
 			}
 			notesHit = notesHit + String(this.notes.TotalNotesHit);
 			totalNotes = totalNotes + String(totN);	
@@ -207,17 +203,17 @@ const app = new Vue({
 		},			
 		strDisplay: function(){
 			$("div.strDisplay").removeAttr('style');
-			let curStr = '0000';
-			let maxStr = '0000';
+			var curStr = '0000';
+			var maxStr = '0000';
 			if (this.readout.songTimer == 0){
 				return curStr.substr(curStr.length-4)+'/'+maxStr.substr(maxStr.length-4)
 			};	
-			const curS = this.notes.CurrentHitStreak-this.notes.CurrentMissStreak;
-			let maxS = this.notes.HighestHitStreak;
+			var curS = this.notes.CurrentHitStreak-this.notes.CurrentMissStreak;
+			var maxS = this.notes.HighestHitStreak;
 			var totN = this.notes.TotalNotes;
 			curStr = curStr + String(Math.abs(curS));
 			maxStr = maxStr + String(maxS);
-			let neg = '';
+			var neg = '';
 			if (curS < 0){
 				neg = '-'
 			}
@@ -299,12 +295,12 @@ const app = new Vue({
 
 			if(arrangement == null) {return null;}			
 			
-			let sections = arrangement.sections;
+			var sections = arrangement.sections;
 
-			let songLength = this.song.songLength;
+			var songLength = this.song.songLength;
 			
-			for (let i = 0; i < sections.length; i++) {
-				let section = sections[i];
+			for (var i = 0; i < sections.length; i++) {
+				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -343,13 +339,13 @@ const app = new Vue({
 
 			if(arrangement == null) {return null;}			
 			
-			let phraseIterations = arrangement.phraseIterations;
+			var phraseIterations = arrangement.phraseIterations;
 
 			var songLength = this.song.songLength;
 					
 			var maxDif = poller.getMaxDif();		
 			
-			for (let i = 0; i < phraseIterations.length; i++) {
+			for (var i = 0; i < phraseIterations.length; i++) {
 				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
@@ -420,15 +416,15 @@ const app = new Vue({
 				}
 			if(this.prevNotes == null) {
 				return '0100% 0000/0000';
-			}
+				}
 			var accHit = '0000';
 			var notesHit = '0000';
 			var totalNotes = '0000';
 			var acc = this.prevNotes.Accuracy;
 			if(acc == 100){
-				accHit = accHit + '0100'
+				var accHit = accHit + '0100'
 			}else{
-				accHit = accHit + String(acc.toFixed(1));
+				var accHit = accHit + String(acc.toFixed(1));
 			}
 			notesHit = notesHit + String(this.prevNotes.TotalNotesHit);
 			totalNotes = totalNotes + String(this.prevNotes.TotalNotes);		
@@ -477,7 +473,7 @@ const app = new Vue({
 					"color": 'white',
 				})
 			} else {
-				const accCol = accuracyGradient(acc);
+				var accCol = accuracyGradient(acc);
 				$("div.hitDisplay").css({
 					"color": accCol,
 				})
@@ -491,7 +487,7 @@ const app = new Vue({
 				}
 			if(this.prevNotes == null) {
 				return '0000/0000';
-			}
+				}
 			var curStr = '0000'
 			var maxStr = '0000'
 			var maxS = this.prevNotes.HighestHitStreak;
@@ -570,7 +566,7 @@ const app = new Vue({
 			if(this.prevSong == null) {return null;}
 			if(this.prevSong.arrangements == null) {return null;}
 			
-			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
+			for (var i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
 				var arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID.length == 32 && arrangement.arrangementID == this.prevReadout.arrangementID) {
@@ -594,7 +590,7 @@ const app = new Vue({
 
 			var songLength = this.prevSong.songLength;
 
-			for (let i = 0; i < sections.length; i++) {
+			for (var i = 0; i < sections.length; i++) {
 				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
@@ -641,7 +637,7 @@ const app = new Vue({
 			
 			var maxDif = poller.getMaxDif();		
 			
-			for (let i = 0; i < phraseIterations.length; i++) {
+			for (var i = 0; i < phraseIterations.length; i++) {
 				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
@@ -687,14 +683,14 @@ const app = new Vue({
 });
 
 function formatTimer(time) {
-	if (time < 0) {
+	var minutes = Math.floor(time/60);
+	var seconds = time % 60;
+
+	if(time < 0) {
 		return "";
 	}
 
-	const minutes = Math.floor(time / 60);
-	const seconds = time % 60;
-
-	return [minutes, seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
+	return [minutes,seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
 }
 
 function generateFeedback() {
@@ -705,17 +701,17 @@ function generateFeedback() {
 	if(arrangement == null) {
 		app.feedback = ["YOU TRIED!"];
 		app.cycleFeedback();
-		var hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
+		hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 		return;
 	}
 	var sections = arrangement.sections;
-	let feedback = []
+	var feedback = []
 
-	let greens = 0;
+	var greens = 0;
 
-	for (let i = sections.length - 1; i >= 0; i--) {
+	for (var i = sections.length - 1; i >= 0; i--) {
 		var section = sections[i];
-		const rel = tracker.getRelative(section.endTime);
+		var rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
 			continue;
