@@ -37,7 +37,7 @@ const app = new Vue({
 		snifferData: {},
 		feedback: [],
 		feedbackIdx: 0,
-		// Snapshots of tracker outputs at onSongEnded — read during mode 1 so the
+		// Snapshots of tracker outputs at onSongEnded - read during mode 1 so the
 		// comparison survives the tracker's NSP reset. See current_song_v3/script.js.
 		snapshotHasPreviousBest: null,
 		snapshotFinal: null
@@ -245,9 +245,9 @@ function generateFeedback() {
 	//Defensive: getCurrentArrangement can return null when memoryReadout.arrangementID is junk
 	//(e.g. uninitialized or stale memory pointers in RSMemoryReader). Without this guard,
 	//`arrangement.sections` throws TypeError, propagating out of _doOnSongEnded -> gotData
-	//and aborting the poll BEFORE _doOnData runs — which freezes app.snifferData.
+	//and aborting the poll BEFORE _doOnData runs - which freezes app.snifferData.
 	//Lowercase "you tried!" matches V2's existing fallback at line ~264 (vs V3/V3.1/Arcade's
-	//uppercase "YOU TRIED!" — within-file style consistency wins over cross-file consistency).
+	//uppercase "YOU TRIED!" - within-file style consistency wins over cross-file consistency).
 	if(arrangement == null) {
 		app.feedback = ["you tried!"];
 		app.cycleFeedback();

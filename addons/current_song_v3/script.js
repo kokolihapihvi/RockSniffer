@@ -129,7 +129,7 @@ const app = new Vue({
 	computed: {
 		
 		//Get song details. In mode 1, read from prevData so the marquee/album art
-		//reference the song that just ended — in NSP, snifferData.songDetails already
+		//reference the song that just ended - in NSP, snifferData.songDetails already
 		//points at the next queued song.
 		song: function() {
 			if (this.mode === 1 && this.prevData && this.prevData.songDetails) {
@@ -198,7 +198,7 @@ const app = new Vue({
 			return phraseHeight*100;
 		},		
 		
-		//Get current arrangement: arrangementID direct match → currentPath filter
+		//Get current arrangement: arrangementID direct match -> currentPath filter
 		//(first non-bonus/non-alternate match wins, bonus allowed as fallback).
 		arrangement: function() {
 			//Shared resolver (sniffer-poller.js): arrangementID direct match, then
@@ -370,7 +370,7 @@ const app = new Vue({
 		prevPath: function() {
 			if(this.prevSong == null){return null;}
 			//Defensive: prevArrangement returns null when no entry in prevSong.arrangements matches
-			//prevReadout.arrangementID — which is the case in Nonstop transitions when memoryReadout.arrangementID
+			//prevReadout.arrangementID - which is the case in Nonstop transitions when memoryReadout.arrangementID
 			//becomes junk (e.g. "Fear Inoculum", "urn:image:dds:album_..."). Without this guard, .type
 			//throws TypeError, killing the Vue render.
 			if(this.prevArrangement == null){return null;}
@@ -497,7 +497,7 @@ function generateFeedback() {
 	arrangement = poller.getCurrentArrangement();
 	//Defensive: getCurrentArrangement can return null in Nonstop Play transitions when memoryReadout.arrangementID
 	//is junk and none of the fallback paths match. Without this guard, `arrangement.sections` throws TypeError,
-	//propagating out of _doOnSongEnded -> gotData and aborting the poll BEFORE _doOnData runs — which means
+	//propagating out of _doOnSongEnded -> gotData and aborting the poll BEFORE _doOnData runs - which means
 	//app.snifferData isn't updated and the entire UI freezes. Falling back to a generic feedback line keeps
 	//the data pipeline alive.
 	if(arrangement == null) {

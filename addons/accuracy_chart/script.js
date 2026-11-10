@@ -22,7 +22,7 @@ const poller = new SnifferPoller({
 		//(stale/uninitialized memory in RSMemoryReader). Without this guard, `.arrangementID` throws
 		//TypeError. B1's expanded onSongStarted firing means this path is hit more often in Nonstop Play
 		//where memory is more likely to be in a transient state. Skipping the previous-best lookup is
-		//safe — the chart will start fresh and the result will be saved correctly when onSongEnded fires
+		//safe: the chart will start fresh and the result will be saved correctly when onSongEnded fires
 		//later (assuming arrangementID has settled by then; if not, that storage write also self-skips).
 		const arrangement = poller.getCurrentArrangement();
 		if(arrangement == null) {

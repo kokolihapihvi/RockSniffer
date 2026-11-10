@@ -15,7 +15,7 @@ let poller = new SnifferPoller({
 
 	// HTML wrappers emitted around each lyric segment and line break when
 	// building lyric markup. Unused by the current karaoke renderer (which
-	// builds DOM nodes directly) — kept for backward compat with forked code.
+	// builds DOM nodes directly) - kept for backward compat with forked code.
 	beginLyric: '<span class="lyric">',
 	endLyric: '</span>',
 	newLine: '<br>',
@@ -221,7 +221,7 @@ let poller = new SnifferPoller({
 		});
 	},
 
-	// Slot → translateY %: incoming (N*100, off-screen below), preview (100),
+	// Slot -> translateY %: incoming (N*100, off-screen below), preview (100),
 	// active (0), outgoing (-100, off-screen above). preview2/3/... = 200/300/...
 	_setSlot: function (element, slot) {
 		let yPercent;

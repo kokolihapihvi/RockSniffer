@@ -56,7 +56,7 @@ const app = new Vue({
 		snifferData: {},
 		feedback: [],
 		feedbackIdx: 0,
-		// Snapshot fields — see current_song_v3/script.js.
+		// Snapshot fields: see current_song_v3/script.js.
 		snapshotHasPreviousBest: null,
 		snapshotFinal: null,
         songInfoTransform: "translateX(0px)"
@@ -716,7 +716,7 @@ function generateFeedback() {
 	//Defensive: getCurrentArrangement can return null when memoryReadout.arrangementID is junk
 	//(e.g. uninitialized or stale memory pointers in RSMemoryReader). Without this guard,
 	//`arrangement.sections` throws TypeError, propagating out of _doOnSongEnded -> gotData
-	//and aborting the poll BEFORE _doOnData runs — which freezes app.snifferData.
+	//and aborting the poll BEFORE _doOnData runs - which freezes app.snifferData.
 	if(arrangement == null) {
 		app.feedback = ["YOU TRIED!"];
 		app.cycleFeedback();

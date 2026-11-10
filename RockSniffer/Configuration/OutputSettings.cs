@@ -27,7 +27,7 @@ namespace RockSniffer.Configuration
             { "streaks.txt", "%CURRENT_STREAK%/%HIGHEST_STREAK%" },
             { "game_stage.txt", "%GAME_STAGE%" },
             { "game_state.txt", "%GAME_STATE%" },
-            // Menu-level Path selection ("Lead"/"Rhythm"/"Bass") — useful for
+            // Menu-level Path selection ("Lead"/"Rhythm"/"Bass") - useful for
             // path-specific OBS scene switching.
             { "path.txt", "%CURRENT_PATH%" },
             // Chart-authored section/phrase name at the song timer (e.g. "verse 2",

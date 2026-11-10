@@ -1,7 +1,7 @@
 /* Load Google Fonts Locally */
 /* Fonts are bundled locally (not CDN-imported) intentionally: loading from
    Google Fonts transmits user IPs to Google, which EU case law treats as a
-   GDPR violation (LG München, 3 O 17493/20). Do not swap for an @import. */
+   GDPR violation (LG Muenchen, 3 O 17493/20). Do not swap for an @import. */
 @font-face {
     font-family: 'Inter';
     src: url('../_deps/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');

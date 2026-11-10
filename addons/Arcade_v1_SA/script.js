@@ -56,7 +56,7 @@ const app = new Vue({
 		snifferData: {},
 		feedback: [],
 		feedbackIdx: 0,
-		// Snapshot fields — see current_song_v3/script.js.
+		// Snapshot fields: see current_song_v3/script.js.
 		snapshotHasPreviousBest: null,
 		snapshotFinal: null,
         songInfoTransform: "translateX(0px)"
@@ -153,7 +153,7 @@ const app = new Vue({
 		scrDisplay: function(){
 			$("div.scrDisplay").removeAttr('style');
 			let score = '0000000';
-			// LaS-mode noteData has no CurrentScore — falling through would render
+			// LaS-mode noteData has no CurrentScore - falling through would render
 			// "UNDEFINED" via CSS uppercase. Reuse the frozen placeholder branch.
 			if (this.readout.songTimer == 0 || this.notes.CurrentScore === undefined){
 				return score.substr(score.length-7)
@@ -299,7 +299,7 @@ const app = new Vue({
 			$("div.mltDisplay").removeAttr('style');	
 			let curMlt = '00'
 			let maxMlt = '00'
-			// LaS noteData has no CurrentMultiplier — frozen placeholder.
+			// LaS noteData has no CurrentMultiplier - frozen placeholder.
 			if (this.readout.songTimer == 0 || this.notes.CurrentMultiplier === undefined){			
 				return curMlt.substr(curMlt.length-2)+'x/'+maxMlt.substr(maxMlt.length-2)+'x'
 			}	
@@ -588,7 +588,7 @@ const app = new Vue({
 			if(this.prevNotes == null) {
 				return '0000000';
 			}
-			// Previous playthrough may be from LaS mode (no CurrentScore) — frozen placeholder.
+			// Previous playthrough may be from LaS mode (no CurrentScore) - frozen placeholder.
 			if(this.prevNotes.CurrentScore === undefined) {
 				return '0000000';
 			}
@@ -752,7 +752,7 @@ const app = new Vue({
 			if(this.prevSong == null) {
 				return '00x/00x';
 				}
-			// Null-prevNotes + LaS-mode guard — same rationale as scrDisplayF.
+			// Null-prevNotes + LaS-mode guard - same rationale as scrDisplayF.
 			if(this.prevNotes == null || this.prevNotes.HighestMultiplier === undefined) {
 				return '00x/00x';
 			}
@@ -1041,7 +1041,7 @@ function generateFeedback() {
 	//Defensive: getCurrentArrangement can return null when memoryReadout.arrangementID is junk
 	//(e.g. uninitialized or stale memory pointers in RSMemoryReader). Without this guard,
 	//`arrangement.sections` throws TypeError, propagating out of _doOnSongEnded -> gotData
-	//and aborting the poll BEFORE _doOnData runs — which freezes app.snifferData.
+	//and aborting the poll BEFORE _doOnData runs - which freezes app.snifferData.
 	if(arrangement == null) {
 		app.feedback = ["YOU TRIED!"];
 		app.cycleFeedback();

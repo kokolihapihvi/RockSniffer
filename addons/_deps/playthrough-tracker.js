@@ -9,7 +9,7 @@ class PlaythroughTracker {
 		this.currentAttemptPhrase = null;
 
 		// True if the current song run started in a Multiplayer mode (split_game,
-		// mp_*, duet_*, h2h_*). Checked at song end to skip storage writes — multi-user
+		// mp_*, duet_*, h2h_*). Checked at song end to skip storage writes - multi-user
 		// note data isn't supported. Defaults false so an unexpected pre-onSongStarted
 		// onSongEnded call doesn't skip a legitimate save.
 		this.wasMultiplayerMode = false;
@@ -21,7 +21,7 @@ class PlaythroughTracker {
 		//This handles the Nonstop Play case where the next song's onSongStarted may be delayed (or skipped
 		//entirely) due to unstable arrangementID memory reads. Without this reset, currentAttempt stays
 		//sized for the previous song, and stat lookups at the new song's section/phrase indices either
-		//read from gap slots ({} placeholders) or run off the end of the array — both of which produce
+		//read from gap slots ({} placeholders) or run off the end of the array - both of which produce
 		//`undefined.TotalNotesHit` TypeErrors that abort the Vue render.
 		poller.onSongChanged((song) => this.onSongChanged(song));
 	}
@@ -161,17 +161,17 @@ class PlaythroughTracker {
 	//Do on song ended
 	onSongEnded(song) {
 
-		// Skip storage writes for Multiplayer attempts — multi-user note data isn't
+		// Skip storage writes for Multiplayer attempts - multi-user note data isn't
 		// tracked, so single-user data under a shared songID+arrangementID key would
 		// pollute tracking. Matching gate on the C# history side in PlaythroughHistory.cs.
 		if (this.wasMultiplayerMode) {
-			console.log("PlaythroughTracker.onSongEnded: skipping save (MULTIPLAYER mode — multi-user note data not yet supported)");
+			console.log("PlaythroughTracker.onSongEnded: skipping save (MULTIPLAYER mode; multi-user note data not yet supported)");
 			return;
 		}
 
 		//Defensive: if there's no current attempt or no resolvable arrangement, skip storage rather than
 		//throwing on `arrangement.arrangementID`. This can happen in Nonstop Play when memory is in transition
-		//at the moment the songID-change branch fires onSongEnded — the arrangementID memory read may already
+		//at the moment the songID-change branch fires onSongEnded - the arrangementID memory read may already
 		//be stale/junk and all three fallbacks in getCurrentArrangement may miss.
 		if(this.currentAttempt == null) {
 			console.warn("PlaythroughTracker.onSongEnded: no currentAttempt, skipping save");
@@ -189,7 +189,7 @@ class PlaythroughTracker {
 		var finalReadout = this.poller.getCurrentReadout();
 
 		// Empty-shell guard A: skip if the readout has no notes. Must run BEFORE
-		// finalize() — finalize() stamps finalReadout.noteData into sections[currentSection],
+		// finalize(), because finalize() stamps finalReadout.noteData into sections[currentSection],
 		// which can make a never-played attempt look valid (song-select browsing creates
 		// empty attempts, and NSP transitions can leave the previous song's noteData in
 		// the readout).
@@ -202,7 +202,7 @@ class PlaythroughTracker {
 		}
 
 		// Empty-shell guard B: skip if no section was ever finished. Same ordering
-		// constraint — must check BEFORE finalize() stamps the section data.
+		// constraint: must check BEFORE finalize() stamps the section data.
 		var finishedSections = 0;
 		if(this.currentAttempt && this.currentAttempt.sections) {
 			for(var i = 0; i < this.currentAttempt.sections.length; i++) {
@@ -217,7 +217,7 @@ class PlaythroughTracker {
 			return;
 		}
 
-		// Both guards passed — this is a real attempt. Now safe to finalize and save.
+		// Both guards passed: this is a real attempt. Now safe to finalize and save.
 		this.currentAttempt.finalize(finalReadout);
 
 		if(this.previousBest == null) {
@@ -329,7 +329,7 @@ class PlaythroughBySection {
 		}
 
 		var section = sections[index];
-		//A section that hasn't been finished yet is a `{}` placeholder from the constructor — its
+		//A section that hasn't been finished yet is a `{}` placeholder from the constructor - its
 		//.TotalNotesHit etc. are undefined. Treat as Rest to avoid `undefined - 0 = NaN` propagating.
 		if(section == null || section.TotalNotes == null) {
 			return { Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0 };
@@ -443,7 +443,7 @@ class PlaythroughByPhrase {
 	
 	//calculate other phrase stats
 	_calculatePhraseStats(index, phraseIterations) {
-		//Defensive bounds check — same rationale as _calculateSectionStats above. This.phraseIterations
+		//Defensive bounds check - same rationale as _calculateSectionStats above. This.phraseIterations
 		//may be sized for the previous song while index was computed against the new song's arrangement,
 		//or onSongStarted may not yet have re-fired in Nonstop Play.
 		if(phraseIterations == null || index == null || index < 0 || index >= phraseIterations.length) {

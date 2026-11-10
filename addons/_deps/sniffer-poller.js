@@ -1,4 +1,4 @@
-// SnifferState string constants. These must match the C# enum member NAMES —
+// SnifferState string constants. These must match the C# enum member NAMES:
 // AddonServiceListener serializes currentState with StringEnumConverter, so the
 // JSON carries "SONG_PLAYING", not the underlying integer.
 const STATE_NONE = "NONE";
@@ -222,12 +222,12 @@ class SnifferPoller {
 
 	//Get current arrangement.
 	// Resolution order:
-	//   1) Direct arrangementID match — exact; trusts the memory hash, so bonus and
+	//   1) Direct arrangementID match - exact; trusts the memory hash, so bonus and
 	//      alternate arrangements can match.
 	//   2) currentPath filter (Lead/Rhythm/Bass byte from memory, populated from
-	//      launch and valid in Nonstop Play) — first non-bonus, non-alternate match
+	//      launch and valid in Nonstop Play) - first non-bonus, non-alternate match
 	//      wins, falling through to bonus/alternate if no regular match exists.
-	//   3) null if neither resolves — callers null-check.
+	//   3) null if neither resolves - callers null-check.
 	getCurrentArrangement() {
 		if(!this._prevdata) {
 			return null;
@@ -236,7 +236,7 @@ class SnifferPoller {
 	}
 
 	//Resolve the live arrangement within the given song details + readout. Shared
-	// by getCurrentArrangement and the addon `arrangement` computeds — addons pass
+	// by getCurrentArrangement and the addon `arrangement` computeds - addons pass
 	// their own displayed song (prevData during mode-1 results) so resolution stays
 	// bound to what is on screen even after the poller has advanced to the next
 	// Nonstop song.
@@ -251,7 +251,7 @@ class SnifferPoller {
 
 		var arrangements = songDetails.arrangements;
 
-		// STEP 1: Direct arrangementID match — exact, allow bonus/alt
+		// STEP 1: Direct arrangementID match - exact, allow bonus/alt
 		for (var i = arrangements.length - 1; i >= 0; i--) {
 			var arrangement = arrangements[i];
 
@@ -262,7 +262,7 @@ class SnifferPoller {
 			}
 		}
 
-		// STEP 2: Path filter — first match wins
+		// STEP 2: Path filter - first match wins
 		var currentPath = memoryReadout.currentPath;
 		if (currentPath && currentPath !== "Unknown") {
 			// 2a: Prefer non-bonus, non-alternate
@@ -282,13 +282,13 @@ class SnifferPoller {
 			}
 		}
 
-		// Unresolvable — return null. Callers all have null guards.
+		// Unresolvable: return null. Callers all have null guards.
 		return null;
 	}
 
 	// Mode-1 results min-hold, shared by the mode-1 addons: holds the results
 	// comparison visible for at least one pass through app.feedback
-	// (feedback.length × cycleMs) before song lifecycle events may flip back to
+	// (feedback.length x cycleMs) before song lifecycle events may flip back to
 	// mode 0; a state transition to SONG_SELECTED/SONG_STARTING/SONG_PLAYING
 	// overrides the hold immediately (needed in Nonstop Play, where the songID
 	// flips to the next queued song the moment the hub loads and would otherwise

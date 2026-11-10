@@ -419,7 +419,7 @@ namespace RockSniffer
                     outputtext = outputtext.Replace("%TOOLKIT_COMMENT%", details.toolkit.comment);
                 }
 
-                // %TUNING% — tuning name of the loaded arrangement, resolved by arrangementID
+                // %TUNING%: tuning name of the loaded arrangement, resolved by arrangementID
                 // match. Empty when unresolvable. Song-detail block placement so the
                 // blank-on-invalid-details rule applies.
                 string tuningName = "";
@@ -433,10 +433,10 @@ namespace RockSniffer
                 }
                 outputtext = outputtext.Replace("%TUNING%", tuningName);
 
-                // %CURRENT_SECTION% / %CURRENT_PHRASE% — chart-authored section/phrase name at
+                // %CURRENT_SECTION% / %CURRENT_PHRASE%: chart-authored section/phrase name at
                 // the song timer position (e.g. "verse 2", "solo 1"); scan mirrors the JS
                 // getSectionAt/getPhraseAt. Empty when the timer is 0 or unresolvable, so the
-                // files blank between songs and OBS text sources hide — same contract as
+                // files blank between songs and OBS text sources hide - same contract as
                 // %CURRENT_PATH%.
                 string currentSectionName = "";
                 string currentPhraseName = "";
@@ -492,7 +492,7 @@ namespace RockSniffer
                 outputtext = outputtext.Replace("%TOTAL_NOTES%", nd.TotalNotes.ToString());
                 outputtext = outputtext.Replace("%CURRENT_ACCURACY%", FormatPercentage(nd.Accuracy));
 
-                // %CURRENT_PATH% — menu-level Path selection ("Lead"/"Rhythm"/"Bass"),
+                // %CURRENT_PATH%: menu-level Path selection ("Lead"/"Rhythm"/"Bass"),
                 // populated from launch and valid in all gameStages. Empty when Unknown so
                 // OBS text sources hide. Memory-readout block placement so path.txt updates
                 // even with no song loaded.

@@ -173,7 +173,7 @@ namespace RockSniffer.History
                 return;
             }
 
-            // Skip history writes (CSV and SQLite) for Multiplayer plays — multi-user note
+            // Skip history writes (CSV and SQLite) for Multiplayer plays - multi-user note
             // data isn't tracked, so rows would carry wrong single-user values.
             // wasMultiplayerMode is captured at song start in Sniffer.cs. EVENT=END logging,
             // Discord RPC, and live overlays are unaffected.
@@ -308,7 +308,7 @@ namespace RockSniffer.History
             try
             {
                 // Self-heal: if the CSV vanished mid-session (deleted, moved,
-                // rotated), recreate it with headers before appending — otherwise
+                // rotated), recreate it with headers before appending - otherwise
                 // AppendAllText silently rebuilds a headerless file, since
                 // InitializeCsv only runs at startup.
                 if (!File.Exists(csvPath))
