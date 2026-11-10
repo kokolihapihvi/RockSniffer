@@ -293,10 +293,7 @@ namespace RockSniffer
             sniffer.OnSongChanged += Sniffer_OnCurrentSongChanged;
             sniffer.OnMemoryReadout += Sniffer_OnMemoryReadout;
 
-            if (config.outputSettings.enableEventLog)
-            {
-                RockSniffer.Logging.EventLogger.Attach(sniffer);
-            }
+            RockSniffer.Logging.EventLogger.Attach(sniffer, config.outputSettings.enableEventLog);
 
             //Add playthrough history listeners
             if (playthroughHistory != null)

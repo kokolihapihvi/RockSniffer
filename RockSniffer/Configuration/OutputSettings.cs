@@ -38,7 +38,7 @@ namespace RockSniffer.Configuration
         };
 
 
-        // Write one line per song start and end to output/events.log
+        // Also write song start, pause, resume and end to output/events.log
         public bool enableEventLog = false;
 
 

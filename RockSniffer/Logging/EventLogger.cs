@@ -11,9 +11,9 @@ using System.Text;
 namespace RockSniffer.Logging
 {
     /// <summary>
-    /// Appends one line per song start and end to output/events.log, for external
-    /// tools that tail the file (scene switching, recording markers). Nothing goes
-    /// to the console or sniffer.log.
+    /// Reports song start, pause, resume and end: one short line on the console and
+    /// in sniffer.log, and optionally one key=value line in output/events.log for
+    /// external tools that tail the file (scene switching, recording markers).
     /// </summary>
     internal static class EventLogger
     {
@@ -24,16 +24,49 @@ namespace RockSniffer.Logging
 
         private static readonly Encoding utf8NoBom = new UTF8Encoding(false);
 
-        public static void Attach(Sniffer sniffer)
+        private static bool writeFile;
+
+        // Pause and resume arrive as state changes, which carry no readout or song.
+        private static RSMemoryReadout? lastReadout;
+        private static SongDetails? currentSong;
+
+        public static void Attach(Sniffer sniffer, bool writeEventLog)
         {
+            writeFile = writeEventLog;
+
+            sniffer.OnMemoryReadout += (sender, e) => lastReadout = e.memoryReadout;
+            sniffer.OnStateChanged += OnStateChanged;
             sniffer.OnSongStarted += OnSongStarted;
             sniffer.OnSongEnded += OnSongEnded;
+        }
+
+        private static void OnStateChanged(object? sender, OnStateChangedArgs e)
+        {
+            // SONG_PAUSED is only entered from SONG_PLAYING and only returns to it on a
+            // resume; quit and restart from pause leave to IN_MENUS and end the run.
+            bool pause = e.oldState == SnifferState.SONG_PLAYING && e.newState == SnifferState.SONG_PAUSED;
+            bool resume = e.oldState == SnifferState.SONG_PAUSED && e.newState == SnifferState.SONG_PLAYING;
+
+            if (!pause && !resume)
+            {
+                return;
+            }
+
+            float timer = lastReadout?.songTimer ?? 0;
+
+            Logger.Log("Song {0} at {1}", pause ? "paused" : "resumed", FormatTimer(timer));
+
+            Write(DateTime.Now, string.Create(CultureInfo.InvariantCulture,
+                $"EVENT={(pause ? "PAUSE" : "RESUME")};song={currentSong?.songName};timer={Math.Round(timer, 3)};"));
         }
 
         private static void OnSongStarted(object? sender, OnSongStartedArgs e)
         {
             SongDetails song = e.song;
+            currentSong = song;
             string author = (song.toolkit?.author ?? "").Trim();
+
+            Logger.Log("Song started: {0} - {1} [{2}]", song.artistName, song.songName, e.path);
 
             Write(e.timestamp, string.Create(CultureInfo.InvariantCulture,
                 $"EVENT=START;artist={song.artistName};album={song.albumName};year={song.albumYear};" +
@@ -43,6 +76,22 @@ namespace RockSniffer.Logging
         private static void OnSongEnded(object? sender, OnSongEndedArgs e)
         {
             INoteData? noteData = e.readout?.noteData;
+
+            if (e.completed)
+            {
+                if (noteData != null)
+                {
+                    Logger.Log("Song ended: completed, {0}%", Math.Round(noteData.Accuracy, 1).ToString(CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    Logger.Log("Song ended: completed");
+                }
+            }
+            else
+            {
+                Logger.Log("Song ended: quit at {0}", FormatTimer(e.readout?.songTimer ?? 0));
+            }
 
             string line = string.Create(CultureInfo.InvariantCulture,
                 $"EVENT=END;completed={e.completed};paused={e.paused};");
@@ -67,8 +116,19 @@ namespace RockSniffer.Logging
             Write(e.timestamp, line);
         }
 
+        private static string FormatTimer(float seconds)
+        {
+            int total = (int)Math.Max(0, seconds);
+            return $"{total / 60}:{total % 60:00}";
+        }
+
         private static void Write(DateTime timestamp, string message)
         {
+            if (!writeFile)
+            {
+                return;
+            }
+
             string line = $"[{timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}] {message}\r\n";
 
             // These handlers run inside the sniffer's loops; an exception here would
