@@ -16,7 +16,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using RockSniffer.History;
@@ -26,7 +25,7 @@ namespace RockSniffer
 {
     class Program
     {
-        internal const string version = "0.6.12";
+        internal const string version = "0.7.0";
 
         internal static ICache cache;
         internal static Config config;
@@ -132,7 +131,13 @@ namespace RockSniffer
                 {
                     addonService = new AddonService(config.addonSettings, new SQLiteStorage());
                 }
-                catch (SocketException e)
+                catch (HttpListenerException e) when (e.ErrorCode == 5)
+                {
+                    Logger.LogError("Windows denied listening on http://{0}:{1}/", config.addonSettings.ipAddress, config.addonSettings.port);
+                    Logger.LogError("You may need to allow listening manually using netsh");
+                    Logger.LogError("Could not start addon service: {0}\r\n{1}", e.Message, e.StackTrace);
+                }
+                catch (HttpListenerException e)
                 {
                     Logger.LogError("Please verify that the IP address is valid and the port is not already in use");
                     Logger.LogError("Could not start addon service: {0}\r\n{1}", e.Message, e.StackTrace);

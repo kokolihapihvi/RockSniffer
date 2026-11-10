@@ -1,12 +1,17 @@
-using System;
+﻿using System;
 using System.Data.SQLite;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace RockSniffer.Addons.Storage
 {
-    public class SQLiteStorage : IAddonStorage
+    public partial class SQLiteStorage : IAddonStorage
     {
-        private SQLiteConnection Connection { get; set; }
+        private SQLiteConnection Connection { get; }
+        
+        [GeneratedRegex("^[a-zA-Z0-9_]{1,64}\\z")]
+        private static partial Regex AddonIdRegex();
+        private static readonly Regex ValidAddonIdRegex = AddonIdRegex();
 
         public SQLiteStorage()
         {
@@ -20,10 +25,20 @@ namespace RockSniffer.Addons.Storage
             Connection.Open();
         }
 
-        private void CreateTable(string addonkey)
+        private static bool IsValidAddonId(string addonId)
         {
+            return ValidAddonIdRegex.IsMatch(addonId);
+        }
+
+        private void CreateTable(string addonId)
+        {
+            if (!IsValidAddonId(addonId))
+            {
+                throw new ArgumentException("Invalid addon id", nameof(addonId));
+            }
+            
             var q = $@"
-            CREATE TABLE IF NOT EXISTS `{addonkey}` (
+            CREATE TABLE IF NOT EXISTS `{addonId}` (
 	            `id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	            `key`	TEXT NOT NULL,
 	            `value`	TEXT
@@ -36,32 +51,42 @@ namespace RockSniffer.Addons.Storage
             }
         }
 
-        public string GetValue(string addonid, string key)
+        public string? GetValue(string addonId, string key)
         {
+            if (!IsValidAddonId(addonId))
+            {
+                throw new ArgumentException("Invalid addon id", nameof(addonId));
+            }
+            
             //Make sure the table exists
-            CreateTable(addonid);
+            CreateTable(addonId);
 
             using (var cmd = Connection.CreateCommand())
             {
-                cmd.CommandText = $"SELECT value FROM {addonid} WHERE key=@key";
+                cmd.CommandText = $"SELECT value FROM `{addonId}` WHERE key=@key";
 
                 cmd.Parameters.AddWithValue("@key", key);
 
-                return (string)cmd.ExecuteScalar();
+                return (string?)cmd.ExecuteScalar();
             }
         }
 
-        public void SetValue(string addonid, string key, string value)
+        public void SetValue(string addonId, string key, string value)
         {
-            //Make sure the table exists
-            CreateTable(addonid);
+            if (!IsValidAddonId(addonId))
+            {
+                throw new ArgumentException("Invalid addon id", nameof(addonId));
+            }
+            
+            Console.WriteLine($"Storing {addonId}/{key} ({value.Length} bytes)");
 
-            Console.WriteLine($"Storing {addonid}/{key} ({value.Length} bytes)");
+            //Make sure the table exists
+            CreateTable(addonId);
 
             //Attempt to update the table
             using (var cmd = Connection.CreateCommand())
             {
-                cmd.CommandText = $"UPDATE {addonid} SET value=@value WHERE key=@key";
+                cmd.CommandText = $"UPDATE `{addonId}` SET value=@value WHERE key=@key";
 
                 cmd.Parameters.AddWithValue("@value", value);
                 cmd.Parameters.AddWithValue("@key", key);
@@ -75,7 +100,7 @@ namespace RockSniffer.Addons.Storage
 
             using (var cmd = Connection.CreateCommand())
             {
-                cmd.CommandText = $@"INSERT INTO {addonid}(key, value) VALUES(@key, @value)";
+                cmd.CommandText = $@"INSERT INTO `{addonId}`(key, value) VALUES(@key, @value)";
 
                 cmd.Parameters.AddWithValue("@value", value);
                 cmd.Parameters.AddWithValue("@key", key);
