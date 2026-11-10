@@ -1,5 +1,5 @@
-var widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth;
-var gradeCode = {
+const widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth;
+const gradeCode = {
 	NaN : 'white',
 	'error' : 'white',
 	'No Data' : 'grey',
@@ -12,12 +12,12 @@ var gradeCode = {
 function accuracyGradient(accuracy){
 	if (accuracy == "Rest"){return "grey"}
 	if (accuracy < 50){return "rgb(255, 0, 0)"}
-	var red = (Math.floor(Math.min(((100 - accuracy)/25),1) * 8)/ 8) * 255;
-	var green = (Math.floor(Math.min(((accuracy - 50)/25),1) * 8) / 8) * 255;
+	const red = (Math.floor(Math.min(((100 - accuracy)/25),1) * 8)/ 8) * 255;
+	const green = (Math.floor(Math.min(((accuracy - 50)/25),1) * 8) / 8) * 255;
 	return "rgb("+red+","+green+", 0)";
 };
 
-var poller = new SnifferPoller({
+const poller = new SnifferPoller({
 	interval: 100,
 
 	onData: function(data) {
@@ -38,9 +38,9 @@ var poller = new SnifferPoller({
 	}
 });
 
-var tracker = new PlaythroughTracker(poller);
+const tracker = new PlaythroughTracker(poller);
 
-var app = new Vue({
+const app = new Vue({
 	el: "#app",
 	data: {
 		visible: true,
@@ -59,11 +59,10 @@ var app = new Vue({
     },
 	methods: {
         doScrollSong: function() {
-			if(this.song == null){
-				var width = 0;
-				} else {				
-				var width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth)+10;
-				}
+			let width = 0;
+			if(this.song != null){
+				width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth)+10;
+			}
             if(this.songInfoTransform == "translateX(0px)" && width > widthUI) {
                 this.songInfoTransform = "translateX(-"+(width-widthUI)+"px)";
             } else {
@@ -127,16 +126,16 @@ var app = new Vue({
 		},
 		phraseStartTime: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			var currentPhrase = poller.getCurrentPhrase();
+			const currentPhrase = poller.getCurrentPhrase();
 			if(currentPhrase == null){return 0;}
 			if(currentPhrase.index == 0){return 0;}
 			return (currentPhrase.startTime / this.song.songLength) * 100;
 		},
 		phraseHeight: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			var phraseHeight = 1;
-			var maxDif = poller.getMaxDif();
-			var phrase = poller.getCurrentPhrase();
+			let phraseHeight = 1;
+			const maxDif = poller.getMaxDif();
+			const phrase = poller.getCurrentPhrase();
 			if(maxDif != 0){
 				phraseHeight = phrase.maxDifficulty/maxDif;
 			}
@@ -144,17 +143,17 @@ var app = new Vue({
 		},		
 		scrDisplay: function(){
 			$("div.scrDisplay").removeAttr('style');
-			var score = '0000000';
+			let score = '0000000';
 			// Learn a Song note data has no score
 			if (this.readout.songTimer == 0 || this.notes.CurrentScore === undefined){
 				return score.substr(score.length-7)
 			}
-			var songProg = this.songProgress;
-			var scr = this.notes.CurrentScore;
-			var PerfP = this.notes.PerfectPhrases;
-			var GP = this.notes.GoodPhrases;
-			var PP = this.notes.PassedPhrases;
-			var FP = this.notes.FailedPhrases;
+			const songProg = this.songProgress;
+			const scr = this.notes.CurrentScore;
+			const PerfP = this.notes.PerfectPhrases;
+			const GP = this.notes.GoodPhrases;
+			const PP = this.notes.PassedPhrases;
+			const FP = this.notes.FailedPhrases;
 			score = score + String(scr);
 			if((songProg >= 80 & (GP + PP + FP) == 0 & PerfP > 0) | scr >= 1500000){
 				$("div.scrDisplay").css({
@@ -229,19 +228,19 @@ var app = new Vue({
 		},		
 		hitDisplay: function(){
 			$("div.hitDisplay").removeAttr('style');
-			var accHit = '0000';
-			var notesHit = '0000';
-			var totalNotes = '0000';
+			let accHit = '0000';
+			let notesHit = '0000';
+			let totalNotes = '0000';
 			if (this.readout.songTimer == 0){
 				return accHit.substr(accHit.length-4)+'% '+notesHit.substr(notesHit.length-4)+'/'+totalNotes.substr(totalNotes.length-4);
 			}
-			var songProg = this.songProgress;
-			var acc = this.notes.Accuracy;
-			var totN = this.notes.TotalNotes;
+			const songProg = this.songProgress;
+			const acc = this.notes.Accuracy;
+			const totN = this.notes.TotalNotes;
 			if(acc == 100){
-				var accHit = accHit + '0100'
+				accHit = accHit + '0100'
 			}else{
-				var accHit = accHit + String(acc.toFixed(1));
+				accHit = accHit + String(acc.toFixed(1));
 			}
 			notesHit = notesHit + String(this.notes.TotalNotesHit);
 			totalNotes = totalNotes + String(totN);	
@@ -288,16 +287,16 @@ var app = new Vue({
 		},		
 		mltDisplay: function(){
 			$("div.mltDisplay").removeAttr('style');	
-			var curMlt = '00'
-			var maxMlt = '00'
+			let curMlt = '00'
+			let maxMlt = '00'
 			// Learn a Song note data has no multiplier
 			if (this.readout.songTimer == 0 || this.notes.CurrentMultiplier === undefined){			
 				return curMlt.substr(curMlt.length-2)+'x/'+maxMlt.substr(maxMlt.length-2)+'x'
 			}	
-			var curM = this.notes.CurrentMultiplier;
-			var maxM = this.notes.HighestMultiplier;
-			var acc = this.notes.Accuracy;
-			var maxM_POS = ((this.notes.TotalNotes)/5) + 1;
+			const curM = this.notes.CurrentMultiplier;
+			const maxM = this.notes.HighestMultiplier;
+			const acc = this.notes.Accuracy;
+			const maxM_POS = ((this.notes.TotalNotes)/5) + 1;
 			curMlt = curMlt + String(curM);
 			maxMlt = maxMlt + String(maxM);	
 			if(curM == 99){
@@ -357,17 +356,17 @@ var app = new Vue({
 		},		
 		strDisplay: function(){
 			$("div.strDisplay").removeAttr('style');
-			var curStr = '0000';
-			var maxStr = '0000';
+			let curStr = '0000';
+			let maxStr = '0000';
 			if (this.readout.songTimer == 0){
 				return curStr.substr(curStr.length-4)+'/'+maxStr.substr(maxStr.length-4)
 			};	
-			var curS = this.notes.CurrentHitStreak-this.notes.CurrentMissStreak;
-			var maxS = this.notes.HighestHitStreak;
-			var totN = this.notes.TotalNotes;
+			const curS = this.notes.CurrentHitStreak-this.notes.CurrentMissStreak;
+			const maxS = this.notes.HighestHitStreak;
+			const totN = this.notes.TotalNotes;
 			curStr = curStr + String(Math.abs(curS));
 			maxStr = maxStr + String(maxS);
-			var neg = '';
+			let neg = '';
 			if (curS < 0){
 				neg = '-'
 			}
@@ -445,16 +444,16 @@ var app = new Vue({
 			return this.arrangement.tuning.TuningName;		
         },
 		sections: function() {
-			var arrangement = this.arrangement;
+			const arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
-			var sections = arrangement.sections;
+			const sections = arrangement.sections;
 
-			var songLength = this.song.songLength;
+			const songLength = this.song.songLength;
 			
-			for (var i = 0; i < sections.length; i++) {
-				var section = sections[i];
+			for (let i = 0; i < sections.length; i++) {
+				const section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -489,18 +488,18 @@ var app = new Vue({
 			return sections;
 		},
 		phraseIterations: function() {
-			var arrangement = this.arrangement;
+			const arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
-			var phraseIterations = arrangement.phraseIterations;
+			const phraseIterations = arrangement.phraseIterations;
 
-			var songLength = this.song.songLength;
+			const songLength = this.song.songLength;
 					
-			var maxDif = poller.getMaxDif();		
+			let maxDif = poller.getMaxDif();		
 			
-			for (var i = 0; i < phraseIterations.length; i++) {
-				var phrase = phraseIterations[i];
+			for (let i = 0; i < phraseIterations.length; i++) {
+				const phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -516,7 +515,7 @@ var app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				var phraseHeight = 1;
+				let phraseHeight = 1;
 				
 				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
 				
@@ -556,7 +555,7 @@ var app = new Vue({
 			return this.prevData.memoryReadout;
 		},
 		prevNotes: function() {
-			var pr = this.prevReadout;
+			const pr = this.prevReadout;
 			if(!pr) {
 				return null;
 			}
@@ -576,13 +575,13 @@ var app = new Vue({
 			if(this.prevNotes.CurrentScore === undefined) {
 				return '0000000';
 				}
-			var score = '0000000';	
-			var acc = this.prevNotes.Accuracy;
-			var PerfP = this.prevNotes.PerfectPhrases;
-			var GP = this.prevNotes.GoodPhrases;
-			var PP = this.prevNotes.PassedPhrases;
-			var FP = this.prevNotes.FailedPhrases;
-			var scr = this.prevNotes.CurrentScore;
+			let score = '0000000';	
+			const acc = this.prevNotes.Accuracy;
+			const PerfP = this.prevNotes.PerfectPhrases;
+			const GP = this.prevNotes.GoodPhrases;
+			const PP = this.prevNotes.PassedPhrases;
+			const FP = this.prevNotes.FailedPhrases;
+			const scr = this.prevNotes.CurrentScore;
 			score = score + String(scr);	
 			if(acc == 100){
 				$("div.scrDisplay").css({
@@ -668,14 +667,14 @@ var app = new Vue({
 			if(this.prevSong == null) {
 				return '0100% 0000/0000';
 				}
-			var accHit = '0000';
-			var notesHit = '0000';
-			var totalNotes = '0000';
-			var acc = this.prevNotes.Accuracy;
+			let accHit = '0000';
+			let notesHit = '0000';
+			let totalNotes = '0000';
+			const acc = this.prevNotes.Accuracy;
 			if(acc == 100){
-				var accHit = accHit + '0100'
+				accHit = accHit + '0100'
 			}else{
-				var accHit = accHit + String(acc.toFixed(1));
+				accHit = accHit + String(acc.toFixed(1));
 			}
 			notesHit = notesHit + String(this.prevNotes.TotalNotesHit);
 			totalNotes = totalNotes + String(this.prevNotes.TotalNotes);		
@@ -724,7 +723,7 @@ var app = new Vue({
 					"color": 'white',
 				})
 			} else {
-				var accCol = accuracyGradient(acc);
+				const accCol = accuracyGradient(acc);
 				$("div.hitDisplay").css({
 					"color": accCol,
 				})
@@ -739,10 +738,10 @@ var app = new Vue({
 			if(this.prevNotes == null || this.prevNotes.HighestMultiplier === undefined) {
 				return '00x/00x';
 				}
-			var curMlt = '00';
-			var maxMlt = '00';
-			var maxM = this.prevNotes.HighestMultiplier;
-			var maxM_POS = ((this.prevNotes.TotalNotes)/5) + 1;
+			const curMlt = '00';
+			let maxMlt = '00';
+			const maxM = this.prevNotes.HighestMultiplier;
+			const maxM_POS = ((this.prevNotes.TotalNotes)/5) + 1;
 			maxMlt = maxMlt + String(maxM);	
 			if(this.prevNotes.Accuracy == 100){
 				$("div.mltDisplay").css({
@@ -812,12 +811,12 @@ var app = new Vue({
 			if(this.prevSong == null) {
 				return '0000/0000';
 				}
-			var curStr = '0000'
-			var maxStr = '0000'
-			var maxS = this.prevNotes.HighestHitStreak;
-			var totN = this.prevNotes.TotalNotes;
+			const curStr = '0000'
+			let maxStr = '0000'
+			const maxS = this.prevNotes.HighestHitStreak;
+			const totN = this.prevNotes.TotalNotes;
 			maxStr = maxStr + String(maxS);
-			var neg = '';	
+			const neg = '';	
 			if(this.prevNotes.Accuracy == 100){
 				$("div.strDisplay").css({
 					  "background": "repeating-linear-gradient(180deg, #fc0000, #fc9000, #fcfc00, #00fc00, #00fcff, #fc00ff, #fc0000, #fc9000, #fcfc00, #00fc00)",
@@ -890,8 +889,8 @@ var app = new Vue({
 			if(this.prevSong == null) {return null;}
 			if(this.prevSong.arrangements == null) {return null;}
 			
-			for (var i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
-				var arrangement = this.prevSong.arrangements[i];
+			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
+				const arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID.length == 32 && arrangement.arrangementID == this.prevReadout.arrangementID) {
 					return arrangement;
@@ -906,16 +905,16 @@ var app = new Vue({
 		},
 		
 		prevSections: function() {
-			var arrangement = this.prevArrangement;
+			const arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			var sections = arrangement.sections;
+			const sections = arrangement.sections;
 
-			var songLength = this.prevSong.songLength;
+			const songLength = this.prevSong.songLength;
 
-			for (var i = 0; i < sections.length; i++) {
-				var section = sections[i];
+			for (let i = 0; i < sections.length; i++) {
+				const section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -951,18 +950,18 @@ var app = new Vue({
 		},
 		
 		prevPhrases: function() {
-			var arrangement = this.prevArrangement;
+			const arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			var phraseIterations = arrangement.phraseIterations;
+			const phraseIterations = arrangement.phraseIterations;
 
-			var songLength = this.prevSong.songLength;
+			const songLength = this.prevSong.songLength;
 			
-			var maxDif = poller.getMaxDif();		
+			let maxDif = poller.getMaxDif();		
 			
-			for (var i = 0; i < phraseIterations.length; i++) {
-				var phrase = phraseIterations[i];
+			for (let i = 0; i < phraseIterations.length; i++) {
+				const phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -978,7 +977,7 @@ var app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				var phraseHeight = 1;
+				let phraseHeight = 1;
 				
 				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
 				
@@ -1007,20 +1006,21 @@ var app = new Vue({
 });
 
 function formatTimer(time) {
-	var minutes = Math.floor(time/60);
-	var seconds = time % 60;
-
 	if(time < 0) {
 		return "";
 	}
 
+	const minutes = Math.floor(time/60);
+	const seconds = time % 60;
+
 	return [minutes,seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
 }
 
+let hideTimeout = null;
 function generateFeedback() {
 	app.feedback = [];
 
-	var arrangement = poller.getCurrentArrangement();
+	const arrangement = poller.getCurrentArrangement();
 	//Can be unresolved at Nonstop Play song changes
 	if(arrangement == null) {
 		app.feedback = ["YOU TRIED!"];
@@ -1028,14 +1028,14 @@ function generateFeedback() {
 		hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 		return;
 	}
-	var sections = arrangement.sections;
-	var feedback = []
+	const sections = arrangement.sections;
+	const feedback = []
 
-	var greens = 0;
+	let greens = 0;
 
-	for (var i = sections.length - 1; i >= 0; i--) {
-		var section = sections[i];
-		var rel = tracker.getRelative(section.endTime);
+	for (let i = sections.length - 1; i >= 0; i--) {
+		const section = sections[i];
+		const rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
 			continue;

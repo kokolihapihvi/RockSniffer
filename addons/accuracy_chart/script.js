@@ -1,12 +1,12 @@
-var prevBest = [];
-var currentAttempt = [];
-var betterTicks = [];
-var worseTicks = [];
-var myChart = null;
+const prevBest = [];
+const currentAttempt = [];
+const betterTicks = [];
+const worseTicks = [];
+let myChart = null;
 
-var storage = new SnifferStorage("accuracy_chart");
+const storage = new SnifferStorage("accuracy_chart");
 
-var poller = new SnifferPoller({
+const poller = new SnifferPoller({
 	onData: function(data) {
 		if(poller.getCurrentState() == STATE_SONG_STARTING || poller.getCurrentState() == STATE_SONG_PLAYING || poller.getCurrentState() == STATE_SONG_ENDING) {
 			setCurrentAttempt(poller.getSongTimer(), poller.getCurrentAccuracy());
@@ -18,14 +18,14 @@ var poller = new SnifferPoller({
 		betterTicks.length = 0;
 		worseTicks.length = 0;
 
-		var arrangement = poller.getCurrentArrangement();
+		const arrangement = poller.getCurrentArrangement();
 		if(arrangement == null) {
 			return;
 		}
-		var arr_id = arrangement.arrangementID;
+		const arr_id = arrangement.arrangementID;
 
 		storage.getValue(song.songID+"_"+arr_id).done(function(data) {
-			var parsed = JSON.parse(data);
+			const parsed = JSON.parse(data);
 
 			if(parsed != null) {
 				setPrevBest(parsed);
@@ -34,11 +34,11 @@ var poller = new SnifferPoller({
 	},
 	onSongEnded: function(song) {
 		//Can be unresolved at Nonstop Play song changes
-		var arrangement = poller.getCurrentArrangement();
+		const arrangement = poller.getCurrentArrangement();
 		if(arrangement == null) {
 			return;
 		}
-		var arr_id = arrangement.arrangementID;
+		const arr_id = arrangement.arrangementID;
 
 		if(prevBest.length <= 1) {
 			storage.setValue(song.songID+"_"+arr_id, currentAttempt);
@@ -57,9 +57,9 @@ var poller = new SnifferPoller({
 });
 
 function setCurrentAttempt(time, accuracy) {
-	var t = Math.floor(time);
+	const t = Math.floor(time);
 
-	for (var i = 0; i < t; i++) {
+	for (let i = 0; i < t; i++) {
 		if(!currentAttempt[i]) {
 			currentAttempt[i] = {x: i, y: accuracy};
 		}
@@ -96,7 +96,7 @@ function setCurrentAttempt(time, accuracy) {
 function setPrevBest(pb) {
 	prevBest.length = 0;
 
-	for (var i = 0; i < pb.length; i++) {
+	for (let i = 0; i < pb.length; i++) {
 		prevBest.push(pb[i]);
 	}
 
@@ -104,7 +104,7 @@ function setPrevBest(pb) {
 }
 
 $(function() {
-	var ctx = document.getElementById('acc_chart').getContext('2d');
+	const ctx = document.getElementById('acc_chart').getContext('2d');
 	myChart = new Chart(ctx, {
 		type: 'line',
 		data: {
@@ -155,8 +155,8 @@ $(function() {
 						minRotation: 0,
 						maxRotation: 0,
 						callback: function(value, index, values) {
-							var minutes = Math.floor(value/60);
-							var seconds = value % 60;
+							const minutes = Math.floor(value/60);
+							const seconds = value % 60;
 
 							if(value < 0) {
 								return "";
@@ -193,8 +193,8 @@ $(function() {
 		plugins: [
 			{
 				afterDatasetsDraw: function(chartInstance) {
-					var ctx = chartInstance.chart.ctx;
-					var chartArea = chartInstance.chartArea;
+					const ctx = chartInstance.chart.ctx;
+					const chartArea = chartInstance.chartArea;
 
 					if(currentAttempt.length == 0) {
 						return;
@@ -202,16 +202,16 @@ $(function() {
 
 					ctx.save();
 
-					var pt = currentAttempt.slice(-1)[0];
-					var x = chartInstance.scales["x-axis-0"].getPixelForValue(pt.x);
-					var y = chartInstance.scales["y-axis-0"].getPixelForValue(pt.y);
+					const pt = currentAttempt.slice(-1)[0];
+					const x = chartInstance.scales["x-axis-0"].getPixelForValue(pt.x);
+					const y = chartInstance.scales["y-axis-0"].getPixelForValue(pt.y);
 
-					var text = pt.y+"%";
-					var textColor = "black";
-					var fontSize = 30;
+					let text = pt.y+"%";
+					let textColor = "black";
+					const fontSize = 30;
 
 					if(prevBest.length > 0) {
-						var bpt = prevBest[pt.x];
+						const bpt = prevBest[pt.x];
 
 						if(bpt.y > pt.y) {
 							textColor = "red";
@@ -224,16 +224,16 @@ $(function() {
 					}
 
 					ctx.font = fontSize+"px Arial";
-					var textSize = ctx.measureText(text);
+					const textSize = ctx.measureText(text);
 
-					var arrangement = poller.getCurrentArrangement();
+					const arrangement = poller.getCurrentArrangement();
 
 					if(arrangement) {
-						for (var i = 0; i < arrangement.sections.length; i++) {
-							var section = arrangement.sections[i];
+						for (let i = 0; i < arrangement.sections.length; i++) {
+							const section = arrangement.sections[i];
 
-							var start = chartInstance.scales["x-axis-0"].getPixelForValue(section.startTime);
-							var end = chartInstance.scales["x-axis-0"].getPixelForValue(section.endTime);
+							const start = chartInstance.scales["x-axis-0"].getPixelForValue(section.startTime);
+							const end = chartInstance.scales["x-axis-0"].getPixelForValue(section.endTime);
 
 							ctx.fillStyle = "black";
 							ctx.fillText(section.name, start, 30);
