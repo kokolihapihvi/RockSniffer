@@ -1,15 +1,15 @@
 //Remember previous song
-let prevSongID = "";
+var prevSongID = "";
 
 //Listen to onSongStarted
-const poller = new SnifferPoller({
+var poller = new SnifferPoller({
 	onSongStarted: function(song) {
 		if(song.songID == prevSongID) {
 			return;
 		}
 
-		const songText = song.artistName + " - " + song.songName;
-		$("div.log").append("<div class='log_line'>"+songText+"</div><br>");
+		var song = song.artistName + " - " + song.songName;
+		$("div.log").append("<div class='log_line'>"+song+"</div><br>");
 
 		prevSongID = song.songID;
 	}

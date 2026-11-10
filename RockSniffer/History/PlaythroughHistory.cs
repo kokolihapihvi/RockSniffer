@@ -11,9 +11,7 @@ using System.Text;
 namespace RockSniffer.History
 {
     /// <summary>
-    /// Handles playthrough history logging to SQL and CSV
-    /// Timestamps come from the sniffer's song events
-    /// Supports Score Attack mode with additional stats
+    /// Writes one row per playthrough to SQLite and/or CSV
     /// </summary>
     public class PlaythroughHistory
     {
@@ -23,12 +21,9 @@ namespace RockSniffer.History
         private bool csvEnabled;
 
         private SQLiteConnection sqliteConnection;
-        private DateTime metadataTimestamp;      // Song selected (OnSongSelected)
-        private DateTime actualStartTimestamp;    // Gameplay started (OnSongStarted)
-        private DateTime actualEndTimestamp;      // Gameplay ended (OnSongEnded)
-        private RSMemoryReadout startReadout;
-        private string arrangementPath;          // Arrangement type (Lead/Rhythm/Bass)
-        private string arrangementTuning;        // Tuning (e.g., "E Standard", "D Standard (Capo Fret 2)")
+        private DateTime metadataTimestamp;
+        private DateTime actualStartTimestamp;
+        private DateTime actualEndTimestamp;
 
         public PlaythroughHistory(bool enableSqlite, string sqlitePath, bool enableCsv, string csvPath)
         {
@@ -121,7 +116,6 @@ namespace RockSniffer.History
             {
                 if (!File.Exists(csvPath))
                 {
-                    // Create CSV with headers including Score Attack fields
                     string header =
                         "Timestamp,TimestampStart,TimestampEnd,SongID,SongName,ArtistName,AlbumName,AlbumYear,SongLength," +
                         "ArrangementID,ArrangementPath,ArrangementTuning,GameMode,Author,TotalNotes,NotesHit,NotesMissed," +
@@ -139,89 +133,37 @@ namespace RockSniffer.History
             }
         }
 
-        /// <summary>
-        /// Called when a selected song starts loading (OnSongSelected)
-        /// </summary>
-        public void OnMetadataLoaded(SongDetails song, RSMemoryReadout readout)
+        public void OnSongSelected()
         {
             metadataTimestamp = DateTime.Now;
-            startReadout = readout?.Clone();
         }
 
-        /// <summary>
-        /// Called when gameplay starts (OnSongStarted)
-        /// </summary>
         public void OnSongStarted(RockSnifferLib.Events.OnSongStartedArgs e)
         {
             actualStartTimestamp = e.timestamp;
-            arrangementPath = e.path ?? "";
-            arrangementTuning = e.tuning ?? "";
-            // arrangementID is also available on e (e.arrangementID) but Program.cs
-            // doesn't propagate it as a field here; the end-of-song event carries the
-            // run-context arrangementID directly via e.arrangementID at OnSongEnded.
         }
 
-        /// <summary>
-        /// Called when gameplay ends (OnSongEnded). The args carry the arrangement
-        /// context captured at song start (preserved even if currentMemoryReadout has
-        /// advanced to a later song), keeping arrangement columns correct in Nonstop Play.
-        /// </summary>
         public void OnSongEnded(RockSnifferLib.Events.OnSongEndedArgs e)
         {
-            if (e == null || e.song == null || !e.song.IsValid())
-            {
-                return;
-            }
-
-            // Skip history writes (CSV and SQLite) for Multiplayer plays - multi-user note
-            // data isn't tracked, so rows would carry wrong single-user values.
-            // wasMultiplayerMode is captured at song start in Sniffer.cs. events.log,
-            // Discord RPC, and live overlays are unaffected.
+            // Note data is single-player only
             if (e.wasMultiplayerMode)
             {
                 return;
             }
 
-            // e.wasNonstopMode remains populated on the event args for downstream
-            // consumers; it no longer gates history writes.
-
-            // Prefer the snapshot readout captured inside Sniffer.EndSongRun (so we get
-            // accurate end-of-song noteData / mode even if currentMemoryReadout has since
-            // been updated). Fall back to a defensive empty readout if the snapshot is
-            // somehow null.
-            var readout = e.readout ?? new RSMemoryReadout();
-            var song = e.song;
-            bool completed = e.completed;
-            bool paused = e.paused;
-
-            // Resolve arrangement metadata, preferring the run-context values from the
-            // event args (captured at song start in Sniffer.cs). Fall back to the
-            // OnSongStarted-set fields if the args don't have them, and finally to the
-            // readout's arrangementID. This layered approach keeps the path/tuning correct
-            // for Nonstop and recovers gracefully for any edge case where the args are
-            // missing values.
-            string resolvedArrangementID = !string.IsNullOrEmpty(e.arrangementID)
-                ? e.arrangementID
-                : (readout.arrangementID ?? "");
-            string resolvedPath = !string.IsNullOrEmpty(e.path)
-                ? e.path
-                : (arrangementPath ?? "");
-            string resolvedTuning = !string.IsNullOrEmpty(e.tuning)
-                ? e.tuning
-                : (arrangementTuning ?? "");
-
             actualEndTimestamp = e.timestamp;
+
+            var readout = e.readout ?? new RSMemoryReadout();
+            string arrangementID = e.arrangementID ?? "";
 
             if (sqliteEnabled)
             {
-                LogToSqlite(song, readout, completed, paused,
-                            resolvedArrangementID, resolvedPath, resolvedTuning);
+                LogToSqlite(e.song, readout, e.completed, e.paused, arrangementID, e.path, e.tuning);
             }
 
             if (csvEnabled)
             {
-                LogToCsv(song, readout, completed, paused,
-                         resolvedArrangementID, resolvedPath, resolvedTuning);
+                LogToCsv(e.song, readout, e.completed, e.paused, arrangementID, e.path, e.tuning);
             }
         }
 
@@ -230,14 +172,8 @@ namespace RockSniffer.History
         {
             try
             {
-                // Check if this is Score Attack mode
-                bool isScoreAttack = readout.mode == RSMode.SCOREATTACK;
-                ScoreAttackNoteData? saData = null;
-
-                if (isScoreAttack && readout.noteData is ScoreAttackNoteData scoreAttackData)
-                {
-                    saData = scoreAttackData;
-                }
+                // Null outside Score Attack, which leaves those columns empty
+                ScoreAttackNoteData? saData = readout.mode == RSMode.SCOREATTACK && readout.noteData is ScoreAttackNoteData sa ? sa : null;
 
                 string insertQuery = @"
                     INSERT INTO playthrough_history 
@@ -257,7 +193,6 @@ namespace RockSniffer.History
 
                 using (var command = new SQLiteCommand(insertQuery, sqliteConnection))
                 {
-                    // Standard fields
                     command.Parameters.AddWithValue("@timestamp", metadataTimestamp.ToString("yyyy-MM-dd HH:mm:ss"));
                     command.Parameters.AddWithValue("@timestamp_start", actualStartTimestamp.ToString("yyyy-MM-dd HH:mm:ss"));
                     command.Parameters.AddWithValue("@timestamp_end", actualEndTimestamp.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -280,7 +215,6 @@ namespace RockSniffer.History
                     command.Parameters.AddWithValue("@completed", completed ? 1 : 0);
                     command.Parameters.AddWithValue("@paused", paused ? 1 : 0);
 
-                    // Score Attack specific fields (NULL if not Score Attack mode)
                     command.Parameters.AddWithValue("@total_perfect_hits", saData?.TotalPerfectHits ?? (object)DBNull.Value);
                     command.Parameters.AddWithValue("@perfect_phrases", saData?.PerfectPhrases ?? (object)DBNull.Value);
                     command.Parameters.AddWithValue("@good_phrases", saData?.GoodPhrases ?? (object)DBNull.Value);
@@ -307,27 +241,17 @@ namespace RockSniffer.History
         {
             try
             {
-                // Self-heal: if the CSV vanished mid-session (deleted, moved,
-                // rotated), recreate it with headers before appending - otherwise
-                // AppendAllText silently rebuilds a headerless file, since
-                // InitializeCsv only runs at startup.
+                // Recreate the header if the file was removed while running
                 if (!File.Exists(csvPath))
                 {
                     InitializeCsv();
                 }
 
-                // Check if this is Score Attack mode
-                bool isScoreAttack = readout.mode == RSMode.SCOREATTACK;
-                ScoreAttackNoteData? saData = null;
-
-                if (isScoreAttack && readout.noteData is ScoreAttackNoteData scoreAttackData)
-                {
-                    saData = scoreAttackData;
-                }
+                // Null outside Score Attack, which leaves those columns empty
+                ScoreAttackNoteData? saData = readout.mode == RSMode.SCOREATTACK && readout.noteData is ScoreAttackNoteData sa ? sa : null;
 
                 StringBuilder line = new StringBuilder();
 
-                // Standard fields
                 line.Append($"\"{metadataTimestamp:yyyy-MM-dd HH:mm:ss}\",");
                 line.Append($"\"{actualStartTimestamp:yyyy-MM-dd HH:mm:ss}\",");
                 line.Append($"\"{actualEndTimestamp:yyyy-MM-dd HH:mm:ss}\",");
@@ -350,7 +274,6 @@ namespace RockSniffer.History
                 line.Append($"{(completed ? "True" : "False")},");
                 line.Append($"{(paused ? "True" : "False")},");
 
-                // Score Attack specific fields (empty if not Score Attack)
                 line.Append($"{saData?.TotalPerfectHits.ToString() ?? ""},");
                 line.Append($"{saData?.PerfectPhrases.ToString() ?? ""},");
                 line.Append($"{saData?.GoodPhrases.ToString() ?? ""},");

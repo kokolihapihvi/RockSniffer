@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -27,20 +27,13 @@ namespace RockSniffer.Configuration
             { "streaks.txt", "%CURRENT_STREAK%/%HIGHEST_STREAK%" },
             { "game_stage.txt", "%GAME_STAGE%" },
             { "game_state.txt", "%GAME_STATE%" },
-            // Menu-level Path selection ("Lead"/"Rhythm"/"Bass") - useful for
-            // path-specific OBS scene switching.
             { "path.txt", "%CURRENT_PATH%" },
-            // Chart-authored section/phrase name at the song timer (e.g. "verse 2",
-            // "solo 1"); blank when not in a song. New default keys merge into existing
-            // user configs automatically.
             { "current_section.txt", "%CURRENT_SECTION%" },
             { "current_phrase.txt", "%CURRENT_PHRASE%" }
         };
 
-
         // Also write song start, pause, resume and end to output/events.log
         public bool enableEventLog = false;
-
 
         //Convert dictionary to array
         private void ConvertToArray()

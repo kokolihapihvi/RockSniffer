@@ -1,38 +1,38 @@
 //If you want to preview what the popup looks like, set this to true
-const preview = false;
+var preview = false;
 
 //How often to poll the addon service (in milliseconds)
-const pollrate = 900;
+var pollrate = 900;
 
 //Should the popup be always visible or fade out in between songs
-const always_visible = false;
+var always_visible = false;
 
 //Enable accuracy percentage
-const show_accuracy = true;
+var show_accuracy = true;
 
 //Enable animation (percentage scrolls to the next number instead of snapping)
-const animate_percentage = true;
+var animate_percentage = true;
 
 //Enable colour animation (percentage fades from one color to another across 0%->100%)
-const animate_percentage_color = true;
+var animate_percentage_color = true;
 
 //Enable a media player style progress bar on the bottom
-const show_progress = true;
+var show_progress = true;
 
 //Color for 0%
-const color_0 = "#FF0000";
+var color_0 = "#FF0000";
 
 //Color for 50%
-const color_50 = "#FFFF00";
+var color_50 = "#FFFF00";
 
 //Color for 100%
-const color_100 = "#00FF00";
+var color_100 = "#00FF00";
 
 //The point at which the 50% color is placed in the gradient, number between 0 and 1
-const color_midpoint = 0.8;
+var color_midpoint = 0.8;
 
 //Exponent for interpolation, higher number = steeper curve towards the end, 1 = linear interpolation
-const color_exponent = 2;
+var color_exponent = 2;
 
 //Extend jQuery
 jQuery.fn.extend({
@@ -111,10 +111,10 @@ $(function() {
 });
 
 //Remember popup visibility
-let visible = false;
+var visible = false;
 
 //Remember previous percentage for the animation
-let prev_accuracy = 0;
+var prev_accuracy = 0;
 
 function refresh() {
 	//JSON query the addon service
@@ -122,10 +122,10 @@ function refresh() {
 		//If data was successfully gotten
 		if(data.success) {
 			//Get song details out of it
-			const details = data.songDetails;
+			var details = data.songDetails;
 
 			//Get memory readout
-			const readout = data.memoryReadout;
+			var readout = data.memoryReadout;
 
 			//If song details are invalid, hide popup
 			if(details.songLength == 0 && details.albumYear == 0 && details.numArrangements == 0) {
@@ -139,7 +139,7 @@ function refresh() {
 			$("h1.album_name").textStroke(details.albumName + " (" + details.albumYear + ")");
 
 			//Get accuracy
-			const accuracy = readout.noteData.Accuracy
+			var accuracy = readout.noteData.Accuracy
 
 			if(animate_percentage) {
 				//Format it and apply it to the element
@@ -208,9 +208,9 @@ function showPopup() {
 
 //Convert a number to a duration "hh:mm:ss"
 function durationString(tSeconds) {
-	let hh = Math.floor(tSeconds / 3600);
-	let mm = Math.floor((tSeconds - (hh * 3600)) / 60);
-	let ss = Math.floor(tSeconds % 60);
+	var hh = Math.floor(tSeconds / 3600);
+	var mm = Math.floor((tSeconds - (hh * 3600)) / 60);
+	var ss = Math.floor(tSeconds % 60);
 
 	if(hh < 10) {hh = "0"+hh;}
 	if(mm < 10) {mm = "0"+mm;}
@@ -249,7 +249,7 @@ function lerpColor(a, b, amount) {
 	//Clamp the amount to 0-1 range
 	amount = Math.min(1, Math.max(0,amount));
 
-    const ah = parseInt(a.replace(/#/g, ''), 16),
+    var ah = parseInt(a.replace(/#/g, ''), 16),
         ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
         bh = parseInt(b.replace(/#/g, ''), 16),
         br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,

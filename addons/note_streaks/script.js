@@ -1,8 +1,8 @@
 //Set this to true for previewing
-const preview = false;
+var preview = false;
 
 //How often to poll the addon service (in milliseconds)
-const pollrate = 900;
+var pollrate = 900;
 
 //JQuerys document.onReady function
 //Gets called after the webpage is loaded
@@ -12,10 +12,10 @@ $(function() {
 });
 
 //Remember popup visibility
-let visible = false;
+var visible = false;
 
 //Remember previous streak
-let prevStreak = 0;
+var prevStreak = 0;
 
 function refresh() {
 	if(preview) {
@@ -28,10 +28,10 @@ function refresh() {
 		//If data was successfully gotten
 		if(data.success) {
 			//Get memory readout
-			const ro = data.memoryReadout.noteData;
+			var ro = data.memoryReadout.noteData;
 
 			//Get current note streak from readout
-			const streak = ro.CurrentHitStreak;
+			var streak = ro.CurrentHitStreak;
 
 			//If the previous streak is larger than current streak, the streak must have broken
 			if(prevStreak > streak) {
@@ -39,7 +39,7 @@ function refresh() {
 			}
 
 			//Check all values between previous streak and current streak
-			for (let i = prevStreak; i < streak; i++) {
+			for (var i = prevStreak; i < streak; i++) {
 				//If we hit 50, show popup
 				if(i == 50) {
 					showPopup(50);

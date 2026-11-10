@@ -29,10 +29,7 @@ const poller = new SnifferPoller({
 
 	onSongEnded: function(data) {
 		app.prevData = app.snifferData;
-		// Finalize the last section, then snapshot tracker outputs, before
-		// generateFeedback and the tracker's own callbacks (which fire after this
-		// handler and would otherwise leave the last section unfinalized, then reset
-		// the data). finalize() is idempotent; the tracker's later call no-ops.
+		// Finalize and snapshot before the tracker's own onSongEnded resets it
 		if (tracker.currentAttempt) {
 			tracker.currentAttempt.finalize(poller.getCurrentReadout());
 		}
@@ -56,7 +53,7 @@ const app = new Vue({
 		snifferData: {},
 		feedback: [],
 		feedbackIdx: 0,
-		// Snapshot fields: see current_song_v3/script.js.
+		// Tracker results at song end, shown in mode 1 after the tracker resets
 		snapshotHasPreviousBest: null,
 		snapshotFinal: null,
         songInfoTransform: "translateX(0px)"
@@ -69,7 +66,7 @@ const app = new Vue({
 			if(this.song == null){
 				let width = 0;
 				} else {				
-				width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth)+10;
+				var width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth)+10;
 				}
             if(this.songInfoTransform == "translateX(0px)" && width > widthUI) {
                 this.songInfoTransform = "translateX(-"+(width-widthUI)+"px)";
@@ -97,7 +94,7 @@ const app = new Vue({
 		}
 	},
 	computed: {
-		// In mode 1, read from prevData so song info matches the stats shown.
+		// In mode 1, show the song that just ended
 		song: function() {
 			if (this.mode === 1 && this.prevData && this.prevData.songDetails) {
 				return this.prevData.songDetails;
@@ -135,7 +132,6 @@ const app = new Vue({
 		phraseStartTime: function() {
 			if (this.readout.songTimer == 0){return 0;}
 			const currentPhrase = poller.getCurrentPhrase();
-			// getCurrentPhrase() can return null before noteData populates or during NSP transitions.
 			if(currentPhrase == null){return 0;}
 			if(currentPhrase.index == 0){return 0;}
 			return (currentPhrase.startTime / this.song.songLength) * 100;
@@ -153,8 +149,7 @@ const app = new Vue({
 		scrDisplay: function(){
 			$("div.scrDisplay").removeAttr('style');
 			let score = '0000000';
-			// LaS-mode noteData has no CurrentScore - falling through would render
-			// "UNDEFINED" via CSS uppercase. Reuse the frozen placeholder branch.
+			// Learn a Song note data has no score
 			if (this.readout.songTimer == 0 || this.notes.CurrentScore === undefined){
 				return score.substr(score.length-7)
 			}
@@ -244,7 +239,7 @@ const app = new Vue({
 			if (this.readout.songTimer == 0){
 				return accHit.substr(accHit.length-4)+'% '+notesHit.substr(notesHit.length-4)+'/'+totalNotes.substr(totalNotes.length-4);
 			}
-			songProg = this.songProgress;
+			var songProg = this.songProgress;
 			let acc = this.notes.Accuracy;
 			let totN = this.notes.TotalNotes;
 			if(acc == 100){
@@ -299,13 +294,13 @@ const app = new Vue({
 			$("div.mltDisplay").removeAttr('style');	
 			let curMlt = '00'
 			let maxMlt = '00'
-			// LaS noteData has no CurrentMultiplier - frozen placeholder.
+			// Learn a Song note data has no multiplier
 			if (this.readout.songTimer == 0 || this.notes.CurrentMultiplier === undefined){			
 				return curMlt.substr(curMlt.length-2)+'x/'+maxMlt.substr(maxMlt.length-2)+'x'
 			}	
 			const curM = this.notes.CurrentMultiplier;
 			let maxM = this.notes.HighestMultiplier;
-			acc = this.notes.Accuracy;
+			var acc = this.notes.Accuracy;
 			let maxM_POS = ((this.notes.TotalNotes)/5) + 1;
 			curMlt = curMlt + String(curM);
 			maxMlt = maxMlt + String(maxM);	
@@ -373,7 +368,7 @@ const app = new Vue({
 			};	
 			const curS = this.notes.CurrentHitStreak-this.notes.CurrentMissStreak;
 			let maxS = this.notes.HighestHitStreak;
-			totN = this.notes.TotalNotes;
+			var totN = this.notes.TotalNotes;
 			curStr = curStr + String(Math.abs(curS));
 			maxStr = maxStr + String(maxS);
 			let neg = '';
@@ -446,10 +441,6 @@ const app = new Vue({
 			return neg+curStr.substr(curStr.length-4)+'/'+maxStr.substr(maxStr.length-4)			
 		},
 		arrangement: function() {
-			//Shared resolver (sniffer-poller.js): arrangementID direct match, then
-			//currentPath filter. Passing this.song keeps mode-1 resolution bound to
-			//the displayed (prevData) song even after the poller has advanced to the
-			//next Nonstop song.
 			if(this.song == null) {return null;}
 			return poller.resolveArrangement(this.song, this.readout);
 		},
@@ -458,7 +449,7 @@ const app = new Vue({
 			return this.arrangement.tuning.TuningName;		
         },
 		sections: function() {
-			arrangement = this.arrangement;
+			var arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
@@ -502,18 +493,18 @@ const app = new Vue({
 			return sections;
 		},
 		phraseIterations: function() {
-			arrangement = this.arrangement;
+			var arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
 			let phraseIterations = arrangement.phraseIterations;
 
-			songLength = this.song.songLength;
+			var songLength = this.song.songLength;
 					
-			maxDif = poller.getMaxDif();		
+			var maxDif = poller.getMaxDif();		
 			
 			for (let i = 0; i < phraseIterations.length; i++) {
-				phrase = phraseIterations[i];
+				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -529,7 +520,7 @@ const app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				phraseHeight = 1;
+				var phraseHeight = 1;
 				
 				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
 				
@@ -556,7 +547,6 @@ const app = new Vue({
 		},
 		/* PREV */
 		prevSong: function() {
-			// prevData can be null before the first poll.
 			if(!this.prevData) {
 				return null;
 			}
@@ -570,7 +560,6 @@ const app = new Vue({
 			return this.prevData.memoryReadout;
 		},
 		prevNotes: function() {
-			// prevReadout / prevReadout.noteData can be null in transient inter-song states.
 			var pr = this.prevReadout;
 			if(!pr) {
 				return null;
@@ -584,21 +573,20 @@ const app = new Vue({
 			if(this.prevSong == null) {
 				return '0000000';
 				}
-			// prevNotes can be null when the previous poll's noteData was null.
 			if(this.prevNotes == null) {
 				return '0000000';
 			}
-			// Previous playthrough may be from LaS mode (no CurrentScore) - frozen placeholder.
+			// Learn a Song note data has no score
 			if(this.prevNotes.CurrentScore === undefined) {
 				return '0000000';
 			}
-			score = '0000000';	
-			acc = this.prevNotes.Accuracy;
-			PerfP = this.prevNotes.PerfectPhrases;
-			GP = this.prevNotes.GoodPhrases;
-			PP = this.prevNotes.PassedPhrases;
-			FP = this.prevNotes.FailedPhrases;
-			scr = this.prevNotes.CurrentScore;
+			var score = '0000000';	
+			var acc = this.prevNotes.Accuracy;
+			var PerfP = this.prevNotes.PerfectPhrases;
+			var GP = this.prevNotes.GoodPhrases;
+			var PP = this.prevNotes.PassedPhrases;
+			var FP = this.prevNotes.FailedPhrases;
+			var scr = this.prevNotes.CurrentScore;
 			score = score + String(scr);	
 			if(acc == 100){
 				$("div.scrDisplay").css({
@@ -684,10 +672,10 @@ const app = new Vue({
 			if(this.prevSong == null) {
 				return '0100% 0000/0000';
 				}
-			accHit = '0000';
-			notesHit = '0000';
-			totalNotes = '0000';
-			acc = this.prevNotes.Accuracy;
+			var accHit = '0000';
+			var notesHit = '0000';
+			var totalNotes = '0000';
+			var acc = this.prevNotes.Accuracy;
 			if(acc == 100){
 				accHit = accHit + '0100'
 			}else{
@@ -752,14 +740,13 @@ const app = new Vue({
 			if(this.prevSong == null) {
 				return '00x/00x';
 				}
-			// Null-prevNotes + LaS-mode guard - same rationale as scrDisplayF.
 			if(this.prevNotes == null || this.prevNotes.HighestMultiplier === undefined) {
 				return '00x/00x';
 			}
-			curMlt = '00';
-			maxMlt = '00';
-			maxM = this.prevNotes.HighestMultiplier;
-			maxM_POS = ((this.prevNotes.TotalNotes)/5) + 1;
+			var curMlt = '00';
+			var maxMlt = '00';
+			var maxM = this.prevNotes.HighestMultiplier;
+			var maxM_POS = ((this.prevNotes.TotalNotes)/5) + 1;
 			maxMlt = maxMlt + String(maxM);	
 			if(this.prevNotes.Accuracy == 100){
 				$("div.mltDisplay").css({
@@ -829,12 +816,12 @@ const app = new Vue({
 			if(this.prevSong == null) {
 				return '0000/0000';
 				}
-			curStr = '0000'
-			maxStr = '0000'
-			maxS = this.prevNotes.HighestHitStreak;
-			totN = this.prevNotes.TotalNotes;
+			var curStr = '0000'
+			var maxStr = '0000'
+			var maxS = this.prevNotes.HighestHitStreak;
+			var totN = this.prevNotes.TotalNotes;
 			maxStr = maxStr + String(maxS);
-			neg = '';	
+			var neg = '';	
 			if(this.prevNotes.Accuracy == 100){
 				$("div.strDisplay").css({
 					  "background": "repeating-linear-gradient(180deg, #fc0000, #fc9000, #fcfc00, #00fc00, #00fcff, #fc00ff, #fc0000, #fc9000, #fcfc00, #00fc00)",
@@ -908,7 +895,7 @@ const app = new Vue({
 			if(this.prevSong.arrangements == null) {return null;}
 			
 			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
-				arrangement = this.prevSong.arrangements[i];
+				var arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID.length == 32 && arrangement.arrangementID == this.prevReadout.arrangementID) {
 					return arrangement;
@@ -918,21 +905,21 @@ const app = new Vue({
 		},
 		
 		prevPath: function() {
-			if(this.prevArrangement == null){return defaultPath;}
+			if(this.prevArrangement == null){return null;}
 			return this.prevArrangement.type;
 		},
 		
 		prevSections: function() {
-			arrangement = this.prevArrangement;
+			var arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			sections = arrangement.sections;
+			var sections = arrangement.sections;
 
-			songLength = this.prevSong.songLength;
+			var songLength = this.prevSong.songLength;
 
 			for (let i = 0; i < sections.length; i++) {
-				section = sections[i];
+				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -968,18 +955,18 @@ const app = new Vue({
 		},
 		
 		prevPhrases: function() {
-			arrangement = this.prevArrangement;
+			var arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			phraseIterations = arrangement.phraseIterations;
+			var phraseIterations = arrangement.phraseIterations;
 
-			songLength = this.prevSong.songLength;
+			var songLength = this.prevSong.songLength;
 			
-			maxDif = poller.getMaxDif();		
+			var maxDif = poller.getMaxDif();		
 			
 			for (let i = 0; i < phraseIterations.length; i++) {
-				phrase = phraseIterations[i];
+				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -995,7 +982,7 @@ const app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				phraseHeight = 1;
+				var phraseHeight = 1;
 				
 				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
 				
@@ -1037,24 +1024,21 @@ function formatTimer(time) {
 function generateFeedback() {
 	app.feedback = [];
 
-	arrangement = poller.getCurrentArrangement();
-	//Defensive: getCurrentArrangement can return null when memoryReadout.arrangementID is junk
-	//(e.g. uninitialized or stale memory pointers in RSMemoryReader). Without this guard,
-	//`arrangement.sections` throws TypeError, propagating out of _doOnSongEnded -> gotData
-	//and aborting the poll BEFORE _doOnData runs - which freezes app.snifferData.
+	var arrangement = poller.getCurrentArrangement();
+	//Can be unresolved at Nonstop Play song changes
 	if(arrangement == null) {
 		app.feedback = ["YOU TRIED!"];
 		app.cycleFeedback();
-		hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
+		var hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 		return;
 	}
-	sections = arrangement.sections;
+	var sections = arrangement.sections;
 	let feedback = []
 
 	let greens = 0;
 
 	for (let i = sections.length - 1; i >= 0; i--) {
-		section = sections[i];
+		var section = sections[i];
 		const rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
@@ -1094,5 +1078,4 @@ function generateFeedback() {
 	hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 }
 
-// Shared mode-1 results min-hold (implementation in sniffer-poller.js).
 poller.enableResultsHold(app);

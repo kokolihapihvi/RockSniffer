@@ -1,12 +1,12 @@
-const prevBest = [];
-const currentAttempt = [];
-const betterTicks = [];
-const worseTicks = [];
-let myChart = null;
+var prevBest = [];
+var currentAttempt = [];
+var betterTicks = [];
+var worseTicks = [];
+var myChart = null;
 
-const storage = new SnifferStorage("accuracy_chart");
+var storage = new SnifferStorage("accuracy_chart");
 
-const poller = new SnifferPoller({
+var poller = new SnifferPoller({
 	onData: function(data) {
 		if(poller.getCurrentState() == STATE_SONG_STARTING || poller.getCurrentState() == STATE_SONG_PLAYING || poller.getCurrentState() == STATE_SONG_ENDING) {
 			setCurrentAttempt(poller.getSongTimer(), poller.getCurrentAccuracy());
@@ -18,21 +18,14 @@ const poller = new SnifferPoller({
 		betterTicks.length = 0;
 		worseTicks.length = 0;
 
-		//Defensive: getCurrentArrangement can return null when memoryReadout.arrangementID is junk
-		//(stale/uninitialized memory in RSMemoryReader). Without this guard, `.arrangementID` throws
-		//TypeError. B1's expanded onSongStarted firing means this path is hit more often in Nonstop Play
-		//where memory is more likely to be in a transient state. Skipping the previous-best lookup is
-		//safe: the chart will start fresh and the result will be saved correctly when onSongEnded fires
-		//later (assuming arrangementID has settled by then; if not, that storage write also self-skips).
-		const arrangement = poller.getCurrentArrangement();
+		var arrangement = poller.getCurrentArrangement();
 		if(arrangement == null) {
-			console.warn("accuracy_chart.onSongStarted: no resolvable arrangement, skipping previous-best lookup");
 			return;
 		}
-		let arr_id = arrangement.arrangementID;
+		var arr_id = arrangement.arrangementID;
 
 		storage.getValue(song.songID+"_"+arr_id).done(function(data) {
-			const parsed = JSON.parse(data);
+			var parsed = JSON.parse(data);
 
 			if(parsed != null) {
 				setPrevBest(parsed);
@@ -40,15 +33,12 @@ const poller = new SnifferPoller({
 		});
 	},
 	onSongEnded: function(song) {
-		//Same defensive null-check as onSongStarted above. If we can't resolve the arrangement at the
-		//moment of song end, we skip the storage write rather than throwing. The score stays in memory
-		//for the rest of the session even though it isn't persisted.
-		const arrangement = poller.getCurrentArrangement();
+		//Can be unresolved at Nonstop Play song changes
+		var arrangement = poller.getCurrentArrangement();
 		if(arrangement == null) {
-			console.warn("accuracy_chart.onSongEnded: no resolvable arrangement, skipping save");
 			return;
 		}
-		arr_id = arrangement.arrangementID;
+		var arr_id = arrangement.arrangementID;
 
 		if(prevBest.length <= 1) {
 			storage.setValue(song.songID+"_"+arr_id, currentAttempt);
@@ -67,9 +57,9 @@ const poller = new SnifferPoller({
 });
 
 function setCurrentAttempt(time, accuracy) {
-	const t = Math.floor(time);
+	var t = Math.floor(time);
 
-	for (let i = 0; i < t; i++) {
+	for (var i = 0; i < t; i++) {
 		if(!currentAttempt[i]) {
 			currentAttempt[i] = {x: i, y: accuracy};
 		}
@@ -106,7 +96,7 @@ function setCurrentAttempt(time, accuracy) {
 function setPrevBest(pb) {
 	prevBest.length = 0;
 
-	for (let i = 0; i < pb.length; i++) {
+	for (var i = 0; i < pb.length; i++) {
 		prevBest.push(pb[i]);
 	}
 
@@ -114,7 +104,7 @@ function setPrevBest(pb) {
 }
 
 $(function() {
-	let ctx = document.getElementById('acc_chart').getContext('2d');
+	var ctx = document.getElementById('acc_chart').getContext('2d');
 	myChart = new Chart(ctx, {
 		type: 'line',
 		data: {
@@ -165,8 +155,8 @@ $(function() {
 						minRotation: 0,
 						maxRotation: 0,
 						callback: function(value, index, values) {
-							const minutes = Math.floor(value/60);
-							const seconds = value % 60;
+							var minutes = Math.floor(value/60);
+							var seconds = value % 60;
 
 							if(value < 0) {
 								return "";
@@ -203,8 +193,8 @@ $(function() {
 		plugins: [
 			{
 				afterDatasetsDraw: function(chartInstance) {
-					ctx = chartInstance.chart.ctx;
-					const chartArea = chartInstance.chartArea;
+					var ctx = chartInstance.chart.ctx;
+					var chartArea = chartInstance.chartArea;
 
 					if(currentAttempt.length == 0) {
 						return;
@@ -212,16 +202,16 @@ $(function() {
 
 					ctx.save();
 
-					const pt = currentAttempt.slice(-1)[0];
-					const x = chartInstance.scales["x-axis-0"].getPixelForValue(pt.x);
-					const y = chartInstance.scales["y-axis-0"].getPixelForValue(pt.y);
+					var pt = currentAttempt.slice(-1)[0];
+					var x = chartInstance.scales["x-axis-0"].getPixelForValue(pt.x);
+					var y = chartInstance.scales["y-axis-0"].getPixelForValue(pt.y);
 
-					let text = pt.y+"%";
-					let textColor = "black";
-					const fontSize = 30;
+					var text = pt.y+"%";
+					var textColor = "black";
+					var fontSize = 30;
 
 					if(prevBest.length > 0) {
-						const bpt = prevBest[pt.x];
+						var bpt = prevBest[pt.x];
 
 						if(bpt.y > pt.y) {
 							textColor = "red";
@@ -234,16 +224,16 @@ $(function() {
 					}
 
 					ctx.font = fontSize+"px Arial";
-					const textSize = ctx.measureText(text);
+					var textSize = ctx.measureText(text);
 
-					const arrangement = poller.getCurrentArrangement();
+					var arrangement = poller.getCurrentArrangement();
 
 					if(arrangement) {
-						for (let i = 0; i < arrangement.sections.length; i++) {
-							const section = arrangement.sections[i];
+						for (var i = 0; i < arrangement.sections.length; i++) {
+							var section = arrangement.sections[i];
 
-							const start = chartInstance.scales["x-axis-0"].getPixelForValue(section.startTime);
-							const end = chartInstance.scales["x-axis-0"].getPixelForValue(section.endTime);
+							var start = chartInstance.scales["x-axis-0"].getPixelForValue(section.startTime);
+							var end = chartInstance.scales["x-axis-0"].getPixelForValue(section.endTime);
 
 							ctx.fillStyle = "black";
 							ctx.fillText(section.name, start, 30);

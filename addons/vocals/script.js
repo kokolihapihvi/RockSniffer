@@ -13,13 +13,6 @@ let poller = new SnifferPoller({
 	// Per-line height. Bump proportionally if you change font-size.
 	lineHeight: '1.2em',
 
-	// HTML wrappers emitted around each lyric segment and line break when
-	// building lyric markup. Unused by the current karaoke renderer (which
-	// builds DOM nodes directly) - kept for backward compat with forked code.
-	beginLyric: '<span class="lyric">',
-	endLyric: '</span>',
-	newLine: '<br>',
-
 	// State across polls.
 	_lineStructure: null,
 	_vocalsRef: null,
@@ -178,7 +171,7 @@ let poller = new SnifferPoller({
 			transform: 'translateY(' + (this.numberOfLinesDisplayed * 100) + '%)'
 		});
 
-		// span.lyric wrapper kept for back-compat with legacy themes that style it.
+		// span.lyric is styled by the themes
 		let lyricSpan = $('<span class="lyric"></span>');
 
 		for (let k = 0; k < lineData.syllableIndices.length; k++) {
@@ -221,8 +214,8 @@ let poller = new SnifferPoller({
 		});
 	},
 
-	// Slot -> translateY %: incoming (N*100, off-screen below), preview (100),
-	// active (0), outgoing (-100, off-screen above). preview2/3/... = 200/300/...
+	// Slot to translateY %: incoming N*100 (below), preview 100, active 0,
+	// outgoing -100 (above), preview2/3/... 200/300/...
 	_setSlot: function (element, slot) {
 		let yPercent;
 		if (slot === 'incoming') {

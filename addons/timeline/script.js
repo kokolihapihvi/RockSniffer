@@ -1,10 +1,10 @@
 //OBS websocket details
-const obs_ip = "localhost";
-const obs_port = 4444;
-const obs_password = "who needs a password anyway";
+var obs_ip = "localhost";
+var obs_port = 4444;
+var obs_password = "who needs a password anyway";
 
-let songID = "";
-const poller = new SnifferPoller({
+var songID = "";
+var poller = new SnifferPoller({
 	interval: 500,
 
 	onData: function(data) {
@@ -29,7 +29,7 @@ const poller = new SnifferPoller({
 	}
 });
 
-const events = {
+var events = {
 	"Scene": {
 		desc: "Switch to scene",
 		start: function(row) {
@@ -63,9 +63,9 @@ const events = {
 			obs.SetSceneItemProperties({"scene-name": row.sceneName, "item": row.sourceName, "visible": false})
 		},
 		getRow: function(options, editing) {
-			const curRow = timeline.getItem(getSelectedRow());
+			var curRow = timeline.getItem(getSelectedRow());
 
-			const newrow = {
+			var newrow = {
 				content: options.source+" in "+options.scene,
 				sceneName: options.scene,
 				sourceName: options.source
@@ -92,7 +92,7 @@ const events = {
 				name: "Source name",
 				type: "select",
 				options: function(curOptions) {
-					const curScene = obs_scenes.find(function(x) {
+					var curScene = obs_scenes.find(function(x) {
 						return x.name == curOptions.scene;
 					});
 
@@ -116,19 +116,19 @@ $(function() {
 		modal: true,
 		buttons: {
 			"Go": function() {
-				let event = events[eventDialog.currentET];
+				var event = events[eventDialog.currentET];
 
-				const opts = event.options;
+				var opts = event.options;
 
-				const builtops = {};
+				var builtops = {};
 
-				for(let key in opts) {
+				for(var key in opts) {
 					builtops[key] = $(this).find("#"+key).val();
 				}
 
 
 				//Hey, I know its ugly, but it works
-				let row = event.getRow(builtops, $(this).dialog("option","title").toLowerCase().includes("edit"));
+				var row = event.getRow(builtops, $(this).dialog("option","title").toLowerCase().includes("edit"));
 
 				row["event"] = eventDialog.currentET;
 
@@ -158,7 +158,7 @@ $(function() {
 		},
 		computed: {
 			status: function() {
-				let status = "";
+				var status = "";
 
 				if(obs._connected) {
 					status += "Connected to OBS, ";
@@ -232,12 +232,12 @@ $(function() {
 		'showCustomTime': true
 	});
 
-	const onedit = function () {
+	var onedit = function () {
 		$("div#eventDialog").dialog("option","title","Edit event").dialog("open");
 	};
 
 	// callback function for the add item
-	const onadd = function () {
+	var onadd = function () {
 	    $("div#eventDialog").dialog("option","title","Add event").dialog("open");
 	};
 
@@ -250,8 +250,8 @@ $(function() {
 	timeline.setCustomTime(timeToDate(0))
 });
 
-let pastEvents = [];
-let currentEvents = [];
+var pastEvents = [];
+var currentEvents = [];
 
 function resetSequencer() {
 	currentEvents = [];
@@ -259,17 +259,17 @@ function resetSequencer() {
 }
 
 function evalSequencer() {
-	const sorted = timeline.getData().slice(0).sort(function(a,b) {
+	var sorted = timeline.getData().slice(0).sort(function(a,b) {
 		return (a.start < b.start ? -1 : 1);
 	});
 
-	const ctime = timeline.getCustomTime();
+	var ctime = timeline.getCustomTime();
 
-	for (let i = 0; i < sorted.length; i++) {
-		event = sorted[i];
+	for (var i = 0; i < sorted.length; i++) {
+		var event = sorted[i];
 
-		let start = event.start;
-		let end = event.end;
+		var start = event.start;
+		var end = event.end;
 
 		if(typeof(end) === "undefined") {
 			end = start;
@@ -301,8 +301,8 @@ function evalSequencer() {
 }
 
 function getSelectedRow() {
-    row = undefined;
-    const sel = timeline.getSelection();
+    var row = undefined;
+    var sel = timeline.getSelection();
 
     if (sel.length) {
         if (sel[0].row != undefined) {
@@ -314,7 +314,7 @@ function getSelectedRow() {
 }
 
 function updateSelectedRow(newRow) {
-	row = getSelectedRow();
+	var row = getSelectedRow();
 
 	$.extend(timeline.getData()[row], newRow);
 
@@ -343,14 +343,14 @@ function loadTimeline() {
 
 	storage.getValue(songID)
 	.done(function(data) {
-		const parsed = JSON.parse(data);
+		var parsed = JSON.parse(data);
 
 		if(parsed === null) {
 			timeline.setData([]);
 			return;
 		}
 
-		for (let i = parsed.length - 1; i >= 0; i--) {
+		for (var i = parsed.length - 1; i >= 0; i--) {
 			if(typeof(parsed[i].start) !== "undefined") {
 				parsed[i].start = new Date(parsed[i].start);
 			}
@@ -372,10 +372,10 @@ function refreshOBS() {
 }
 
 function timeToDate(tSeconds) {
-	let hh = Math.floor(tSeconds / 3600);
-	let mm = Math.floor((tSeconds - (hh * 3600)) / 60);
-	let ss = Math.floor(tSeconds % 60);
-	const ms = (tSeconds - Math.floor(tSeconds)) * 1000;
+	var hh = Math.floor(tSeconds / 3600);
+	var mm = Math.floor((tSeconds - (hh * 3600)) / 60);
+	var ss = Math.floor(tSeconds % 60);
+	var ms = (tSeconds - Math.floor(tSeconds)) * 1000;
 
 	return new Date(2000,0,1,hh,mm,ss,ms)
 }
@@ -386,9 +386,9 @@ function dateToTime(date) {
 
 //Convert a number to a duration "hh:mm:ss"
 function durationString(tSeconds) {
-	hh = Math.floor(tSeconds / 3600);
-	mm = Math.floor((tSeconds - (hh * 3600)) / 60);
-	ss = Math.floor(tSeconds % 60);
+	var hh = Math.floor(tSeconds / 3600);
+	var mm = Math.floor((tSeconds - (hh * 3600)) / 60);
+	var ss = Math.floor(tSeconds % 60);
 
 	if(hh < 10) {hh = "0"+hh;}
 	if(mm < 10) {mm = "0"+mm;}

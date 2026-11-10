@@ -1,7 +1,4 @@
-/* Load Google Fonts Locally */
-/* Fonts are bundled locally (not CDN-imported) intentionally: loading from
-   Google Fonts transmits user IPs to Google, which EU case law treats as a
-   GDPR violation (LG Muenchen, 3 O 17493/20). Do not swap for an @import. */
+/* Fonts are bundled so visitor IPs aren't sent to Google Fonts (GDPR, LG Muenchen 3 O 17493/20) */
 @font-face {
     font-family: 'Nunito Sans';
     src: url('../_deps/fonts/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf') format('truetype-variations');

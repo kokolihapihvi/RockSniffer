@@ -1,7 +1,4 @@
-/* Load Google Fonts Locally */
-/* Fonts are bundled locally (not CDN-imported) intentionally: loading from
-   Google Fonts transmits user IPs to Google, which EU case law treats as a
-   GDPR violation (LG Muenchen, 3 O 17493/20). Do not swap for an @import. */
+/* Fonts are bundled so visitor IPs aren't sent to Google Fonts (GDPR, LG Muenchen 3 O 17493/20) */
 @font-face {
     font-family: 'Inter';
     src: url('../_deps/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');
@@ -39,15 +36,15 @@ body {
 /* All text container */
 div.vocal {       
     padding-left: 16px;
-    border-radius: 0 4px 4px 0;    /* Twitch uses more angular/slightly rounded corners */
+    border-radius: 0 4px 4px 0;
     color: var(--twitch-text-muted);     
-    background-color: rgba(14, 14, 16, 0.95); /* Deep Twitch dark mode background */
-    border-left: 4px solid var(--twitch-purple); /* Added a purple accent bar common in Twitch UI */
+    background-color: rgba(14, 14, 16, 0.95);
+    border-left: 4px solid var(--twitch-purple);
 }
 
 /* Active text */
 span.lyric {
     color: var(--twitch-vibrant);
-    font-weight: 700; /* Makes the active lyric pop more */
+    font-weight: 700;
     text-shadow: 0 0 10px rgba(145, 70, 255, 0.4); /* Subtle purple glow */
 }

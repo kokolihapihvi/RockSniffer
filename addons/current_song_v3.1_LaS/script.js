@@ -34,11 +34,7 @@ const poller = new SnifferPoller({
 
 	onSongEnded: function(data) {
 		app.prevData = app.snifferData;
-		// Finalize the last section, then snapshot tracker outputs, BEFORE
-		// generateFeedback and before the tracker's own callbacks run: tracker.onSongEnded
-		// fires after this handler, so an unfinalized last section would make getFinal()
-		// read 0, and the tracker's onSongChanged reset wipes the data on NSP songID
-		// flips. finalize() is idempotent; the tracker's own later call no-ops.
+		// Finalize and snapshot before the tracker's own onSongEnded resets it
 		if (tracker.currentAttempt) {
 			tracker.currentAttempt.finalize(poller.getCurrentReadout());
 		}
@@ -66,10 +62,7 @@ const app = new Vue({
 		snifferData: {},
 		feedback: [],
 		feedbackIdx: 0,
-		// Snapshots of tracker outputs taken at onSongEnded. The tracker resets on the
-		// NSP songID flip while mode 1 is still held; hasPreviousBest()/trackerScore()
-		// read these snapshots during mode 1 so the comparison stays visible for the
-		// full hold window.
+		// Tracker results at song end, shown in mode 1 after the tracker resets
 		snapshotHasPreviousBest: null,
 		snapshotFinal: null,
         songInfoTransform: "translateX(0px)"
@@ -88,7 +81,7 @@ const app = new Vue({
 			if(this.song == null){
 				let width = 0;
 				} else {				
-				width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth);
+				var width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth);
 				}
             if(this.songInfoTransform == "translateX(0px)" && width > widthUI) {
                 this.songInfoTransform = "translateX(-"+(width-widthUI)+"px)";
@@ -105,10 +98,7 @@ const app = new Vue({
 			}
 		},
 		
-		//return previous best if available. Reads from snapshot during mode 1
-		//so the `v-if="hasPreviousBest()"` block in the results view survives
-		//tracker reset (which fires on songID change in NSP, before the
-		//min-hold expires).
+		//return previous best if available
 		hasPreviousBest: function() {
 			if (this.mode === 1 && this.snapshotHasPreviousBest !== null) {
 				return this.snapshotHasPreviousBest;
@@ -116,7 +106,7 @@ const app = new Vue({
 			return tracker.hasPreviousBest();
 		},
 
-		//Return trackerScore. Same snapshot pattern as hasPreviousBest.
+		//Return trackerScore
 		trackerScore: function() {
 			if (this.mode === 1 && this.snapshotFinal !== null) {
 				return this.snapshotFinal;
@@ -128,9 +118,7 @@ const app = new Vue({
 	//Grab variables for UI
 	computed: {
 		
-		//Get song details. In mode 1, read from prevData so the marquee/album art
-		//reference the song that just ended - in NSP, snifferData.songDetails already
-		//points at the next queued song.
+		//Get song details, in mode 1 the song that just ended
 		song: function() {
 			if (this.mode === 1 && this.prevData && this.prevData.songDetails) {
 				return this.prevData.songDetails;
@@ -180,7 +168,6 @@ const app = new Vue({
 		phraseStartTime: function() {
 			if (this.readout.songTimer == 0){return 0;}
 			const currentPhrase = poller.getCurrentPhrase();
-			// Defensive null check
 			if(currentPhrase == null){return 0;}
 			if(currentPhrase.index == 0){return 0;}
 			return (currentPhrase.startTime / this.song.songLength) * 100;
@@ -198,13 +185,8 @@ const app = new Vue({
 			return phraseHeight*100;
 		},		
 		
-		//Get current arrangement: arrangementID direct match -> currentPath filter
-		//(first non-bonus/non-alternate match wins, bonus allowed as fallback).
+		//Get current arrangement
 		arrangement: function() {
-			//Shared resolver (sniffer-poller.js): arrangementID direct match, then
-			//currentPath filter. Passing this.song keeps mode-1 resolution bound to
-			//the displayed (prevData) song even after the poller has advanced to the
-			//next Nonstop song.
 			if(this.song == null) {return null;}
 			return poller.resolveArrangement(this.song, this.readout);
 		},
@@ -217,7 +199,7 @@ const app = new Vue({
 		
 		//Create and draw sections
 		sections: function() {
-			arrangement = this.arrangement;
+			var arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
@@ -254,8 +236,6 @@ const app = new Vue({
 				}
 				
 				//If has previous best, color based on that. If not, then color using accuracy gradient.
-				//Note: && is required (not bitwise &) so hasPreviousBest() short-circuits and getSectionAccuracy()
-				//is not called when there is no previous best to compare against.
 				if (this.readout.songTimer > section.endTime || this.readout.gameStage == "panel_bib" || this.readout.gameStage == "sa_songreview" || this.readout.gameStage == "las_songreview"){
 					if(tracker.hasPreviousBest() && tracker.getSectionAccuracy((section.startTime + section.endTime)/2) != 'Rest') {
 						section.style.backgroundColor = (tracker.isBetterRelative((section.startTime + section.endTime)/2) ? "lime" : "red");
@@ -272,19 +252,19 @@ const app = new Vue({
 		
 		//Create and draw phrase iterations
 		phraseIterations: function() {
-			arrangement = this.arrangement;
+			var arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
 			let phraseIterations = arrangement.phraseIterations;
 
-			songLength = this.song.songLength;
+			var songLength = this.song.songLength;
 					
-			maxDif = poller.getMaxDif();		
+			var maxDif = poller.getMaxDif();		
 			
 			//Cycle through phrases and draw
 			for (let i = 0; i < phraseIterations.length; i++) {
-				phrase = phraseIterations[i];
+				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -300,7 +280,7 @@ const app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				phraseHeight = 1;
+				var phraseHeight = 1;
 				
 				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
 				
@@ -357,7 +337,7 @@ const app = new Vue({
 			if(this.prevSong.arrangements == null) {return null;}
 			
 			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
-				arrangement = this.prevSong.arrangements[i];
+				var arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID.length == 32 && arrangement.arrangementID == this.prevReadout.arrangementID) {
 					return arrangement;
@@ -369,26 +349,22 @@ const app = new Vue({
 		//Get previous path info
 		prevPath: function() {
 			if(this.prevSong == null){return null;}
-			//Defensive: prevArrangement returns null when no entry in prevSong.arrangements matches
-			//prevReadout.arrangementID - which is the case in Nonstop transitions when memoryReadout.arrangementID
-			//becomes junk (e.g. "Fear Inoculum", "urn:image:dds:album_..."). Without this guard, .type
-			//throws TypeError, killing the Vue render.
 			if(this.prevArrangement == null){return null;}
 			return this.prevArrangement.type;
 		},
 		
 		//Get previous sections and draw results screen
 		prevSections: function() {
-			arrangement = this.prevArrangement;
+			var arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			sections = arrangement.sections;
+			var sections = arrangement.sections;
 
-			songLength = this.prevSong.songLength;
+			var songLength = this.prevSong.songLength;
 
 			for (let i = 0; i < sections.length; i++) {
-				section = sections[i];
+				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -423,18 +399,18 @@ const app = new Vue({
 				
 		//Get previous phrases and draw results screen
 		prevPhrases: function() {
-			arrangement = this.prevArrangement;
+			var arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			phraseIterations = arrangement.phraseIterations;
+			var phraseIterations = arrangement.phraseIterations;
 
-			songLength = this.prevSong.songLength;
+			var songLength = this.prevSong.songLength;
 			
-			maxDif = poller.getMaxDif();		
+			var maxDif = poller.getMaxDif();		
 			
 			for (let i = 0; i < phraseIterations.length; i++) {
-				phrase = phraseIterations[i];
+				var phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -450,7 +426,7 @@ const app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				phraseHeight = 1;
+				var phraseHeight = 1;
 				
 				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
 				
@@ -494,25 +470,21 @@ function formatTimer(time) {
 function generateFeedback() {
 	app.feedback = [];
 
-	arrangement = poller.getCurrentArrangement();
-	//Defensive: getCurrentArrangement can return null in Nonstop Play transitions when memoryReadout.arrangementID
-	//is junk and none of the fallback paths match. Without this guard, `arrangement.sections` throws TypeError,
-	//propagating out of _doOnSongEnded -> gotData and aborting the poll BEFORE _doOnData runs - which means
-	//app.snifferData isn't updated and the entire UI freezes. Falling back to a generic feedback line keeps
-	//the data pipeline alive.
+	var arrangement = poller.getCurrentArrangement();
+	//Can be unresolved at Nonstop Play song changes
 	if(arrangement == null) {
 		app.feedback = ["YOU TRIED!"];
 		app.cycleFeedback();
-		hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
+		var hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 		return;
 	}
-	sections = arrangement.sections;
+	var sections = arrangement.sections;
 	let feedback = []
 
 	let greens = 0;
 
 	for (let i = sections.length - 1; i >= 0; i--) {
-		section = sections[i];
+		var section = sections[i];
 		const rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
@@ -552,5 +524,4 @@ function generateFeedback() {
 	hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 }
 
-// Shared mode-1 results min-hold (implementation in sniffer-poller.js).
 poller.enableResultsHold(app);

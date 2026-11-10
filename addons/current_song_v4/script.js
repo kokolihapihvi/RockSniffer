@@ -50,7 +50,7 @@ const app = new Vue({
 		}
 	},
 	computed: {
-		// In mode 1, read from prevData so song info matches the stats shown.
+		// In mode 1, show the song that just ended
 		song: function() {
 			if (this.mode === 1 && this.prevData && this.prevData.songDetails) {
 				return this.prevData.songDetails;
@@ -85,15 +85,11 @@ const app = new Vue({
 			return (this.readout.songTimer / this.song.songLength) * 100;
 		},
 		arrangement: function() {
-			//Shared resolver (sniffer-poller.js): arrangementID direct match, then
-			//currentPath filter. Passing this.song keeps mode-1 resolution bound to
-			//the displayed (prevData) song even after the poller has advanced to the
-			//next Nonstop song.
 			if(this.song == null) {return null;}
 			return poller.resolveArrangement(this.song, this.readout);
 		},
 		sections: function() {
-			arrangement = this.arrangement;
+			var arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}
 
@@ -156,7 +152,7 @@ const app = new Vue({
 			if(this.prevSong.arrangements == null) {return null;}
 
 			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
-				arrangement = this.prevSong.arrangements[i];
+				var arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID == this.prevReadout.arrangementID) {
 					return arrangement;
@@ -166,16 +162,16 @@ const app = new Vue({
 			return null;
 		},
 		prevSections: function() {
-			arrangement = this.prevArrangement;
+			var arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			sections = arrangement.sections;
+			var sections = arrangement.sections;
 
-			songLength = this.prevSong.songLength;
+			var songLength = this.prevSong.songLength;
 
 			for (let i = 0; i < sections.length; i++) {
-				section = sections[i];
+				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -220,14 +216,14 @@ let hideTimeout = null;
 function generateFeedback() {
 	app.feedback = [];
 
-	arrangement = poller.getCurrentArrangement();
-	sections = arrangement.sections;
+	var arrangement = poller.getCurrentArrangement();
+	var sections = arrangement.sections;
 	let feedback = []
 
 	let greens = 0;
 
 	for (let i = sections.length - 1; i >= 0; i--) {
-		section = sections[i];
+		var section = sections[i];
 		const rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
@@ -267,5 +263,4 @@ function generateFeedback() {
 	hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 }
 
-// Shared mode-1 results min-hold (implementation in sniffer-poller.js).
 poller.enableResultsHold(app);

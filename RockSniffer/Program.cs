@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using RockSniffer.Addons;
 using RockSniffer.Addons.Storage;
 using RockSniffer.Configuration;
@@ -15,11 +15,11 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using RockSniffer.History;
-
 
 namespace RockSniffer
 {
@@ -32,7 +32,6 @@ namespace RockSniffer
 
         internal static Process rsProcess;
 
-
         private static readonly bool Is64Bits = (IntPtr.Size == 8);
 
         private static AddonService addonService;
@@ -43,9 +42,8 @@ namespace RockSniffer
         private DiscordRPCHandler rpcHandler;
         private string gameState;
         private PlaythroughHistory playthroughHistory;
-        private SongDetails currentSong;
 
-                // Cache of last-written content per output file to avoid redundant disk writes
+        // Last content written to each output file
         private Dictionary<string, string> _outputCache = new Dictionary<string, string>();
 
         static void Main(string[] args)
@@ -151,7 +149,7 @@ namespace RockSniffer
                 Logger.Log("Pre-release version, skipping version check");
                 return;
             }
-
+            
             try
             {
                 //Use TLS
@@ -281,9 +279,9 @@ namespace RockSniffer
                 Console.ReadKey();
                 Environment.Exit(0);
             }
-
+            
             var edition = rocksmithEditionHashes[hash];
-
+            
             Logger.Log("Detected Rocksmith edition: {0}", edition);
 
             //Initialize file handle reader and memory reader
@@ -298,21 +296,9 @@ namespace RockSniffer
             //Add playthrough history listeners
             if (playthroughHistory != null)
             {
-                sniffer.OnSongSelected += (sender, args) => {
-                    currentSong = args.song;
-                    playthroughHistory.OnMetadataLoaded(args.song, memReadout);
-                };
-
-                sniffer.OnSongStarted += (sender, args) => {
-                    playthroughHistory.OnSongStarted(args);
-                };
-
-                // The args carry the arrangement context captured at song start, which keeps
-                // playthrough_history correct during Nonstop Play. sniffer is a fresh instance
-                // per Run(), so no handler cleanup is needed.
-                sniffer.OnSongEnded += (sender, args) => {
-                    playthroughHistory.OnSongEnded(args);
-                };
+                sniffer.OnSongSelected += (sender, args) => playthroughHistory.OnSongSelected();
+                sniffer.OnSongStarted += (sender, args) => playthroughHistory.OnSongStarted(args);
+                sniffer.OnSongEnded += (sender, args) => playthroughHistory.OnSongEnded(args);
             }
 
             //Add RPC event listeners
@@ -334,14 +320,12 @@ namespace RockSniffer
                     break;
                 }
 
-                // Update gameState from the current sniffer state
                 gameState = sniffer.currentState.ToString();
 
                 OutputDetails();
 
                 //GOTTA GO FAST
                 Thread.Sleep(1000);
-
             }
 
             sniffer.Stop();
@@ -413,54 +397,23 @@ namespace RockSniffer
                     outputtext = outputtext.Replace("%TOOLKIT_COMMENT%", details.toolkit.comment);
                 }
 
-                // %TUNING%: tuning name of the loaded arrangement, resolved by arrangementID
-                // match. Empty when unresolvable. Song-detail block placement so the
-                // blank-on-invalid-details rule applies.
+                // Empty when unresolved, so OBS text sources hide
                 string tuningName = "";
-                if (!string.IsNullOrEmpty(memReadout.arrangementID) && details.arrangements != null)
+                string currentSectionName = "";
+                string currentPhraseName = "";
+                var arrangement = string.IsNullOrEmpty(memReadout.arrangementID) ? null
+                    : details.arrangements?.Find(a => a.arrangementID == memReadout.arrangementID);
+                if (arrangement != null)
                 {
-                    var matched = details.arrangements.Find(a => a.arrangementID == memReadout.arrangementID);
-                    if (matched?.tuning != null)
+                    tuningName = arrangement.tuning?.TuningName ?? "";
+
+                    if (memReadout.songTimer > 0)
                     {
-                        tuningName = matched.tuning.TuningName ?? "";
+                        currentSectionName = arrangement.sections?.LastOrDefault(sec => memReadout.songTimer > sec.startTime)?.name ?? "";
+                        currentPhraseName = arrangement.phraseIterations?.LastOrDefault(ph => memReadout.songTimer > ph.startTime)?.name ?? "";
                     }
                 }
                 outputtext = outputtext.Replace("%TUNING%", tuningName);
-
-                // %CURRENT_SECTION% / %CURRENT_PHRASE%: chart-authored section/phrase name at
-                // the song timer position (e.g. "verse 2", "solo 1"); scan mirrors the JS
-                // getSectionAt/getPhraseAt. Empty when the timer is 0 or unresolvable, so the
-                // files blank between songs and OBS text sources hide - same contract as
-                // %CURRENT_PATH%.
-                string currentSectionName = "";
-                string currentPhraseName = "";
-                if (!string.IsNullOrEmpty(memReadout.arrangementID) && details.arrangements != null && memReadout.songTimer > 0)
-                {
-                    var sectionArr = details.arrangements.Find(a => a.arrangementID == memReadout.arrangementID);
-                    if (sectionArr != null)
-                    {
-                        if (sectionArr.sections != null)
-                        {
-                            foreach (var sec in sectionArr.sections)
-                            {
-                                if (memReadout.songTimer > sec.startTime)
-                                {
-                                    currentSectionName = sec.name ?? "";
-                                }
-                            }
-                        }
-                        if (sectionArr.phraseIterations != null)
-                        {
-                            foreach (var ph in sectionArr.phraseIterations)
-                            {
-                                if (memReadout.songTimer > ph.startTime)
-                                {
-                                    currentPhraseName = ph.name ?? "";
-                                }
-                            }
-                        }
-                    }
-                }
                 outputtext = outputtext.Replace("%CURRENT_SECTION%", currentSectionName);
                 outputtext = outputtext.Replace("%CURRENT_PHRASE%", currentPhraseName);
 
@@ -486,16 +439,12 @@ namespace RockSniffer
                 outputtext = outputtext.Replace("%TOTAL_NOTES%", nd.TotalNotes.ToString());
                 outputtext = outputtext.Replace("%CURRENT_ACCURACY%", FormatPercentage(nd.Accuracy));
 
-                // %CURRENT_PATH%: menu-level Path selection ("Lead"/"Rhythm"/"Bass"),
-                // populated from launch and valid in all gameStages. Empty when Unknown so
-                // OBS text sources hide. Memory-readout block placement so path.txt updates
-                // even with no song loaded.
+                // Not song-specific, so path.txt also updates with no song loaded
                 outputtext = outputtext.Replace("%CURRENT_PATH%",
                     memReadout.currentPath == RSPath.Unknown ? "" : memReadout.currentPath.ToString());
 
-                //Only write to disk if content has changed since last cycle
-                string cachedValue;
-                if (_outputCache.TryGetValue(of.filename, out cachedValue) && cachedValue == outputtext)
+                //Only write files whose content changed
+                if (_outputCache.TryGetValue(of.filename, out string cachedValue) && cachedValue == outputtext)
                 {
                     continue;
                 }
@@ -507,7 +456,6 @@ namespace RockSniffer
 
         private void ClearOutput()
         {
-            //Clear output cache
             _outputCache.Clear();
 
             //Clear all output files

@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using RockSnifferLib.Configuration;
 using System;
 using System.IO;

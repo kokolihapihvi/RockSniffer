@@ -1,5 +1,5 @@
 //How often to poll the addon service (in milliseconds)
-const pollrate = 900;
+var pollrate = 900;
 
 //JQuerys document.onReady function
 //Gets called after the webpage is loaded

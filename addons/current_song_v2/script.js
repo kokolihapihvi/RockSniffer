@@ -10,10 +10,7 @@ const poller = new SnifferPoller({
 	},
 	onSongEnded: function(data) {
 		app.prevData = app.snifferData;
-		// Finalize the last section, then snapshot tracker outputs, before
-		// generateFeedback and the tracker's own callbacks (which fire after this
-		// handler and would otherwise leave the last section unfinalized, then reset
-		// the data). finalize() is idempotent; the tracker's later call no-ops.
+		// Finalize and snapshot before the tracker's own onSongEnded resets it
 		if (tracker.currentAttempt) {
 			tracker.currentAttempt.finalize(poller.getCurrentReadout());
 		}
@@ -37,8 +34,7 @@ const app = new Vue({
 		snifferData: {},
 		feedback: [],
 		feedbackIdx: 0,
-		// Snapshots of tracker outputs at onSongEnded - read during mode 1 so the
-		// comparison survives the tracker's NSP reset. See current_song_v3/script.js.
+		// Tracker results at song end, shown in mode 1 after the tracker resets
 		snapshotHasPreviousBest: null,
 		snapshotFinal: null
 	},
@@ -63,7 +59,7 @@ const app = new Vue({
 		}
 	},
 	computed: {
-		// In mode 1, read from prevData so song info matches the stats shown.
+		// In mode 1, show the song that just ended
 		song: function() {
 			if (this.mode === 1 && this.prevData && this.prevData.songDetails) {
 				return this.prevData.songDetails;
@@ -98,15 +94,11 @@ const app = new Vue({
 			return (this.readout.songTimer / this.song.songLength) * 100;
 		},
 		arrangement: function() {
-			//Shared resolver (sniffer-poller.js): arrangementID direct match, then
-			//currentPath filter. Passing this.song keeps mode-1 resolution bound to
-			//the displayed (prevData) song even after the poller has advanced to the
-			//next Nonstop song.
 			if(this.song == null) {return null;}
 			return poller.resolveArrangement(this.song, this.readout);
 		},
 		sections: function() {
-			arrangement = this.arrangement;
+			var arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}
 
@@ -173,7 +165,7 @@ const app = new Vue({
 			if(this.prevSong.arrangements == null) {return null;}
 
 			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
-				arrangement = this.prevSong.arrangements[i];
+				var arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID == this.prevReadout.arrangementID) {
 					return arrangement;
@@ -183,16 +175,16 @@ const app = new Vue({
 			return null;
 		},
 		prevSections: function() {
-			arrangement = this.prevArrangement;
+			var arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			sections = arrangement.sections;
+			var sections = arrangement.sections;
 
-			songLength = this.prevSong.songLength;
+			var songLength = this.prevSong.songLength;
 
 			for (let i = 0; i < sections.length; i++) {
-				section = sections[i];
+				var section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -241,26 +233,21 @@ let hideTimeout = null;
 function generateFeedback() {
 	app.feedback = [];
 
-	arrangement = poller.getCurrentArrangement();
-	//Defensive: getCurrentArrangement can return null when memoryReadout.arrangementID is junk
-	//(e.g. uninitialized or stale memory pointers in RSMemoryReader). Without this guard,
-	//`arrangement.sections` throws TypeError, propagating out of _doOnSongEnded -> gotData
-	//and aborting the poll BEFORE _doOnData runs - which freezes app.snifferData.
-	//Lowercase "you tried!" matches V2's existing fallback at line ~264 (vs V3/V3.1/Arcade's
-	//uppercase "YOU TRIED!" - within-file style consistency wins over cross-file consistency).
+	var arrangement = poller.getCurrentArrangement();
+	//Can be unresolved at Nonstop Play song changes
 	if(arrangement == null) {
 		app.feedback = ["you tried!"];
 		app.cycleFeedback();
 		hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 		return;
 	}
-	sections = arrangement.sections;
+	var sections = arrangement.sections;
 	let feedback = []
 
 	let greens = 0;
 
 	for (let i = sections.length - 1; i >= 0; i--) {
-		section = sections[i];
+		var section = sections[i];
 		const rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
@@ -300,5 +287,4 @@ function generateFeedback() {
 	hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 }
 
-// Shared mode-1 results min-hold (implementation in sniffer-poller.js).
 poller.enableResultsHold(app);

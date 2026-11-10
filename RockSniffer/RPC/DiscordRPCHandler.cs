@@ -124,9 +124,7 @@ namespace RockSniffer.RPC
                 //Set accuracy as text for arrangement icon
                 rp.Assets.SmallImageText = accuracyText;
 
-                // mode is derived from gameStage and no longer implies the noteData type
-                // (e.g. SCOREATTACK mode with stale LearnASongNoteData in panel_bib);
-                // the pattern match keeps the cast safe.
+                // mode comes from gameStage, so the note data can still be from another mode
                 if (readout.mode == RSMode.SCOREATTACK && readout.noteData is ScoreAttackNoteData sand)
                 {
                     rp.Assets.SmallImageText = $"{FormattableString.Invariant($"{sand.CurrentScore:n0}")} x{sand.CurrentMultiplier} | {rp.Assets.SmallImageText}";
@@ -181,8 +179,6 @@ namespace RockSniffer.RPC
                     }
                     else if (gameStage.StartsWith("nsp") || gameStage.StartsWith("nonstopplay"))
                     {
-                        // "nonstopplay" prefix also catches the full-word stages (nonstopplay,
-                        // nonstopplaygame, nonstopplayhub) alongside the nsp_* family.
                         state = "Nonstop Play";
                     }
                     else if (gameStage.StartsWith("sa"))

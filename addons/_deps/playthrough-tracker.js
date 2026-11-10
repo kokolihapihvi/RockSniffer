@@ -8,21 +8,13 @@ class PlaythroughTracker {
 		this.currentAttempt = null;
 		this.currentAttemptPhrase = null;
 
-		// True if the current song run started in a Multiplayer mode (split_game,
-		// mp_*, duet_*, h2h_*). Checked at song end to skip storage writes - multi-user
-		// note data isn't supported. Defaults false so an unexpected pre-onSongStarted
-		// onSongEnded call doesn't skip a legitimate save.
+		// Multiplayer runs aren't saved, note data is single-player only
 		this.wasMultiplayerMode = false;
 
 		poller.onData((data) => this.onData(data));
 		poller.onSongStarted((song) => this.onSongStarted(song));
 		poller.onSongEnded((song) => this.onSongEnded(song));
-		//Reset state on songID change so we never operate on currentAttempt arrays sized for the previous song.
-		//This handles the Nonstop Play case where the next song's onSongStarted may be delayed (or skipped
-		//entirely) due to unstable arrangementID memory reads. Without this reset, currentAttempt stays
-		//sized for the previous song, and stat lookups at the new song's section/phrase indices either
-		//read from gap slots ({} placeholders) or run off the end of the array - both of which produce
-		//`undefined.TotalNotesHit` TypeErrors that abort the Vue render.
+		//In Nonstop Play onSongStarted for the next song can come late, don't keep the old song's attempt
 		poller.onSongChanged((song) => this.onSongChanged(song));
 	}
 
@@ -40,11 +32,8 @@ class PlaythroughTracker {
 			return false;
 		}
 
-		// Ghost-attempt guard: a stale or throttled poller can fire onSongEnded with a
-		// mostly-placeholder attempt whose last-section accuracy ties the stored best,
-		// which tie-counts-as-better (>= 0) would let overwrite the full record. Never
-		// allow an attempt with fewer populated sections to replace a fuller stored
-		// best; equal counts preserve tie-counts-as-better for real replays.
+		// A partial attempt can tie the last section of the stored best, don't let it
+		// replace a more complete one
 		var countPopulated = function(sections) {
 			if(sections == null) return 0;
 			var n = 0;
@@ -55,7 +44,7 @@ class PlaythroughTracker {
 			return n;
 		};
 		if(countPopulated(this.currentAttempt.sections) < countPopulated(this.previousBest.sections)) {
-			console.warn("PlaythroughTracker.isBetter: rejecting attempt with fewer populated sections than previous best (ghost-attempt guard)");
+			console.warn("PlaythroughTracker: not storing attempt with fewer sections than the previous best");
 			return false;
 		}
 
@@ -67,9 +56,7 @@ class PlaythroughTracker {
 		if(!this.hasPreviousBest()) {
 			return true;
 		}
-		//Defensive: if currentAttempt is null (e.g. between songs in Nonstop Play before
-		//onSongStarted has re-fired) we have nothing to compare, so return true (Vue then
-		//takes the "better" code path which is harmless during the gap).
+		//No attempt yet between Nonstop songs
 		if(this.currentAttempt == null) {
 			return true;
 		}
@@ -97,8 +84,7 @@ class PlaythroughTracker {
 
 	//Get stats at end
 	getFinal() {
-		//Defensive: V3/V3.1 templates call trackerScore() inside `v-if="hasPreviousBest()"`, so
-		//hasPreviousBest can be true while currentAttempt is null during the Nonstop transition gap.
+		//No attempt yet between Nonstop songs
 		if(this.currentAttempt == null) {
 			return { CurrentAccuracy: 0, PreviousAccuracy: 0, RelativeAccuracy: 0 };
 		}
@@ -136,8 +122,6 @@ class PlaythroughTracker {
 	onSongStarted(song) {
 		this.previousBest = null;
 
-
-		// Capture Multiplayer mode at song start; checked at song end.
 		var readout = this.poller.getCurrentReadout();
 		this.wasMultiplayerMode = (readout && readout.mode === "MULTIPLAYER");
 
@@ -160,19 +144,12 @@ class PlaythroughTracker {
 	
 	//Do on song ended
 	onSongEnded(song) {
-
-		// Skip storage writes for Multiplayer attempts - multi-user note data isn't
-		// tracked, so single-user data under a shared songID+arrangementID key would
-		// pollute tracking. Matching gate on the C# history side in PlaythroughHistory.cs.
 		if (this.wasMultiplayerMode) {
-			console.log("PlaythroughTracker.onSongEnded: skipping save (MULTIPLAYER mode; multi-user note data not yet supported)");
+			console.log("PlaythroughTracker: not storing multiplayer attempt");
 			return;
 		}
 
-		//Defensive: if there's no current attempt or no resolvable arrangement, skip storage rather than
-		//throwing on `arrangement.arrangementID`. This can happen in Nonstop Play when memory is in transition
-		//at the moment the songID-change branch fires onSongEnded - the arrangementID memory read may already
-		//be stale/junk and all three fallbacks in getCurrentArrangement may miss.
+		//Can happen at Nonstop song changes
 		if(this.currentAttempt == null) {
 			console.warn("PlaythroughTracker.onSongEnded: no currentAttempt, skipping save");
 			return;
@@ -188,21 +165,16 @@ class PlaythroughTracker {
 
 		var finalReadout = this.poller.getCurrentReadout();
 
-		// Empty-shell guard A: skip if the readout has no notes. Must run BEFORE
-		// finalize(), because finalize() stamps finalReadout.noteData into sections[currentSection],
-		// which can make a never-played attempt look valid (song-select browsing creates
-		// empty attempts, and NSP transitions can leave the previous song's noteData in
-		// the readout).
+		// Skip attempts that were never played. Check before finalize(), which fills
+		// in the current section and would make an empty attempt look played.
 		var totalNotes = (finalReadout && finalReadout.noteData)
 			? finalReadout.noteData.TotalNotes
 			: 0;
 		if(!totalNotes || totalNotes <= 0) {
-			console.warn("PlaythroughTracker.onSongEnded: readout has no notes, skipping empty-shell save");
+			console.warn("PlaythroughTracker.onSongEnded: no notes, skipping save");
 			return;
 		}
 
-		// Empty-shell guard B: skip if no section was ever finished. Same ordering
-		// constraint: must check BEFORE finalize() stamps the section data.
 		var finishedSections = 0;
 		if(this.currentAttempt && this.currentAttempt.sections) {
 			for(var i = 0; i < this.currentAttempt.sections.length; i++) {
@@ -213,11 +185,10 @@ class PlaythroughTracker {
 			}
 		}
 		if(finishedSections === 0) {
-			console.warn("PlaythroughTracker.onSongEnded: no sections finished, skipping empty-shell save");
+			console.warn("PlaythroughTracker.onSongEnded: no sections finished, skipping save");
 			return;
 		}
 
-		// Both guards passed: this is a real attempt. Now safe to finalize and save.
 		this.currentAttempt.finalize(finalReadout);
 
 		if(this.previousBest == null) {
@@ -233,11 +204,7 @@ class PlaythroughTracker {
 		}
 	}
 
-	//Do on song changed (NEW): clear all per-song state so we never serve stat lookups
-	//from an attempt sized for the previous song. onSongStarted will rebuild currentAttempt
-	//and load previousBest from storage once the new arrangement is resolvable. In the gap
-	//between onSongChanged and onSongStarted, the defensive guards in the stat methods above
-	//ensure callers get safe defaults ('Rest' / 'No Data' / null) instead of TypeErrors.
+	//Do on song changed, onSongStarted sets up the new attempt
 	onSongChanged(song) {
 		this.currentAttempt = null;
 		this.currentAttemptPhrase = null;
@@ -260,9 +227,7 @@ class PlaythroughBySection {
 
 	//Get final stats
 	getFinal(other) {
-		//Defensive: the constructor seeds this.sections with {} placeholders; if finalize() was never
-		//reached, the last slot may still be {} so its .Accuracy is undefined. Treat as 0 to avoid
-		//Math.abs(undefined.toFixed(...)) crashes in V3/V3.1's mode-1 results screen.
+		//Sections start as {} placeholders until finished
 		var lastSection = this.sections[this.sections.length-1];
 		var finalAccuracy = (lastSection != null && lastSection.Accuracy != null) ? lastSection.Accuracy : 0;
 
@@ -321,16 +286,13 @@ class PlaythroughBySection {
 	
 	//calculate section stats
 	_calculateSectionStats(index, sections) {
-		//Defensive bounds check: in Nonstop Play the tracker can briefly be queried with section indices
-		//computed from a different (newer) arrangement than the one this.sections was sized for. Returning
-		//a 'Rest' stub is safer than throwing on `undefined.TotalNotesHit`.
+		//In Nonstop Play the index can briefly come from the next song's arrangement
 		if(sections == null || index == null || index < 0 || index >= sections.length) {
 			return { Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0 };
 		}
 
 		var section = sections[index];
-		//A section that hasn't been finished yet is a `{}` placeholder from the constructor - its
-		//.TotalNotesHit etc. are undefined. Treat as Rest to avoid `undefined - 0 = NaN` propagating.
+		//Not finished yet
 		if(section == null || section.TotalNotes == null) {
 			return { Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0 };
 		}
@@ -341,8 +303,6 @@ class PlaythroughBySection {
 
 		if(index > 0) {
 			var prevSection = sections[index-1];
-			//Same defensive pattern: prev slot may be a {} placeholder if the user skipped through sections,
-			//or undefined if there was an arrangement-size mismatch upstream.
 			if(prevSection != null && prevSection.TotalNotes != null) {
 				prevHitNotes = prevSection.TotalNotesHit;
 				prevMissedNotes = prevSection.TotalNotesMissed;
@@ -388,9 +348,7 @@ class PlaythroughBySection {
 
 	//finalize info for storage
 	finalize(readout) {
-		// Idempotent: mode-1 addons call finalize() early from their onSongEnded (before
-		// the tracker's own callback) so snapshots capture finalized data; the tracker's
-		// later call must no-op rather than re-finalize on an undefined currentSection.
+		// Mode-1 addons finalize before the tracker does, so this can run twice
 		if (this.currentSection === undefined) return;
 		this.onSectionFinished(this.currentSection, readout.noteData);
 
@@ -443,9 +401,7 @@ class PlaythroughByPhrase {
 	
 	//calculate other phrase stats
 	_calculatePhraseStats(index, phraseIterations) {
-		//Defensive bounds check - same rationale as _calculateSectionStats above. This.phraseIterations
-		//may be sized for the previous song while index was computed against the new song's arrangement,
-		//or onSongStarted may not yet have re-fired in Nonstop Play.
+		//See _calculateSectionStats
 		if(phraseIterations == null || index == null || index < 0 || index >= phraseIterations.length) {
 			return {
 				Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0,
@@ -454,7 +410,6 @@ class PlaythroughByPhrase {
 		}
 
 		var phrase = phraseIterations[index];
-		//Unfinished slots are still {} placeholders from the constructor; treat as Rest.
 		if(phrase == null || phrase.TotalNotes == null) {
 			return {
 				Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0,
@@ -472,7 +427,6 @@ class PlaythroughByPhrase {
 
 		if(index > 0) {
 			var prevPhrase = phraseIterations[index-1];
-			//Same defensive pattern: prev slot may be {} or undefined.
 			if(prevPhrase != null && prevPhrase.TotalNotes != null) {
 				prevHitNotes = prevPhrase.TotalNotesHit;
 				prevMissedNotes = prevPhrase.TotalNotesMissed;
