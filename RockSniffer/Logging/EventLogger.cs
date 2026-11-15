@@ -23,73 +23,88 @@ namespace RockSniffer.Logging
 
         private static readonly Encoding utf8NoBom = new UTF8Encoding(false);
 
-        private static bool writeFile;
-
         // State changes carry no readout or song
         private static RSMemoryReadout? lastReadout;
         private static SongDetails? currentSong;
 
         public static void Attach(Sniffer sniffer, bool writeEventLog)
         {
-            writeFile = writeEventLog;
-
             sniffer.OnMemoryReadout += (sender, e) => lastReadout = e.memoryReadout;
-            sniffer.OnStateChanged += OnStateChanged;
-            sniffer.OnSongStarted += OnSongStarted;
-            sniffer.OnSongEnded += OnSongEnded;
-        }
+            sniffer.OnStateChanged += LogStateChanged;
+            sniffer.OnSongStarted += LogSongStarted;
+            sniffer.OnSongEnded += LogSongEnded;
 
-        private static void OnStateChanged(object? sender, OnStateChangedArgs e)
-        {
-            // Quit and restart from pause go to IN_MENUS, so these are only pause and resume
-            bool pause = e.oldState == SnifferState.SONG_PLAYING && e.newState == SnifferState.SONG_PAUSED;
-            bool resume = e.oldState == SnifferState.SONG_PAUSED && e.newState == SnifferState.SONG_PLAYING;
-
-            if (!pause && !resume)
+            if (writeEventLog)
             {
-                return;
+                sniffer.OnStateChanged += WriteStateChanged;
+                sniffer.OnSongStarted += WriteSongStarted;
+                sniffer.OnSongEnded += WriteSongEnded;
             }
-
-            float timer = lastReadout?.songTimer ?? 0;
-
-            Logger.Log("Song {0} at {1}", pause ? "paused" : "resumed", FormatTimer(timer));
-
-            Write(DateTime.Now, string.Create(CultureInfo.InvariantCulture,
-                $"EVENT={(pause ? "PAUSE" : "RESUME")};song={currentSong?.songName};timer={Math.Round(timer, 3)};"));
         }
 
-        private static void OnSongStarted(object? sender, OnSongStartedArgs e)
+        // Quit and restart from pause go to IN_MENUS, so these are the only pause and resume transitions
+        private static bool IsPauseOrResume(OnStateChangedArgs e, out bool pause)
+        {
+            pause = e.oldState == SnifferState.SONG_PLAYING && e.newState == SnifferState.SONG_PAUSED;
+            bool resume = e.oldState == SnifferState.SONG_PAUSED && e.newState == SnifferState.SONG_PLAYING;
+            return pause || resume;
+        }
+
+        private static void LogStateChanged(object? sender, OnStateChangedArgs e)
+        {
+            if (IsPauseOrResume(e, out bool pause))
+            {
+                Logger.Log("Song {0} at {1}", pause ? "paused" : "resumed", FormatTimer(lastReadout?.songTimer ?? 0));
+            }
+        }
+
+        private static void LogSongStarted(object? sender, OnSongStartedArgs e)
+        {
+            Logger.Log("Song started: {0} - {1} [{2}]", e.song.artistName, e.song.songName, e.path);
+        }
+
+        private static void LogSongEnded(object? sender, OnSongEndedArgs e)
+        {
+            INoteData? noteData = e.readout?.noteData;
+
+            if (!e.completed)
+            {
+                Logger.Log("Song ended: quit at {0}", FormatTimer(e.readout?.songTimer ?? 0));
+            }
+            else if (noteData != null)
+            {
+                Logger.Log("Song ended: completed, {0}%", Math.Round(noteData.Accuracy, 1).ToString(CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                Logger.Log("Song ended: completed");
+            }
+        }
+
+        private static void WriteStateChanged(object? sender, OnStateChangedArgs e)
+        {
+            if (IsPauseOrResume(e, out bool pause))
+            {
+                float timer = lastReadout?.songTimer ?? 0;
+                Write(DateTime.Now, string.Create(CultureInfo.InvariantCulture,
+                    $"EVENT={(pause ? "PAUSE" : "RESUME")};song={currentSong?.songName};timer={Math.Round(timer, 3)};"));
+            }
+        }
+
+        private static void WriteSongStarted(object? sender, OnSongStartedArgs e)
         {
             SongDetails song = e.song;
             currentSong = song;
             string author = (song.toolkit?.author ?? "").Trim();
-
-            Logger.Log("Song started: {0} - {1} [{2}]", song.artistName, song.songName, e.path);
 
             Write(e.timestamp, string.Create(CultureInfo.InvariantCulture,
                 $"EVENT=START;artist={song.artistName};album={song.albumName};year={song.albumYear};" +
                 $"song={song.songName};length={song.songLength};path={e.path};tuning={e.tuning};author={author};"));
         }
 
-        private static void OnSongEnded(object? sender, OnSongEndedArgs e)
+        private static void WriteSongEnded(object? sender, OnSongEndedArgs e)
         {
             INoteData? noteData = e.readout?.noteData;
-
-            if (e.completed)
-            {
-                if (noteData != null)
-                {
-                    Logger.Log("Song ended: completed, {0}%", Math.Round(noteData.Accuracy, 1).ToString(CultureInfo.InvariantCulture));
-                }
-                else
-                {
-                    Logger.Log("Song ended: completed");
-                }
-            }
-            else
-            {
-                Logger.Log("Song ended: quit at {0}", FormatTimer(e.readout?.songTimer ?? 0));
-            }
 
             string line = string.Create(CultureInfo.InvariantCulture,
                 $"EVENT=END;completed={e.completed};paused={e.paused};");
@@ -122,11 +137,6 @@ namespace RockSniffer.Logging
 
         private static void Write(DateTime timestamp, string message)
         {
-            if (!writeFile)
-            {
-                return;
-            }
-
             string line = $"[{timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}] {message}\r\n";
 
             // An exception here would abort the rest of the sniffer's poll

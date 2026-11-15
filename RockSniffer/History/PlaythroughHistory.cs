@@ -1,3 +1,5 @@
+using RockSniffer.Configuration;
+using RockSnifferLib.Events;
 using RockSnifferLib.RSHelpers;
 using RockSnifferLib.RSHelpers.NoteData;
 using RockSnifferLib.Logging;
@@ -25,12 +27,12 @@ namespace RockSniffer.History
         private DateTime actualStartTimestamp;
         private DateTime actualEndTimestamp;
 
-        public PlaythroughHistory(bool enableSqlite, string sqlitePath, bool enableCsv, string csvPath)
+        public PlaythroughHistory(HistorySettings settings)
         {
-            this.sqliteEnabled = enableSqlite;
-            this.sqlitePath = sqlitePath;
-            this.csvEnabled = enableCsv;
-            this.csvPath = csvPath;
+            sqliteEnabled = settings.enableSqliteHistory;
+            sqlitePath = settings.sqliteHistoryPath;
+            csvEnabled = settings.enableCsvHistory;
+            csvPath = settings.csvHistoryPath;
 
             if (sqliteEnabled)
             {
@@ -133,17 +135,24 @@ namespace RockSniffer.History
             }
         }
 
-        public void OnSongSelected()
+        public void Attach(Sniffer sniffer)
+        {
+            sniffer.OnSongSelected += OnSongSelected;
+            sniffer.OnSongStarted += OnSongStarted;
+            sniffer.OnSongEnded += OnSongEnded;
+        }
+
+        private void OnSongSelected(object? sender, OnSongSelectedArgs e)
         {
             metadataTimestamp = DateTime.Now;
         }
 
-        public void OnSongStarted(RockSnifferLib.Events.OnSongStartedArgs e)
+        private void OnSongStarted(object? sender, OnSongStartedArgs e)
         {
             actualStartTimestamp = e.timestamp;
         }
 
-        public void OnSongEnded(RockSnifferLib.Events.OnSongEndedArgs e)
+        private void OnSongEnded(object? sender, OnSongEndedArgs e)
         {
             // Note data is single-player only
             if (e.wasMultiplayerMode)

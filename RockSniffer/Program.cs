@@ -109,12 +109,7 @@ namespace RockSniffer
             //Initialize playthrough history
             if (config.historySettings.enableSqliteHistory || config.historySettings.enableCsvHistory)
             {
-                playthroughHistory = new PlaythroughHistory(
-                    config.historySettings.enableSqliteHistory,
-                    config.historySettings.sqliteHistoryPath,
-                    config.historySettings.enableCsvHistory,
-                    config.historySettings.csvHistoryPath
-                );
+                playthroughHistory = new PlaythroughHistory(config.historySettings);
             }
 
             //Enable addon service if configured
@@ -293,13 +288,7 @@ namespace RockSniffer
 
             RockSniffer.Logging.EventLogger.Attach(sniffer, config.outputSettings.enableEventLog);
 
-            //Add playthrough history listeners
-            if (playthroughHistory != null)
-            {
-                sniffer.OnSongSelected += (sender, args) => playthroughHistory.OnSongSelected();
-                sniffer.OnSongStarted += (sender, args) => playthroughHistory.OnSongStarted(args);
-                sniffer.OnSongEnded += (sender, args) => playthroughHistory.OnSongEnded(args);
-            }
+            playthroughHistory?.Attach(sniffer);
 
             //Add RPC event listeners
             if (config.rpcSettings.enabled)
