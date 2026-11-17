@@ -6,10 +6,8 @@
 		<title>RockSniffer Current Song Display (Based on v2, edited by PoizenJam)</title>
 
 		<link rel="stylesheet" type="text/css" href="style.css"> 
-		<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
-
+		
 		<script src="../config.js"></script>
-		<script src="../config-ui.js"></script>
 		<script src="../_deps/jquery-3.2.1.js"></script>
 		<script src="../_deps/vue.js"></script>
 		<script src="../_deps/sniffer-storage.js"></script>
@@ -44,6 +42,7 @@
 											</div>
 										</div>
 									</div>
+								</div>
 								<div v-if="mode == 1" :key="'mode1'">
 									<div class = "stats">
 										<div class = "statsLeft">
@@ -88,12 +87,11 @@
 											</div>
 										</div>
 									</div>
-								</div>
 							</transition>
 						</div>
 					</div>
-				</transition>
-			</div>
+				</div>
+			</transition>
 		</div>
 		<script src="script.js"></script>
 	</body>

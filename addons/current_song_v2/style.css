@@ -1,3 +1,12 @@
+/* Fonts are bundled so visitor IPs aren't sent to Google Fonts (GDPR, LG Muenchen 3 O 17493/20) */
+@font-face {
+	font-family: 'Open Sans';
+	src: url('../_deps/fonts/OpenSans-VariableFont_wdth,wght.ttf') format('truetype-variations');
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
+
 body {
 	font-family: 'Open Sans', sans-serif;
 	font-size: 20px;

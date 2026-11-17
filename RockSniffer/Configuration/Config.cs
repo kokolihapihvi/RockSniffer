@@ -14,6 +14,7 @@ namespace RockSniffer.Configuration
         private const string formatFile = "format.json";
         private const string debugFile = "debug.json";
         private const string outputFile = "output.json";
+        private const string historyFile = "history.json";
 
         public AddonSettings addonSettings;
         public SnifferSettings snifferSettings;
@@ -21,6 +22,7 @@ namespace RockSniffer.Configuration
         public FormatSettings formatSettings;
         public DebugSettings debugSettings;
         public OutputSettings outputSettings;
+        public HistorySettings historySettings;
 
         /// <summary>
         /// Load JSON files from disc or initialize default values and write all configuration files to disc
@@ -37,6 +39,7 @@ namespace RockSniffer.Configuration
             formatSettings = LoadFile<FormatSettings>(formatFile);
             debugSettings = LoadFile<DebugSettings>(debugFile);
             outputSettings = LoadFile<OutputSettings>(outputFile);
+            historySettings = LoadFile<HistorySettings>(historyFile);
 
             Console.WriteLine("Configuration loaded");
 
@@ -72,6 +75,7 @@ namespace RockSniffer.Configuration
             File.WriteAllText(cfiledir + formatFile, JsonConvert.SerializeObject(formatSettings, Formatting.Indented));
             File.WriteAllText(cfiledir + debugFile, JsonConvert.SerializeObject(debugSettings, Formatting.Indented));
             File.WriteAllText(cfiledir + outputFile, JsonConvert.SerializeObject(outputSettings, Formatting.Indented));
+            File.WriteAllText(cfiledir + historyFile, JsonConvert.SerializeObject(historySettings, Formatting.Indented));
         }
     }
 }

@@ -8,9 +8,14 @@ class PlaythroughTracker {
 		this.currentAttempt = null;
 		this.currentAttemptPhrase = null;
 
+		// Multiplayer runs aren't saved, note data is single-player only
+		this.wasMultiplayerMode = false;
+
 		poller.onData((data) => this.onData(data));
 		poller.onSongStarted((song) => this.onSongStarted(song));
 		poller.onSongEnded((song) => this.onSongEnded(song));
+		//In Nonstop Play onSongStarted for the next song can come late, don't keep the old song's attempt
+		poller.onSongChanged((song) => this.onSongChanged(song));
 	}
 
 	//Check if song has previous best
@@ -23,6 +28,25 @@ class PlaythroughTracker {
 		if(!this.hasPreviousBest()) {
 			return true;
 		}
+		if(this.currentAttempt == null) {
+			return false;
+		}
+
+		// A partial attempt can tie the last section of the stored best, don't let it
+		// replace a more complete one
+		var countPopulated = function(sections) {
+			if(sections == null) return 0;
+			var n = 0;
+			for(var i = 0; i < sections.length; i++) {
+				var s = sections[i];
+				if(s != null && s.TotalNotes != null) n++;
+			}
+			return n;
+		};
+		if(countPopulated(this.currentAttempt.sections) < countPopulated(this.previousBest.sections)) {
+			console.warn("PlaythroughTracker: not storing attempt with fewer sections than the previous best");
+			return false;
+		}
 
 		return this.getFinal().RelativeAccuracy >= 0;
 	}
@@ -32,33 +56,47 @@ class PlaythroughTracker {
 		if(!this.hasPreviousBest()) {
 			return true;
 		}
+		//No attempt yet between Nonstop songs
+		if(this.currentAttempt == null) {
+			return true;
+		}
 
 		return this.currentAttempt.compareTo(this.previousBest, time, this.poller);
 	}
 	
 	//Get section accuracy
 	getSectionAccuracy(time){
+		if(this.currentAttempt == null) return 'Rest';
 		return this.currentAttempt.getAcc(time, this.poller);
 	}
 	
 	//Get phrase accuracy
 	getPhraseAccuracy(time){
+		if(this.currentAttemptPhrase == null) return 'Rest';
 		return this.currentAttemptPhrase.getAcc(time, this.poller);
 	}
 	
 	//Get phrase grade
 	getPhraseGrade(time) {
+		if(this.currentAttemptPhrase == null) return 'No Data';
 		return this.currentAttemptPhrase.getGrade(time, this.poller);
 	}
 
 	//Get stats at end
 	getFinal() {
+		//No attempt yet between Nonstop songs
+		if(this.currentAttempt == null) {
+			return { CurrentAccuracy: 0, PreviousAccuracy: 0, RelativeAccuracy: 0 };
+		}
 		return this.currentAttempt.getFinal(this.previousBest)
 	}
 
 	//Get relative performance if has previous best
 	getRelative(time) {
 		if(!this.hasPreviousBest()) {
+			return null;
+		}
+		if(this.currentAttempt == null) {
 			return null;
 		}
 
@@ -84,6 +122,9 @@ class PlaythroughTracker {
 	onSongStarted(song) {
 		this.previousBest = null;
 
+		var readout = this.poller.getCurrentReadout();
+		this.wasMultiplayerMode = (readout && readout.mode === "MULTIPLAYER");
+
 		var arrangement = this.poller.getCurrentArrangement();
 		this.currentAttempt = new PlaythroughBySection(arrangement.sections);
 		this.currentAttemptPhrase = new PlaythroughByPhrase(arrangement.phraseIterations);
@@ -103,10 +144,50 @@ class PlaythroughTracker {
 	
 	//Do on song ended
 	onSongEnded(song) {
+		if (this.wasMultiplayerMode) {
+			console.log("PlaythroughTracker: not storing multiplayer attempt");
+			return;
+		}
+
+		//Can happen at Nonstop song changes
+		if(this.currentAttempt == null) {
+			console.warn("PlaythroughTracker.onSongEnded: no currentAttempt, skipping save");
+			return;
+		}
+
 		var arrangement = this.poller.getCurrentArrangement();
+		if(arrangement == null) {
+			console.warn("PlaythroughTracker.onSongEnded: no resolvable arrangement, skipping save");
+			return;
+		}
+
 		var arr_id = arrangement.arrangementID;
 
 		var finalReadout = this.poller.getCurrentReadout();
+
+		// Skip attempts that were never played. Check before finalize(), which fills
+		// in the current section and would make an empty attempt look played.
+		var totalNotes = (finalReadout && finalReadout.noteData)
+			? finalReadout.noteData.TotalNotes
+			: 0;
+		if(!totalNotes || totalNotes <= 0) {
+			console.warn("PlaythroughTracker.onSongEnded: no notes, skipping save");
+			return;
+		}
+
+		var finishedSections = 0;
+		if(this.currentAttempt && this.currentAttempt.sections) {
+			for(var i = 0; i < this.currentAttempt.sections.length; i++) {
+				var sec = this.currentAttempt.sections[i];
+				if(sec != null && sec.TotalNotes != null && sec.TotalNotes > 0) {
+					finishedSections++;
+				}
+			}
+		}
+		if(finishedSections === 0) {
+			console.warn("PlaythroughTracker.onSongEnded: no sections finished, skipping save");
+			return;
+		}
 
 		this.currentAttempt.finalize(finalReadout);
 
@@ -121,6 +202,13 @@ class PlaythroughTracker {
 		} else {
 			console.log("Not storing worse attempt");
 		}
+	}
+
+	//Do on song changed, onSongStarted sets up the new attempt
+	onSongChanged(song) {
+		this.currentAttempt = null;
+		this.currentAttemptPhrase = null;
+		this.previousBest = null;
 	}
 }
 
@@ -139,7 +227,9 @@ class PlaythroughBySection {
 
 	//Get final stats
 	getFinal(other) {
-		var finalAccuracy = this.sections[this.sections.length-1].Accuracy;
+		//Sections start as {} placeholders until finished
+		var lastSection = this.sections[this.sections.length-1];
+		var finalAccuracy = (lastSection != null && lastSection.Accuracy != null) ? lastSection.Accuracy : 0;
 
 		if(other == null) {
 			return {
@@ -148,7 +238,8 @@ class PlaythroughBySection {
 			}
 		}
 
-		var otherAccuracy = other.sections[other.sections.length-1].Accuracy;
+		var otherLast = other.sections[other.sections.length-1];
+		var otherAccuracy = (otherLast != null && otherLast.Accuracy != null) ? otherLast.Accuracy : 0;
 
 		return {
 			CurrentAccuracy: finalAccuracy,
@@ -159,14 +250,19 @@ class PlaythroughBySection {
 
 	//Compare to previous best
 	compareTo(other, time, poller) {
+		if(other == null) return true;
 		var sectionRelative = this.getRelative(other, time, poller);
+		if(sectionRelative == null) return true;
 
 		return sectionRelative.Accuracy >= 0;
 	}
 	
 	//Get relative improvement/worsening
 	getRelative(other, time, poller) {
-		var index = poller.getSectionAt(time).index;
+		if(other == null) return null;
+		var sec = poller.getSectionAt(time);
+		if(sec == null) return null;
+		var index = sec.index;
 
 		var csection = this._calculateSectionStats(index, this.sections);
 		var osection = this._calculateSectionStats(index, other.sections);
@@ -181,24 +277,37 @@ class PlaythroughBySection {
 	
 	//get section accuracy
 	getAcc(time, poller) {
-		var index = poller.getSectionAt(time).index;
+		var sec = poller.getSectionAt(time);
+		if(sec == null) return 'Rest';
+		var index = sec.index;
 		var sectionAcc = this._calculateSectionStats(index, this.sections);
 		return sectionAcc.Accuracy;
 	}
 	
 	//calculate section stats
 	_calculateSectionStats(index, sections) {
+		//In Nonstop Play the index can briefly come from the next song's arrangement
+		if(sections == null || index == null || index < 0 || index >= sections.length) {
+			return { Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0 };
+		}
+
 		var section = sections[index];
+		//Not finished yet
+		if(section == null || section.TotalNotes == null) {
+			return { Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0 };
+		}
 
 		var prevHitNotes = 0;
 		var prevMissedNotes = 0;
 		var prevTotalNotes = 0;
 
 		if(index > 0) {
-			prevHitNotes = sections[index-1].TotalNotesHit;
-			prevMissedNotes = sections[index-1].TotalNotesMissed;
-			prevTotalNotes = sections[index-1].TotalNotes;
-
+			var prevSection = sections[index-1];
+			if(prevSection != null && prevSection.TotalNotes != null) {
+				prevHitNotes = prevSection.TotalNotesHit;
+				prevMissedNotes = prevSection.TotalNotesMissed;
+				prevTotalNotes = prevSection.TotalNotes;
+			}
 		}
 		
 		var sectionHitNotes = section.TotalNotesHit - prevHitNotes;
@@ -239,6 +348,8 @@ class PlaythroughBySection {
 
 	//finalize info for storage
 	finalize(readout) {
+		// Mode-1 addons finalize before the tracker does, so this can run twice
+		if (this.currentSection === undefined) return;
 		this.onSectionFinished(this.currentSection, readout.noteData);
 
 		delete this.currentSection;
@@ -272,21 +383,39 @@ class PlaythroughByPhrase {
 	
 	//Get phrase grade
 	getGrade(time, poller) {
-		var index = poller.getPhraseAt(time).index;
+		var ph = poller.getPhraseAt(time);
+		if(ph == null) return 'No Data';
+		var index = ph.index;
 		var phraseGrade = this._calculatePhraseStats(index, this.phraseIterations);
 		return phraseGrade.Grade;
 	}
 	
 	//Get phrase accuracy
 	getAcc(time, poller) {
-		var index = poller.getPhraseAt(time).index;
+		var ph = poller.getPhraseAt(time);
+		if(ph == null) return 'Rest';
+		var index = ph.index;
 		var phraseAcc = this._calculatePhraseStats(index, this.phraseIterations);
 		return phraseAcc.Accuracy;
 	}
 	
 	//calculate other phrase stats
 	_calculatePhraseStats(index, phraseIterations) {
+		//See _calculateSectionStats
+		if(phraseIterations == null || index == null || index < 0 || index >= phraseIterations.length) {
+			return {
+				Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0,
+				PerfectPhrase: 0, GoodPhrase: 0, PassedPhrase: 0, FailedPhrase: 0, Grade: 'No Data'
+			};
+		}
+
 		var phrase = phraseIterations[index];
+		if(phrase == null || phrase.TotalNotes == null) {
+			return {
+				Accuracy: 'Rest', TotalNotesHit: 0, TotalNotesMissed: 0, TotalNotes: 0,
+				PerfectPhrase: 0, GoodPhrase: 0, PassedPhrase: 0, FailedPhrase: 0, Grade: 'No Data'
+			};
+		}
 		
 		var prevHitNotes = 0;
 		var prevMissedNotes = 0;
@@ -296,14 +425,17 @@ class PlaythroughByPhrase {
 		var prevPassPhra = 0;
 		var prevFailPhra = 0;
 
-		if(index > 0) {	
-			prevHitNotes = phraseIterations[index-1].TotalNotesHit;
-			prevMissedNotes = phraseIterations[index-1].TotalNotesMissed;
-			prevTotalNotes = phraseIterations[index-1].TotalNotes;
-			prevPerfPhra = phraseIterations[index-1].PerfectPhrases;
-			prevGoodPhra = phraseIterations[index-1].GoodPhrases;
-			prevPassPhra = phraseIterations[index-1].PassedPhrases;
-			prevFailPhra = phraseIterations[index-1].FailedPhrases;
+		if(index > 0) {
+			var prevPhrase = phraseIterations[index-1];
+			if(prevPhrase != null && prevPhrase.TotalNotes != null) {
+				prevHitNotes = prevPhrase.TotalNotesHit;
+				prevMissedNotes = prevPhrase.TotalNotesMissed;
+				prevTotalNotes = prevPhrase.TotalNotes;
+				prevPerfPhra = prevPhrase.PerfectPhrases;
+				prevGoodPhra = prevPhrase.GoodPhrases;
+				prevPassPhra = prevPhrase.PassedPhrases;
+				prevFailPhra = prevPhrase.FailedPhrases;
+			}
 		}
 						
 		var phraseHitNotes = phrase.TotalNotesHit - prevHitNotes;

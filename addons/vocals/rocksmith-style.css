@@ -1,7 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+/* Fonts are bundled so visitor IPs aren't sent to Google Fonts (GDPR, LG Muenchen 3 O 17493/20) */
+@font-face {
+    font-family: 'Nunito Sans';
+    src: url('../_deps/fonts/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf') format('truetype-variations');
+    font-weight: 200 1000;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Nunito Sans';
+    src: url('../_deps/fonts/NunitoSans-Italic-VariableFont_YTLC,opsz,wdth,wght.ttf') format('truetype-variations');
+    font-weight: 200 1000;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root {
     --rocksmith-blue: #1189cd; 
     --darkest: #0b0e0f; /* dark black */
+    --rocksmith-white: #ffffff;
     --rocksmith-grey: #424242;  
   }
 
@@ -18,12 +35,26 @@ body {
     text-shadow: 2px 2px 2px black;
 }
 
-/* All text */
-div.vocal {   
-    color: var(--rocksmith-grey); 
+/* Generic syllable span */
+span.syllable {
+    padding: 0 2px;
+    font-weight: 800; /* match body font-weight to prevent jitter */
 }
 
-/* Active text */
-span.lyric {
+/* COMPLETED syllables */
+span.syllable-past {
+    color: var(--rocksmith-grey); 
+    opacity: 0.7;
+}
+
+/* CURRENT syllable */
+span.syllable-current {
 	color: var(--rocksmith-blue);
+    /* no font-weight change */
+    text-shadow: 0 0 6px black; /* glow instead of size change */
+}
+
+/* FUTURE syllables */
+span.syllable-future {
+    color: var(--rocksmith-white);
 }

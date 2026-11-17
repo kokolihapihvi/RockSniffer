@@ -124,10 +124,9 @@ namespace RockSniffer.RPC
                 //Set accuracy as text for arrangement icon
                 rp.Assets.SmallImageText = accuracyText;
 
-                if (readout.mode == RSMode.SCOREATTACK)
+                // mode comes from gameStage, so the note data can still be from another mode
+                if (readout.mode == RSMode.SCOREATTACK && readout.noteData is ScoreAttackNoteData sand)
                 {
-                    var sand = (ScoreAttackNoteData)readout.noteData;
-
                     rp.Assets.SmallImageText = $"{FormattableString.Invariant($"{sand.CurrentScore:n0}")} x{sand.CurrentMultiplier} | {rp.Assets.SmallImageText}";
 
                     if (sand.FailedPhrases > 0)
@@ -178,7 +177,7 @@ namespace RockSniffer.RPC
                     {
                         state = "Session Mode";
                     }
-                    else if (gameStage.StartsWith("nsp"))
+                    else if (gameStage.StartsWith("nsp") || gameStage.StartsWith("nonstopplay"))
                     {
                         state = "Nonstop Play";
                     }

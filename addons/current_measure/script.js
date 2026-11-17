@@ -1,18 +1,18 @@
-var poller = new SnifferPoller({
+const poller = new SnifferPoller({
 	interval: 500,
 
 	onData: function(data) {
-		var time = data.memoryReadout.songTimer;
-		var arr = poller.getCurrentArrangement();
+		const time = data.memoryReadout.songTimer;
+		const arr = poller.getCurrentArrangement();
 
 		if(arr == null) {
 			$(".measure").text("-");
 			return;
 		}
 
-		var measures = arr.data.Measures;
+		const measures = arr.data.Measures;
 
-		for (var i = measures.length - 1; i >= 0; i--) {
+		for (let i = measures.length - 1; i >= 0; i--) {
 			if(measures[i].Time <= time) {
 				$(".measure").text(poller.getCurrentSection().name+" | "+measures[i].Number);
 				break;

@@ -1,7 +1,7 @@
-var widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth; //Get width of UI
+const widthUI = document.getElementsByClassName("mainContainer")[0].offsetWidth; //Get width of UI
 
 //create dictionary for translating phrase grades into color 
-var gradeCode = {
+const gradeCode = {
 	NaN : 'white',
 	'error' : 'white',
 	'No Data' : 'grey',
@@ -16,42 +16,39 @@ var gradeCode = {
 function accuracyGradient(accuracy){
 	if (accuracy == "Rest"){return "grey"}
 	if (accuracy < 50){return "rgb(255, 0, 0)"}
-	var red = Math.min(((100 - accuracy)/25),1) * 255;
-	var green = Math.min(((accuracy - 50)/25),1) * 255;
+	const red = Math.min(((100 - accuracy)/25),1) * 255;
+	const green = Math.min(((accuracy - 50)/25),1) * 255;
 	return "rgb("+red+","+green+", 0)";
 };
 
 //Edit poller functions
-var poller = new SnifferPoller({
+const poller = new SnifferPoller({
 	interval: 100,
 
 	onData: function(data) {
 		app.snifferData = data;
 	},
 	
-	onSongStarted: function(data) {
-		app.mode = 0;
-		app.visible = true;
-	},
-	
-	onSongChanged: function(data) {
-		app.mode = 0
-		app.visible = true;
-	},
-	
 	onSongEnded: function(data) {
 		app.prevData = app.snifferData;
+		// Finalize and snapshot before the tracker's own onSongEnded resets it
+		if (tracker.currentAttempt) {
+			tracker.currentAttempt.finalize(poller.getCurrentReadout());
+		}
+		app.snapshotHasPreviousBest = tracker.hasPreviousBest();
+		app.snapshotFinal = tracker.getFinal();
 		app.mode = 1;
+		poller.resultsHold.markShown();
 		generateFeedback();
 	}
 });
 
 //Get tracker functions
-var tracker = new PlaythroughTracker(poller);
+const tracker = new PlaythroughTracker(poller);
 
 
 //Create app
-var app = new Vue({
+const app = new Vue({
 	el: "#app",
 	//create variable for data storage
 	data: {
@@ -61,6 +58,9 @@ var app = new Vue({
 		snifferData: {},
 		feedback: [],
 		feedbackIdx: 0,
+		// Tracker results at song end, shown in mode 1 after the tracker resets
+		snapshotHasPreviousBest: null,
+		snapshotFinal: null,
         songInfoTransform: "translateX(0px)"
 	},
 	
@@ -74,11 +74,10 @@ var app = new Vue({
 		
 		//Scroll song if larger than UI
         doScrollSong: function() {
-			if(this.song == null){
-				var width = 0;
-				} else {				
-				var width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth);
-				}
+			let width = 0;
+			if(this.song != null){
+				width = (document.getElementsByClassName("songName")[0].offsetWidth + document.getElementsByClassName("songDash")[0].offsetWidth + document.getElementsByClassName("artistName")[0].offsetWidth);
+			}
             if(this.songInfoTransform == "translateX(0px)" && width > widthUI) {
                 this.songInfoTransform = "translateX(-"+(width-widthUI)+"px)";
             } else {
@@ -96,11 +95,17 @@ var app = new Vue({
 		
 		//return previous best if available
 		hasPreviousBest: function() {
+			if (this.mode === 1 && this.snapshotHasPreviousBest !== null) {
+				return this.snapshotHasPreviousBest;
+			}
 			return tracker.hasPreviousBest();
 		},
 		
 		//Return trackerScore
 		trackerScore: function() {
+			if (this.mode === 1 && this.snapshotFinal !== null) {
+				return this.snapshotFinal;
+			}
 			return tracker.getFinal();
 		}
 	},
@@ -108,8 +113,11 @@ var app = new Vue({
 	//Grab variables for UI
 	computed: {
 		
-		//Get song details
+		//Get song details, in mode 1 the song that just ended
 		song: function() {
+			if (this.mode === 1 && this.prevData && this.prevData.songDetails) {
+				return this.prevData.songDetails;
+			}
 			if(!this.snifferData) {
 				return null;
 			}
@@ -154,7 +162,8 @@ var app = new Vue({
 		//get Phrase Start Time
 		phraseStartTime: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			var currentPhrase = poller.getCurrentPhrase();
+			const currentPhrase = poller.getCurrentPhrase();
+			if(currentPhrase == null){return 0;}
 			if(currentPhrase.index == 0){return 0;}
 			return (currentPhrase.startTime / this.song.songLength) * 100;
 		},
@@ -162,9 +171,9 @@ var app = new Vue({
 		//Calculate phrase height from difficulty
 		phraseHeight: function() {
 			if (this.readout.songTimer == 0){return 0;}
-			var phraseHeight = 1;
-			var maxDif = poller.getMaxDif();
-			var phrase = poller.getCurrentPhrase();
+			let phraseHeight = 1;
+			const maxDif = poller.getMaxDif();
+			const phrase = poller.getCurrentPhrase();
 			if(maxDif != 0){
 				phraseHeight = phrase.maxDifficulty/maxDif;
 			}
@@ -174,28 +183,7 @@ var app = new Vue({
 		//Get current arrangement
 		arrangement: function() {
 			if(this.song == null) {return null;}
-			if(this.song.arrangements == null) {return null;}
-			
-			//Cycle through list of arrangemwnts for matching ID
-			for (var i = this.song.arrangements.length - 1; i >= 0; i--) {
-				var arrangement = this.song.arrangements[i];
-
-				if(arrangement.arrangementID.length == 32 && arrangement.arrangementID == this.readout.arrangementID) {
-					return arrangement;
-				}
-			}
-			
-			//If no ID found, vall back on previous Path first then defaultPath
-			for (var i = this.song.arrangements.length - 1; i >= 0; i--) {
-				var arrangement = this.song.arrangements[i];
-				if(this.prevPath == null && arrangement.name == defaultPath && arrangement.type == defaultPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
-					return arrangement;
-				} else if (arrangement.name == this.prevPath && arrangement.type == this.prevPath && arrangement.isBonusArrangement == false && arrangement.isAlternateArrangement == false){
-					return arrangement;
-					
-				}				
-			}	
-			return null;
+			return poller.resolveArrangement(this.song, this.readout);
 		},
 		
 		//Get tuning name
@@ -206,17 +194,17 @@ var app = new Vue({
 		
 		//Create and draw sections
 		sections: function() {
-			var arrangement = this.arrangement;
+			const arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
-			var sections = arrangement.sections;
+			const sections = arrangement.sections;
 
-			var songLength = this.song.songLength;
+			const songLength = this.song.songLength;
 			
 			//Cycle through all sections and draw
-			for (var i = 0; i < sections.length; i++) {
-				var section = sections[i];
+			for (let i = 0; i < sections.length; i++) {
+				const section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -238,13 +226,13 @@ var app = new Vue({
 				}
 				
 				//If currently playing, color royal-blue as in game
-				if(this.readout.songTimer > section.startTime & this.readout.songTimer <= section.endTime){
+				if(this.readout.songTimer > section.startTime && this.readout.songTimer <= section.endTime){
 					section.style.backgroundColor = "royalblue";
 				}
 				
 				//If has previous best, color based on that. If not, then color using accuracy gradient
-				if (this.readout.songTimer > section.endTime | this.readout.gameStage == "panel_bib" | this.readout.gameStage == "sa_songreview" | this.readout.gameStage == "las_songreview"){
-					if(tracker.hasPreviousBest() & tracker.getSectionAccuracy((section.startTime + section.endTime)/2) != 'Rest') {
+				if (this.readout.songTimer > section.endTime || this.readout.gameStage == "panel_bib" || this.readout.gameStage == "sa_songreview" || this.readout.gameStage == "las_songreview"){
+					if(tracker.hasPreviousBest() && tracker.getSectionAccuracy((section.startTime + section.endTime)/2) != 'Rest') {
 						section.style.backgroundColor = (tracker.isBetterRelative((section.startTime + section.endTime)/2) ? "lime" : "red");
 					} else {						
 						section.style.backgroundColor = accuracyGradient(tracker.getSectionAccuracy((section.startTime + section.endTime)/2));
@@ -259,19 +247,19 @@ var app = new Vue({
 		
 		//Create and draw phrase iterations
 		phraseIterations: function() {
-			var arrangement = this.arrangement;
+			const arrangement = this.arrangement;
 
 			if(arrangement == null) {return null;}			
 			
-			var phraseIterations = arrangement.phraseIterations;
+			const phraseIterations = arrangement.phraseIterations;
 
-			var songLength = this.song.songLength;
+			const songLength = this.song.songLength;
 					
-			var maxDif = poller.getMaxDif();		
+			let maxDif = poller.getMaxDif();		
 			
 			//Cycle through phrases and draw
-			for (var i = 0; i < phraseIterations.length; i++) {
-				var phrase = phraseIterations[i];
+			for (let i = 0; i < phraseIterations.length; i++) {
+				const phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -287,9 +275,10 @@ var app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				var phraseHeight = 1;
+				let phraseHeight = 1;
 				
-				//If has maxDifficulty, set phrase height to fraction of maxDif. Else set to max height
+				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
+				
 				if(maxDif != 0){
 					phraseHeight = phrase.maxDifficulty/maxDif;
 				}
@@ -301,7 +290,7 @@ var app = new Vue({
 				}
 
 				//If phrase grade exists, color based on that; else, use accuracy gradient
-				if (this.readout.songTimer > phrase.endTime | this.readout.gameStage == "panel_bib" | this.readout.gameStage == "sa_songreview"  | this.readout.gameStage == "las_songreview"){
+				if (this.readout.songTimer > phrase.endTime || this.readout.gameStage == "panel_bib" || this.readout.gameStage == "sa_songreview"  || this.readout.gameStage == "las_songreview"){
 					if(tracker.getPhraseGrade((phrase.startTime + phrase.endTime)/2) != "No Data"){
 						phrase.style.backgroundColor = gradeCode[tracker.getPhraseGrade((phrase.startTime + phrase.endTime)/2)];
 					} else {
@@ -342,8 +331,8 @@ var app = new Vue({
 			if(this.prevSong == null) {return null;}
 			if(this.prevSong.arrangements == null) {return null;}
 			
-			for (var i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
-				var arrangement = this.prevSong.arrangements[i];
+			for (let i = this.prevSong.arrangements.length - 1; i >= 0; i--) {
+				const arrangement = this.prevSong.arrangements[i];
 
 				if(arrangement.arrangementID.length == 32 && arrangement.arrangementID == this.prevReadout.arrangementID) {
 					return arrangement;
@@ -355,21 +344,22 @@ var app = new Vue({
 		//Get previous path info
 		prevPath: function() {
 			if(this.prevSong == null){return null;}
+			if(this.prevArrangement == null){return null;}
 			return this.prevArrangement.type;
 		},
 		
 		//Get previous sections and draw results screen
 		prevSections: function() {
-			var arrangement = this.prevArrangement;
+			const arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			var sections = arrangement.sections;
+			const sections = arrangement.sections;
 
-			var songLength = this.prevSong.songLength;
+			const songLength = this.prevSong.songLength;
 
-			for (var i = 0; i < sections.length; i++) {
-				var section = sections[i];
+			for (let i = 0; i < sections.length; i++) {
+				const section = sections[i];
 
 				section.length = section.endTime - section.startTime;
 
@@ -404,18 +394,18 @@ var app = new Vue({
 				
 		//Get previous phrases and draw results screen
 		prevPhrases: function() {
-			var arrangement = this.prevArrangement;
+			const arrangement = this.prevArrangement;
 
 			if(arrangement == null) {return null;}
 
-			var phraseIterations = arrangement.phraseIterations;
+			const phraseIterations = arrangement.phraseIterations;
 
-			var songLength = this.prevSong.songLength;
+			const songLength = this.prevSong.songLength;
 			
-			var maxDif = poller.getMaxDif();		
+			let maxDif = poller.getMaxDif();		
 			
-			for (var i = 0; i < phraseIterations.length; i++) {
-				var phrase = phraseIterations[i];
+			for (let i = 0; i < phraseIterations.length; i++) {
+				const phrase = phraseIterations[i];
 
 				phrase.length = phrase.endTime - phrase.startTime;
 
@@ -431,7 +421,9 @@ var app = new Vue({
 
 				phrase.lengthPercent = (phrase.length / songLength) * 100;
 				
-				var phraseHeight = 1;
+				let phraseHeight = 1;
+				
+				if(phrase.maxDifficulty > maxDif){maxDif = phrase.maxDifficulty}
 				
 				if(maxDif != 0){
 					phraseHeight = phrase.maxDifficulty/maxDif;
@@ -440,7 +432,7 @@ var app = new Vue({
 				phrase.style = {
 					left: phrase.startPercent+'%',
 					width: (phrase.lengthPercent-(100/(widthUI)))+'%',
-					height: Math.round(12*(phraseHeight))+'px'
+					height: Math.round((phraseHeight)*100)+'%'
 				}
 				
 				if(tracker.getPhraseGrade((phrase.startTime + phrase.endTime)/2) != "No Data"){
@@ -459,29 +451,37 @@ var app = new Vue({
 
 //Format timer
 function formatTimer(time) {
-	var minutes = Math.floor(time/60);
-	var seconds = time % 60;
-
 	if(time < 0) {
 		return "";
 	}
+
+	const minutes = Math.floor(time/60);
+	const seconds = time % 60;
 
 	return [minutes,seconds].map(X => ('0' + Math.floor(X)).slice(-2)).join(':')
 }
 
 //Generate feedback
+let hideTimeout = null;
 function generateFeedback() {
 	app.feedback = [];
 
-	var arrangement = poller.getCurrentArrangement();
-	var sections = arrangement.sections;
-	var feedback = []
+	const arrangement = poller.getCurrentArrangement();
+	//Can be unresolved at Nonstop Play song changes
+	if(arrangement == null) {
+		app.feedback = ["YOU TRIED!"];
+		app.cycleFeedback();
+		hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
+		return;
+	}
+	const sections = arrangement.sections;
+	const feedback = []
 
-	var greens = 0;
+	let greens = 0;
 
-	for (var i = sections.length - 1; i >= 0; i--) {
-		var section = sections[i];
-		var rel = tracker.getRelative(section.endTime);
+	for (let i = sections.length - 1; i >= 0; i--) {
+		const section = sections[i];
+		const rel = tracker.getRelative(section.endTime);
 
 		if(rel == null) {
 			continue;
@@ -519,3 +519,5 @@ function generateFeedback() {
 
 	hideTimeout = setTimeout(() => {if(app.mode == 1) {app.mode = 0; app.visible = false;}}, 60000);
 }
+
+poller.enableResultsHold(app);
